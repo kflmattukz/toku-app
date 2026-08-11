@@ -10,11 +10,15 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as DashboardRouteImport } from './routes/dashboard'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as ProductsRouteImport } from './routes/products'
-import { Route as ReportsRouteImport } from './routes/reports'
-import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as AppRouteImport } from './routes/_app'
+import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
+import { Route as AppKasirRouteImport } from './routes/_app/kasir'
+import { Route as AppLaporanRouteImport } from './routes/_app/laporan'
+import { Route as AppOnboardingRouteImport } from './routes/_app/onboarding'
+import { Route as AppPengaturanRouteImport } from './routes/_app/pengaturan'
+import { Route as AppProdukRouteImport } from './routes/_app/produk'
+import { Route as AppStokRouteImport } from './routes/_app/stok'
+import { Route as AppTransaksiRouteImport } from './routes/_app/transaksi'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
 const IndexRoute = IndexRouteImport.update({
@@ -22,30 +26,49 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DashboardRoute = DashboardRouteImport.update({
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppDashboardRoute = AppDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AppRoute,
 } as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
+const AppKasirRoute = AppKasirRouteImport.update({
+  id: '/kasir',
+  path: '/kasir',
+  getParentRoute: () => AppRoute,
 } as any)
-const ProductsRoute = ProductsRouteImport.update({
-  id: '/products',
-  path: '/products',
-  getParentRoute: () => rootRouteImport,
+const AppLaporanRoute = AppLaporanRouteImport.update({
+  id: '/laporan',
+  path: '/laporan',
+  getParentRoute: () => AppRoute,
 } as any)
-const ReportsRoute = ReportsRouteImport.update({
-  id: '/reports',
-  path: '/reports',
-  getParentRoute: () => rootRouteImport,
+const AppOnboardingRoute = AppOnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => AppRoute,
 } as any)
-const SettingsRoute = SettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => rootRouteImport,
+const AppPengaturanRoute = AppPengaturanRouteImport.update({
+  id: '/pengaturan',
+  path: '/pengaturan',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppProdukRoute = AppProdukRouteImport.update({
+  id: '/produk',
+  path: '/produk',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppStokRoute = AppStokRouteImport.update({
+  id: '/stok',
+  path: '/stok',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTransaksiRoute = AppTransaksiRouteImport.update({
+  id: '/transaksi',
+  path: '/transaksi',
+  getParentRoute: () => AppRoute,
 } as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
@@ -55,30 +78,40 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRoute
-  '/login': typeof LoginRoute
-  '/products': typeof ProductsRoute
-  '/reports': typeof ReportsRoute
-  '/settings': typeof SettingsRoute
+  '/dashboard': typeof AppDashboardRoute
+  '/kasir': typeof AppKasirRoute
+  '/laporan': typeof AppLaporanRoute
+  '/onboarding': typeof AppOnboardingRoute
+  '/pengaturan': typeof AppPengaturanRoute
+  '/produk': typeof AppProdukRoute
+  '/stok': typeof AppStokRoute
+  '/transaksi': typeof AppTransaksiRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRoute
-  '/login': typeof LoginRoute
-  '/products': typeof ProductsRoute
-  '/reports': typeof ReportsRoute
-  '/settings': typeof SettingsRoute
+  '/dashboard': typeof AppDashboardRoute
+  '/kasir': typeof AppKasirRoute
+  '/laporan': typeof AppLaporanRoute
+  '/onboarding': typeof AppOnboardingRoute
+  '/pengaturan': typeof AppPengaturanRoute
+  '/produk': typeof AppProdukRoute
+  '/stok': typeof AppStokRoute
+  '/transaksi': typeof AppTransaksiRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRoute
-  '/login': typeof LoginRoute
-  '/products': typeof ProductsRoute
-  '/reports': typeof ReportsRoute
-  '/settings': typeof SettingsRoute
+  '/_app': typeof AppRouteWithChildren
+  '/_app/dashboard': typeof AppDashboardRoute
+  '/_app/kasir': typeof AppKasirRoute
+  '/_app/laporan': typeof AppLaporanRoute
+  '/_app/onboarding': typeof AppOnboardingRoute
+  '/_app/pengaturan': typeof AppPengaturanRoute
+  '/_app/produk': typeof AppProdukRoute
+  '/_app/stok': typeof AppStokRoute
+  '/_app/transaksi': typeof AppTransaksiRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRouteTypes {
@@ -86,38 +119,44 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/dashboard'
-    | '/login'
-    | '/products'
-    | '/reports'
-    | '/settings'
+    | '/kasir'
+    | '/laporan'
+    | '/onboarding'
+    | '/pengaturan'
+    | '/produk'
+    | '/stok'
+    | '/transaksi'
     | '/api/auth/$'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/dashboard'
-    | '/login'
-    | '/products'
-    | '/reports'
-    | '/settings'
+    | '/kasir'
+    | '/laporan'
+    | '/onboarding'
+    | '/pengaturan'
+    | '/produk'
+    | '/stok'
+    | '/transaksi'
     | '/api/auth/$'
   id:
     | '__root__'
     | '/'
-    | '/dashboard'
-    | '/login'
-    | '/products'
-    | '/reports'
-    | '/settings'
+    | '/_app'
+    | '/_app/dashboard'
+    | '/_app/kasir'
+    | '/_app/laporan'
+    | '/_app/onboarding'
+    | '/_app/pengaturan'
+    | '/_app/produk'
+    | '/_app/stok'
+    | '/_app/transaksi'
     | '/api/auth/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  DashboardRoute: typeof DashboardRoute
-  LoginRoute: typeof LoginRoute
-  ProductsRoute: typeof ProductsRoute
-  ReportsRoute: typeof ReportsRoute
-  SettingsRoute: typeof SettingsRoute
+  AppRoute: typeof AppRouteWithChildren
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
 
@@ -130,40 +169,68 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/dashboard': {
-      id: '/dashboard'
+    '/_app': {
+      id: '/_app'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_app/dashboard': {
+      id: '/_app/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AppDashboardRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_app/kasir': {
+      id: '/_app/kasir'
+      path: '/kasir'
+      fullPath: '/kasir'
+      preLoaderRoute: typeof AppKasirRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/products': {
-      id: '/products'
-      path: '/products'
-      fullPath: '/products'
-      preLoaderRoute: typeof ProductsRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_app/laporan': {
+      id: '/_app/laporan'
+      path: '/laporan'
+      fullPath: '/laporan'
+      preLoaderRoute: typeof AppLaporanRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/reports': {
-      id: '/reports'
-      path: '/reports'
-      fullPath: '/reports'
-      preLoaderRoute: typeof ReportsRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_app/onboarding': {
+      id: '/_app/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof AppOnboardingRouteImport
+      parentRoute: typeof AppRoute
     }
-    '/settings': {
-      id: '/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof SettingsRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_app/pengaturan': {
+      id: '/_app/pengaturan'
+      path: '/pengaturan'
+      fullPath: '/pengaturan'
+      preLoaderRoute: typeof AppPengaturanRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/produk': {
+      id: '/_app/produk'
+      path: '/produk'
+      fullPath: '/produk'
+      preLoaderRoute: typeof AppProdukRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/stok': {
+      id: '/_app/stok'
+      path: '/stok'
+      fullPath: '/stok'
+      preLoaderRoute: typeof AppStokRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/transaksi': {
+      id: '/_app/transaksi'
+      path: '/transaksi'
+      fullPath: '/transaksi'
+      preLoaderRoute: typeof AppTransaksiRouteImport
+      parentRoute: typeof AppRoute
     }
     '/api/auth/$': {
       id: '/api/auth/$'
@@ -175,13 +242,33 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AppRouteChildren {
+  AppDashboardRoute: typeof AppDashboardRoute
+  AppKasirRoute: typeof AppKasirRoute
+  AppLaporanRoute: typeof AppLaporanRoute
+  AppOnboardingRoute: typeof AppOnboardingRoute
+  AppPengaturanRoute: typeof AppPengaturanRoute
+  AppProdukRoute: typeof AppProdukRoute
+  AppStokRoute: typeof AppStokRoute
+  AppTransaksiRoute: typeof AppTransaksiRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppDashboardRoute: AppDashboardRoute,
+  AppKasirRoute: AppKasirRoute,
+  AppLaporanRoute: AppLaporanRoute,
+  AppOnboardingRoute: AppOnboardingRoute,
+  AppPengaturanRoute: AppPengaturanRoute,
+  AppProdukRoute: AppProdukRoute,
+  AppStokRoute: AppStokRoute,
+  AppTransaksiRoute: AppTransaksiRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  DashboardRoute: DashboardRoute,
-  LoginRoute: LoginRoute,
-  ProductsRoute: ProductsRoute,
-  ReportsRoute: ReportsRoute,
-  SettingsRoute: SettingsRoute,
+  AppRoute: AppRouteWithChildren,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
 }
 export const routeTree = rootRouteImport
