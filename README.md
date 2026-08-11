@@ -1,237 +1,124 @@
-Welcome to your new TanStack Start app!
+# Toku POS — Kasir Digital Offline-First UMKM
 
-# Getting Started
+![Toku POS Hero Banner](./public/toku_pos_hero_banner.png)
 
-To run this application:
+> **Toku POS** adalah aplikasi Kasir Digital (Point of Sale) modern, super cepat, dan **Offline-First** yang dirancang khusus untuk memenuhi kebutuhan pemilik usaha UMKM (Usaha Mikro, Kecil, dan Menengah) di Makassar & Indonesia.
 
+---
+
+## 🎯 Target Pengguna (Who is this for?)
+
+Toku POS dibuat khusus untuk pemilik warung dan toko kelontong harian yang ingin menggantikan pencatatan manual di buku dengan kasir digital modern tanpa tergantung koneksi internet:
+
+* 🏪 **Warung Sembako & Toko Kelontong**: Penjualan bahan makanan, beras, minyak, dan kebutuhan dapur harian.
+* ☕ **Warung Kopi (Warkop) & Cafe**: Pemesanan kopi, minuman, dan snack cepat saji.
+* 💊 **Apotek & Toko Obat**: Manajemen stok obat-obatan, vitamin, dan alat kesehatan.
+* 📱 **Konter Pulsa & Aksesoris HP**: Penjualan pulsa, paket data, charger, dan kartu perdana.
+* 🍲 **Usaha Kuliner & Rumah Makan**: Catatan transaksi meja & makanan cepat saji.
+
+---
+
+## ✨ Fitur Unggulan
+
+* ⚡ **Mode Offline-First**: Tetap dapat berjualan saat internet mati atau sinyal lemah. Semua transaksi disimpan secara otomatis di memori lokal (IndexedDB) dan disinkronkan ke server saat koneksi pulih.
+* 📸 **Upload Foto Produk & Live Preview**: Dukungan kompresi gambar berbasis canvas di browser untuk menambahkan foto katalog produk tanpa memperlambat aplikasi.
+* 🟧 **Desain System Dribbble Terracotta & Soft Ivory**: Tampilan visual agency-tier $150k dengan tombol kapsul melayang (*floating capsule dock*), squircle card double-bezel, dan micro-interaction taktil yang responsif.
+* 🧾 **Struk Thermal Bluetooth / USB**: Format cetak struk nota 80mm langsung dari browser tanpa perlu driver tambahan.
+* 📊 **Laporan Penjualan & Leaderboard Produk**: Pantau total omset harian, jumlah transaksi, dan produk terlaris secara real-time.
+* 🔢 **Format Harga Otomatis & Stepper Kuantitas**: Format harga ribuan (IDR) otomatis saat diketik dan stepper jumlah barang (`-` / `+`) langsung di kartu produk.
+
+---
+
+## 📖 Panduan 4 Langkah Penggunaan Toku POS
+
+![Toku POS Workflow User Guide](./public/toku_pos_workflow_guide.png)
+
+### 1️⃣ Langkah 1: Login & Atur Profil Toko
+* Masuk ke aplikasi menggunakan akun **Google**.
+* Pada layar onboarding, isi **Nama Toko** (contoh: *Warung Bu Ani*) dan pilih **Jenis Usaha / Kategori**.
+
+### 2️⃣ Langkah 2: Kelola Katalog Produk & Foto
+* Masuk ke menu **Produk** → Klik **Tambah Produk Baru**.
+* Isikan nama barang, harga jual, dan jumlah stok awal.
+* Upload **Foto Produk** (JPG/PNG). Foto akan dikompresi otomatis dan langsung menampilkan live preview.
+
+### 3️⃣ Langkah 3: Transaksi Kasir & Pembayaran
+* Masuk ke menu **Kasir**. Cari barang menggunakan **Pill Search Bar** atau filter **Kategori**.
+* Tekan tombol **Pilih** atau atur jumlah stepper `+` di kartu produk.
+* Buka **Rincian Belanja**, pilih metode pembayaran **Tunai (Cash)** dengan kalkulator kembalian otomatis atau **QRIS Digital**, lalu tekan **Selesaikan Pembayaran**.
+
+### 4️⃣ Langkah 4: Cetak Struk & Cek Laporan Harian
+* Setelah pembayaran selesai, modal **Struk Thermal** akan muncul. Klik **Cetak Struk** untuk mencetak ke printer thermal 80mm.
+* Buka menu **Laporan** untuk melihat ringkasan omset harian dan grafik barang paling laku.
+
+---
+
+## 🛠️ Teknologi & Arsitektur Stack
+
+* **Frontend**: React 19, [TanStack React Start](https://tanstack.com/start), [TanStack Router](https://tanstack.com/router)
+* **Styling & Fonts**: CSS Variables Native, Plus Jakarta Sans, JetBrains Mono (Tabular Price Numerals), `@phosphor-icons/react`
+* **Backend Database & Realtime Functions**: [Convex Cloud Database](https://convex.dev)
+* **Autentikasi**: Better-Auth + Google OAuth 2.0
+* **Offline Storage & Queue**: IndexedDB / LocalStorage queue processor
+
+---
+
+## 🚀 Memulai Pembangunan Lokal (Local Development)
+
+### Prasyarat
+* Node.js v18+ 
+* `pnpm` v9+
+
+### 1. Clone Repository & Install Dependensi
 ```bash
+git clone https://github.com/username/toku-pos.git
+cd toku-pos
 pnpm install
+```
+
+### 2. Konfigurasi Environment Variables (`.env`)
+Buat file `.env` di root project dan sesuaikan URL Convex & Google Credentials:
+```env
+CONVEX_DEPLOYMENT=dev:sensible-quail-336
+VITE_CONVEX_URL=https://sensible-quail-336.convex.cloud
+VITE_CONVEX_SITE_URL=https://sensible-quail-336.convex.site
+
+BETTER_AUTH_URL=http://localhost:3000
+BETTER_AUTH_SECRET=your_generated_auth_secret
+
+GOOGLE_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+```
+
+### 3. Jalankan Backend Convex & Frontend Server
+Jalankan backend Convex dev server:
+```bash
+npx convex dev
+```
+
+Di terminal kedua, jalankan dev server Vite:
+```bash
 pnpm dev
 ```
+Buka browser di `http://localhost:3000`.
 
-# Building For Production
+---
 
-To build this application for production:
+## 📦 Production Deployment
 
+### 1. Deploy Convex Backend
 ```bash
-pnpm build
+npx convex deploy
 ```
 
-## Styling
-
-This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
-
-### Removing Tailwind CSS
-
-If you prefer not to use Tailwind CSS:
-
-1. Remove the demo pages in `src/routes/demo/`
-2. Replace the Tailwind import in `src/styles.css` with your own styles
-3. Remove `tailwindcss()` from the plugins array in `vite.config.ts`
-4. Remove `@tailwindcss/vite` and `tailwindcss` from `package.json`
-
-
-## Deploy with Nitro
-
-This project uses Nitro as a generic server adapter, so it can run on any Node-compatible host.
-
+### 2. Deploy Frontend ke Vercel
 ```bash
-npm run build
-node dist/server/index.mjs
+npx vercel
 ```
+Atau hubungkan repository GitHub ke **Vercel / Netlify** dan tambahkan Environment Variables sesuai `.env`.
 
-The build output is a self-contained Node server. To deploy, push the `dist/` directory to your host (Render, Fly.io, your own VPS, etc.) and run the server command above.
+---
 
-For host-specific presets (Vercel, Netlify, Cloudflare, AWS Lambda, etc.) and tuning, see https://v3.nitro.build/deploy.
+## 📄 Lisensi
 
-
-## Setting up Convex
-
-- Set the `VITE_CONVEX_URL` and `CONVEX_DEPLOYMENT` environment variables in your `.env.local`. (Or run `pnpm dlx convex init` to set them automatically.)
-- Run `pnpm dlx convex dev` to start the Convex server.
-
-
-## Setting up Better Auth
-
-1. Generate and set the `BETTER_AUTH_SECRET` environment variable in your `.env.local`:
-
-   ```bash
-   pnpm dlx @better-auth/cli secret
-   ```
-
-2. Visit the [Better Auth documentation](https://www.better-auth.com) to unlock the full potential of authentication in your app.
-
-### Adding a Database (Optional)
-
-Better Auth can work in stateless mode, but to persist user data, add a database:
-
-```typescript
-// src/lib/auth.ts
-import { betterAuth } from "better-auth";
-import { Pool } from "pg";
-
-export const auth = betterAuth({
-  database: new Pool({
-    connectionString: process.env.DATABASE_URL,
-  }),
-  // ... rest of config
-});
-```
-
-Then run migrations:
-
-```bash
-pnpm dlx @better-auth/cli migrate
-```
-
-
-
-## Routing
-
-This project uses [TanStack Router](https://tanstack.com/router) with file-based routing. Routes are managed as files in `src/routes`.
-
-### Adding A Route
-
-To add a new route to your application just add a new file in the `./src/routes` directory.
-
-TanStack will automatically generate the content of the route file for you.
-
-Now that you have two routes you can use a `Link` component to navigate between them.
-
-### Adding Links
-
-To use SPA (Single Page Application) navigation you will need to import the `Link` component from `@tanstack/react-router`.
-
-```tsx
-import { Link } from "@tanstack/react-router";
-```
-
-Then anywhere in your JSX you can use it like so:
-
-```tsx
-<Link to="/about">About</Link>
-```
-
-This will create a link that will navigate to the `/about` route.
-
-More information on the `Link` component can be found in the [Link documentation](https://tanstack.com/router/v1/docs/framework/react/api/router/linkComponent).
-
-### Using A Layout
-
-In the File Based Routing setup the layout is located in `src/routes/__root.tsx`. Anything you add to the root route will appear in all the routes. The route content will appear in the JSX where you render `{children}` in the `shellComponent`.
-
-Here is an example layout that includes a header:
-
-```tsx
-import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
-
-export const Route = createRootRoute({
-  head: () => ({
-    meta: [
-      { charSet: 'utf-8' },
-      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'My App' },
-    ],
-  }),
-  shellComponent: ({ children }) => (
-    <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        <header>
-          <nav>
-            <Link to="/">Home</Link>
-            <Link to="/about">About</Link>
-          </nav>
-        </header>
-        {children}
-        <Scripts />
-      </body>
-    </html>
-  ),
-})
-```
-
-More information on layouts can be found in the [Layouts documentation](https://tanstack.com/router/latest/docs/framework/react/guide/routing-concepts#layouts).
-
-## Server Functions
-
-TanStack Start provides server functions that allow you to write server-side code that seamlessly integrates with your client components.
-
-```tsx
-import { createServerFn } from '@tanstack/react-start'
-
-const getServerTime = createServerFn({
-  method: 'GET',
-}).handler(async () => {
-  return new Date().toISOString()
-})
-
-// Use in a component
-function MyComponent() {
-  const [time, setTime] = useState('')
-  
-  useEffect(() => {
-    getServerTime().then(setTime)
-  }, [])
-  
-  return <div>Server time: {time}</div>
-}
-```
-
-## API Routes
-
-You can create API routes by using the `server` property in your route definitions:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-import { json } from '@tanstack/react-start'
-
-export const Route = createFileRoute('/api/hello')({
-  server: {
-    handlers: {
-      GET: () => json({ message: 'Hello, World!' }),
-    },
-  },
-})
-```
-
-## Data Fetching
-
-There are multiple ways to fetch data in your application. You can use TanStack Query to fetch data from a server. But you can also use the `loader` functionality built into TanStack Router to load the data for a route before it's rendered.
-
-For example:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-
-export const Route = createFileRoute('/people')({
-  loader: async () => {
-    const response = await fetch('https://swapi.dev/api/people')
-    return response.json()
-  },
-  component: PeopleComponent,
-})
-
-function PeopleComponent() {
-  const data = Route.useLoaderData()
-  return (
-    <ul>
-      {data.results.map((person) => (
-        <li key={person.name}>{person.name}</li>
-      ))}
-    </ul>
-  )
-}
-```
-
-Loaders simplify your data fetching logic dramatically. Check out more information in the [Loader documentation](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters).
-
-
-
-# Learn More
-
-You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
-
-For TanStack Start specific documentation, visit [TanStack Start](https://tanstack.com/start).
+Dibuat dengan ❤️ untuk kemajuan UMKM Makassar & Indonesia. Hak Cipta © 2025 Toku POS.
