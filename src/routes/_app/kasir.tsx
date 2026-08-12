@@ -339,13 +339,14 @@ function Kasir() {
               return (
                 <div
                   key={p._id}
-                  className="squircle-card"
+                  onClick={() => addToCart(p)}
+                  className="squircle-card product-card-interactive"
                   style={{
                     padding: "12px",
                     display: "flex",
                     flexDirection: "column",
                     justifyContent: "space-between",
-                    minHeight: 200,
+                    minHeight: 190,
                     position: "relative",
                     userSelect: "none",
                     border: inCart
@@ -371,6 +372,7 @@ function Kasir() {
                       <img
                         src={p.imageId}
                         alt={p.name}
+                        className="card-img-zoom"
                         style={{ width: "100%", height: "100%", objectFit: "cover" }}
                       />
                     ) : (
@@ -457,92 +459,66 @@ function Kasir() {
                     </span>
                   </div>
 
-                  {/* Integrated Quantity Stepper Controls (Exact Match to Image) */}
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      marginTop: 10,
-                      paddingTop: 8,
-                      borderTop: "1px solid var(--color-border-subtle)",
-                    }}
-                  >
-                    {inCart ? (
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          width: "100%",
-                        }}
-                      >
-                        <button
-                          onClick={() => updateQty(p._id, -1)}
-                          className="press-tactile"
-                          style={{
-                            width: 28,
-                            height: 28,
-                            borderRadius: 99,
-                            background: "var(--color-surface-3)",
-                            border: "none",
-                            color: "var(--color-text-2)",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            cursor: "pointer",
-                          }}
-                        >
-                          <MinusIcon size={13} weight="bold" />
-                        </button>
-                        <span style={{ fontSize: 14, fontWeight: 800, color: "var(--color-text)" }}>
-                          {inCart.qty}
-                        </span>
-                        <button
-                          onClick={() => updateQty(p._id, 1)}
-                          className="press-tactile"
-                          style={{
-                            width: 28,
-                            height: 28,
-                            borderRadius: 99,
-                            background: "var(--color-brand)",
-                            border: "none",
-                            color: "#ffffff",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            cursor: "pointer",
-                            boxShadow: "0 2px 8px rgba(234, 88, 12, 0.3)",
-                          }}
-                        >
-                          <PlusIcon size={13} weight="bold" />
-                        </button>
-                      </div>
-                    ) : (
+                  {/* Integrated Quantity Stepper Controls (When in cart) */}
+                  {inCart && (
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        marginTop: 10,
+                        paddingTop: 8,
+                        borderTop: "1px solid var(--color-border-subtle)",
+                      }}
+                    >
                       <button
-                        onClick={() => addToCart(p)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          updateQty(p._id, -1);
+                        }}
                         className="press-tactile"
                         style={{
-                          width: "100%",
-                          padding: "6px 12px",
+                          width: 28,
+                          height: 28,
                           borderRadius: 99,
-                          background: "var(--color-brand-light)",
-                          border: "1px solid var(--color-brand)",
-                          color: "var(--color-brand)",
-                          fontWeight: 800,
-                          fontSize: 13,
-                          cursor: "pointer",
+                          background: "var(--color-surface-3)",
+                          border: "none",
+                          color: "var(--color-text-2)",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
-                          gap: 6,
+                          cursor: "pointer",
                         }}
                       >
-                        <PlusIcon size={14} weight="bold" />
-                        <span>Pilih</span>
+                        <MinusIcon size={13} weight="bold" />
                       </button>
-                    )}
-                  </div>
+                      <span style={{ fontSize: 14, fontWeight: 800, color: "var(--color-text)" }}>
+                        {inCart.qty}
+                      </span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          updateQty(p._id, 1);
+                        }}
+                        className="press-tactile"
+                        style={{
+                          width: 28,
+                          height: 28,
+                          borderRadius: 99,
+                          background: "var(--color-brand)",
+                          border: "none",
+                          color: "#ffffff",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          cursor: "pointer",
+                          boxShadow: "0 2px 8px rgba(234, 88, 12, 0.3)",
+                        }}
+                      >
+                        <PlusIcon size={13} weight="bold" />
+                      </button>
+                    </div>
+                  )}
                 </div>
               );
             })
