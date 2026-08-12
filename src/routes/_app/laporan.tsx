@@ -83,43 +83,58 @@ function Laporan() {
         </div>
       </div>
 
-      {/* Main KPI Stat Cards — Doppelrand Architecture */}
+      {/* Main KPI Stat Cards — Doppelrand Double-Bezel Architecture */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16, marginBottom: 28 }}>
         <StatCard
           icon={<MoneyIcon size={24} weight="duotone" color="var(--color-brand)" />}
-          label="Total Pendapatan (Omset)"
+          badgeText="OMSET NETTO"
+          label="Total Pendapatan"
           value={formatIDR(totalRevenue)}
           subtext={`Periode ${range === 'hari' ? 'hari ini' : range === 'minggu' ? 'minggu ini' : 'bulan ini'}`}
           isMoney
+          accentColor="var(--color-brand)"
+          bgColor="var(--color-brand-light)"
         />
         <StatCard
-          icon={<ShoppingCartIcon size={24} weight="duotone" color="var(--color-brand)" />}
+          icon={<ShoppingCartIcon size={24} weight="duotone" color="#059669" />}
+          badgeText="NOTA SUKSES"
           label="Jumlah Transaksi"
           value={`${totalTransactions} Transaksi`}
           subtext="Total nota penjualan berhasil"
+          accentColor="#059669"
+          bgColor="#ecfdf5"
         />
         <StatCard
-          icon={<ChartLineUpIcon size={24} weight="duotone" color="var(--color-brand)" />}
-          label="Total Produk Terjual"
+          icon={<ChartLineUpIcon size={24} weight="duotone" color="#d97706" />}
+          badgeText="TOTAL ITEM OUT"
+          label="Produk Terjual"
           value={`${totalItems} pcs`}
-          subtext="Total item keluar dari toko"
+          subtext="Total unit barang keluar dari toko"
+          accentColor="#d97706"
+          bgColor="#fffbeb"
         />
       </div>
 
       {/* Top-Selling Products Ranking List */}
-      <section style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-xl)', padding: '24px', boxShadow: 'var(--shadow-md)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 'var(--radius-sm)', background: 'var(--color-brand-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <TrophyIcon size={20} weight="duotone" color="var(--color-brand-dark)" />
+      <section style={{ background: 'var(--color-surface)', border: '1.5px solid var(--color-border)', borderRadius: 'var(--radius-xl)', padding: '24px', boxShadow: 'var(--shadow-md)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 40, height: 40, borderRadius: 99, background: 'var(--color-brand-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--color-brand)' }}>
+              <TrophyIcon size={22} weight="fill" color="var(--color-brand)" />
+            </div>
+            <div>
+              <h2 style={{ fontSize: 18, fontWeight: 800, margin: 0, color: 'var(--color-text)', letterSpacing: '-0.01em' }}>Produk Terlaris</h2>
+              <div style={{ fontSize: 12, color: 'var(--color-text-3)' }}>Peringkat berdasarkan kuantitas & omset terlaris</div>
+            </div>
           </div>
-          <div>
-            <h2 style={{ fontSize: 17, fontWeight: 800, margin: 0, color: 'var(--color-text)' }}>Produk Terlaris</h2>
-            <div style={{ fontSize: 12, color: 'var(--color-text-3)' }}>Peringkat berdasarkan jumlah kuantitas barang terjual</div>
-          </div>
+          <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--color-brand)', background: 'var(--color-brand-light)', border: '1px solid var(--color-brand)', padding: '4px 14px', borderRadius: 99 }}>
+            {topProducts.length} Produk Terjual
+          </span>
         </div>
 
         {topProducts.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--color-text-3)' }}>
+          <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--color-text-3)' }}>
+            <PackageIcon size={44} style={{ opacity: 0.25, marginBottom: 12 }} />
             <p style={{ margin: 0, fontSize: 14, fontWeight: 600 }}>Belum ada transaksi pada periode ini.</p>
           </div>
         ) : (
@@ -127,13 +142,14 @@ function Laporan() {
             {topProducts.map((p: any, idx: number) => (
               <div
                 key={p.name}
+                className="squircle-card press-tactile"
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  padding: '14px 18px',
+                  padding: '16px 20px',
                   background: 'var(--color-surface-2)',
-                  border: '1px solid var(--color-border)',
+                  border: '1.5px solid var(--color-border)',
                   borderRadius: 'var(--radius-md)',
                   gap: 14,
                 }}
@@ -141,33 +157,33 @@ function Laporan() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0 }}>
                   <div
                     style={{
-                      width: 32,
-                      height: 32,
+                      width: 36,
+                      height: 36,
                       borderRadius: 99,
-                      background: idx === 0 ? 'var(--color-brand)' : idx === 1 ? 'var(--color-surface-3)' : 'var(--color-surface-3)',
-                      color: idx === 0 ? '#ffffff' : 'var(--color-text-2)',
+                      background: idx === 0 ? 'var(--color-brand)' : idx === 1 ? '#57534e' : idx === 2 ? '#a8a29e' : 'var(--color-surface-3)',
+                      color: idx <= 2 ? '#ffffff' : 'var(--color-text-2)',
                       fontSize: 13,
                       fontWeight: 800,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       flexShrink: 0,
-                      boxShadow: idx === 0 ? '0 2px 8px rgba(16,185,129,0.3)' : 'none',
+                      boxShadow: idx === 0 ? '0 4px 12px rgba(234,88,12,0.35)' : 'none',
                     }}
                   >
                     #{idx + 1}
                   </div>
                   <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--color-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {p.name}
                     </div>
-                    <div style={{ fontSize: 12, color: 'var(--color-text-3)', marginTop: 2 }}>
-                      Terjual {p.totalQty} pcs
+                    <div style={{ fontSize: 12, color: 'var(--color-text-3)', marginTop: 2, fontWeight: 600 }}>
+                      Terjual <strong style={{ color: 'var(--color-text)' }}>{p.totalQty} pcs</strong>
                     </div>
                   </div>
                 </div>
 
-                <div className="price" style={{ fontSize: 16, fontWeight: 800, color: 'var(--color-brand)', textAlign: 'right', flexShrink: 0 }}>
+                <div className="price" style={{ fontSize: 17, fontWeight: 800, color: 'var(--color-brand)', textAlign: 'right', flexShrink: 0 }}>
                   {formatIDR(p.totalRevenue)}
                 </div>
               </div>
@@ -179,20 +195,79 @@ function Laporan() {
   )
 }
 
-function StatCard({ icon, label, value, subtext, isMoney }: { icon: React.ReactNode; label: string; value: string; subtext: string; isMoney?: boolean }) {
+function StatCard({
+  icon,
+  badgeText,
+  label,
+  value,
+  subtext,
+  isMoney,
+  accentColor,
+  bgColor,
+}: {
+  icon: React.ReactNode
+  badgeText: string
+  label: string
+  value: string
+  subtext: string
+  isMoney?: boolean
+  accentColor: string
+  bgColor: string
+}) {
   return (
     <div className="doppelrand-shell">
-      <div className="doppelrand-core" style={{ padding: '20px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-          <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-text-3)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</span>
-          <div style={{ width: 36, height: 36, borderRadius: 'var(--radius-sm)', background: 'var(--color-surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div className="doppelrand-core">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+          <span
+            style={{
+              fontSize: 10,
+              fontWeight: 800,
+              color: accentColor,
+              background: bgColor,
+              border: `1px solid ${accentColor}`,
+              padding: '3px 10px',
+              borderRadius: 99,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+            }}
+          >
+            {badgeText}
+          </span>
+          <div
+            style={{
+              width: 42,
+              height: 42,
+              borderRadius: 99,
+              background: bgColor,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: `1px solid ${accentColor}`,
+            }}
+          >
             {icon}
           </div>
         </div>
-        <div className={isMoney ? 'price' : ''} style={{ fontSize: 26, fontWeight: 800, color: 'var(--color-text)', marginBottom: 4 }}>
+
+        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-text-2)', marginBottom: 4 }}>
+          {label}
+        </div>
+        <div
+          className={isMoney ? 'price' : ''}
+          style={{
+            fontSize: 'clamp(22px, 3vw, 28px)',
+            fontWeight: 800,
+            color: 'var(--color-text)',
+            lineHeight: 1.2,
+            marginBottom: 6,
+            letterSpacing: '-0.02em',
+          }}
+        >
           {value}
         </div>
-        <div style={{ fontSize: 12, color: 'var(--color-text-3)' }}>{subtext}</div>
+        <div style={{ fontSize: 12, color: 'var(--color-text-3)', fontWeight: 500 }}>
+          {subtext}
+        </div>
       </div>
     </div>
   )

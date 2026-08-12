@@ -4,6 +4,7 @@ import { api } from '../../../convex/_generated/api'
 import { authClient } from '#/lib/auth-client'
 import { useEffect, useState } from 'react'
 import { isDarkMode, toggleTheme } from '#/lib/utils'
+import { toast } from 'sonner'
 import { MoonIcon, SunIcon, SignOutIcon, UserIcon, CheckIcon, StorefrontIcon, PaletteIcon } from '@phosphor-icons/react'
 
 export const Route = createFileRoute('/_app/pengaturan')({ component: Pengaturan })
@@ -41,19 +42,27 @@ function Pengaturan() {
   const handleToggleDark = () => {
     const next = toggleTheme()
     setDark(next)
+    toast.info(`Mode tampilan diubah ke ${next ? 'Gelap' : 'Terang'}`)
   }
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!store) return
     setSaving(true)
-    await updateStore({ id: store._id, name, address: address || undefined })
-    setSaving(false)
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
+    try {
+      await updateStore({ id: store._id, name, address: address || undefined })
+      setSaved(true)
+      toast.success('Info toko berhasil diperbarui!')
+      setTimeout(() => setSaved(false), 2000)
+    } catch {
+      toast.error('Gagal memperbarui profil toko.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const handleLogout = () => {
+    toast.info('Keluar dari Toku POS...')
     authClient.signOut({ fetchOptions: { onSuccess: () => (window.location.href = '/') } })
   }
 

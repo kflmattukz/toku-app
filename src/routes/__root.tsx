@@ -7,6 +7,7 @@ import {
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 import { useEffect, useState } from 'react'
+import { Toaster } from 'sonner'
 import ConvexProvider from '../integrations/convex/provider'
 import appCss from '../styles.css?url'
 
@@ -74,6 +75,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       >
         <ConvexProvider>
           {children}
+          <Toaster position="top-right" richColors closeButton theme={dark ? 'dark' : 'light'} />
           <TanStackDevtools
             config={{ position: 'bottom-right' }}
             plugins={[{ name: 'Tanstack Router', render: <TanStackRouterDevtoolsPanel /> }]}

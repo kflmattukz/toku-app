@@ -135,34 +135,164 @@ function Transaksi() {
 }
 
 function Receipt({ tx, storeName }: { tx: any; storeName: string }) {
-  const now = new Date(tx.createdAt)
+  const now = new Date(tx.createdAt);
+  const txId = tx._id ? `TX-${String(tx._id).slice(-6).toUpperCase()}` : `TX-${now.getTime().toString().slice(-6)}`;
+
   return (
-    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 13, color: '#000', lineHeight: 1.5 }}>
-      <div style={{ textAlign: 'center', borderBottom: '1px dashed #000', paddingBottom: 10, marginBottom: 10 }}>
-        <strong style={{ fontSize: 17 }}>{storeName}</strong>
-        <div style={{ fontSize: 11, marginTop: 4 }}>
-          {now.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })} {now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+    <div
+      style={{
+        fontFamily: "'JetBrains Mono', monospace",
+        fontSize: 13,
+        color: "var(--color-text)",
+        lineHeight: 1.5,
+        background: "var(--color-surface-2)",
+        border: "1.5px solid var(--color-border)",
+        borderRadius: "var(--radius-lg)",
+        padding: "24px 20px",
+        boxShadow: "var(--shadow-sm)",
+      }}
+    >
+      {/* Store Header */}
+      <div
+        style={{
+          textAlign: "center",
+          borderBottom: "2px dashed var(--color-border)",
+          paddingBottom: 16,
+          marginBottom: 16,
+        }}
+      >
+        <strong style={{ fontSize: 18, color: "var(--color-text)", display: "block", letterSpacing: "-0.02em" }}>
+          {storeName}
+        </strong>
+        <div style={{ fontSize: 11, color: "var(--color-text-3)", marginTop: 4 }}>
+          {now.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })} ·{" "}
+          {now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
+        </div>
+        <div
+          style={{
+            display: "inline-block",
+            marginTop: 8,
+            padding: "2px 10px",
+            borderRadius: 99,
+            background: "var(--color-surface)",
+            border: "1px solid var(--color-border)",
+            fontSize: 11,
+            fontWeight: 800,
+            color: "var(--color-brand)",
+          }}
+        >
+          #{txId}
         </div>
       </div>
-      {tx.items.map((item: any, i: number) => (
-        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}>
-          <span>{item.name} x{item.qty}</span>
-          <span>{formatIDR(item.price * item.qty)}</span>
+
+      {/* Item List */}
+      <div style={{ marginBottom: 16 }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            fontSize: 10,
+            fontWeight: 800,
+            color: "var(--color-text-3)",
+            textTransform: "uppercase",
+            letterSpacing: "0.1em",
+            marginBottom: 8,
+          }}
+        >
+          <span>ITEM BARANG</span>
+          <span>SUBTOTAL</span>
         </div>
-      ))}
-      <div style={{ borderTop: '1px dashed #000', marginTop: 10, paddingTop: 10 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: 14 }}>
-          <span>TOTAL</span><span>{formatIDR(tx.total)}</span>
-        </div>
-        {tx.paymentMethod === 'cash' && <>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}><span>Tunai</span><span>{formatIDR(tx.cashPaid)}</span></div>
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Kembali</span><span>{formatIDR(tx.change)}</span></div>
-        </>}
-        {tx.paymentMethod === 'qris' && <div style={{ marginTop: 4 }}>Bayar via QRIS Digital</div>}
+
+        {tx.items.map((item: any, i: number) => (
+          <div
+            key={i}
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+              padding: "6px 0",
+              borderBottom: i === tx.items.length - 1 ? "none" : "1px solid var(--color-border-subtle)",
+            }}
+          >
+            <div style={{ flex: 1, minWidth: 0, paddingRight: 12 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--color-text)" }}>
+                {item.name}
+              </div>
+              <div style={{ fontSize: 11, color: "var(--color-text-3)" }}>
+                {item.qty} x <span className="price">{formatIDR(item.price)}</span>
+              </div>
+            </div>
+            <span className="price" style={{ fontSize: 13, fontWeight: 800, color: "var(--color-text)" }}>
+              {formatIDR(item.price * item.qty)}
+            </span>
+          </div>
+        ))}
       </div>
-      <div style={{ textAlign: 'center', marginTop: 16, fontSize: 11, color: '#666' }}>Terima kasih!</div>
+
+      {/* Payment Details */}
+      <div
+        style={{
+          borderTop: "2px dashed var(--color-border)",
+          paddingTop: 14,
+          marginBottom: 16,
+        }}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6, fontSize: 12, color: "var(--color-text-2)" }}>
+          <span>Metode Bayar</span>
+          <span style={{ fontWeight: 800, color: "var(--color-text)" }}>
+            {tx.paymentMethod === "cash" ? "Tunai (Cash)" : "QRIS Digital"}
+          </span>
+        </div>
+
+        {tx.paymentMethod === "cash" && (
+          <>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4, fontSize: 12, color: "var(--color-text-2)" }}>
+              <span>Uang Diterima</span>
+              <span className="price" style={{ color: "var(--color-text)" }}>{formatIDR(tx.cashPaid)}</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6, fontSize: 12, color: "var(--color-text-2)" }}>
+              <span>Kembalian</span>
+              <span className="price" style={{ fontWeight: 800, color: "var(--color-success-text)" }}>{formatIDR(tx.change)}</span>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Total Banner */}
+      <div
+        style={{
+          background: "var(--color-brand-light)",
+          border: "1.5px solid var(--color-brand)",
+          borderRadius: "var(--radius-md)",
+          padding: "12px 16px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 20,
+        }}
+      >
+        <span style={{ fontSize: 12, fontWeight: 800, color: "var(--color-brand)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+          TOTAL BAYAR
+        </span>
+        <span className="price" style={{ fontSize: 22, fontWeight: 800, color: "var(--color-brand)" }}>
+          {formatIDR(tx.total)}
+        </span>
+      </div>
+
+      {/* Thermal Barcode Graphic & Footer */}
+      <div style={{ textAlign: "center", paddingTop: 4 }}>
+        <div style={{ fontSize: 18, letterSpacing: "4px", color: "var(--color-text-3)", marginBottom: 8, opacity: 0.7 }}>
+          ||| | || |||| | ||| || |||
+        </div>
+        <div style={{ fontSize: 11, color: "var(--color-text-3)", fontWeight: 600 }}>
+          Terima kasih telah berbelanja!
+        </div>
+        <div style={{ fontSize: 10, color: "var(--color-brand)", fontWeight: 800, marginTop: 2 }}>
+          Toku POS · Kasir Digital UMKM
+        </div>
+      </div>
     </div>
-  )
+  );
 }
 
 function Modal({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {

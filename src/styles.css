@@ -1,5 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap");
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap');
 
 * {
   box-sizing: border-box;
@@ -15,7 +15,14 @@ body,
 
 body {
   margin: 0;
-  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family:
+    "Plus Jakarta Sans",
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
   -webkit-font-smoothing: antialiased;
   background-color: var(--color-surface-2);
   color: var(--color-text);
@@ -24,22 +31,22 @@ body {
 
 /* Light mode design tokens — Warm Terracotta Dribbble POS Aesthetic */
 :root {
-  --color-brand: #ea580c;       /* Vibrant Terracotta Orange (from image) */
-  --color-brand-dark: #c2410c;  /* Deep Orange */
+  --color-brand: #ea580c; /* Vibrant Terracotta Orange (from image) */
+  --color-brand-dark: #c2410c; /* Deep Orange */
   --color-brand-light: #fff7ed; /* Warm Cream Orange 50 */
   --color-accent: #f97316;
 
   --color-surface: #ffffff;
-  --color-surface-2: #f7f4ee;   /* Soft warm ivory background (from image) */
-  --color-surface-3: #efeae2;   /* Inset search & pill background */
-  --color-border: #e7e0d5;      /* Warm beige border */
+  --color-surface-2: #f7f4ee; /* Soft warm ivory background (from image) */
+  --color-surface-3: #efeae2; /* Inset search & pill background */
+  --color-border: #e7e0d5; /* Warm beige border */
   --color-border-subtle: #f3ece1;
 
-  --color-text: #1c1917;        /* Warm Stone 900 */
-  --color-text-2: #57534e;      /* Stone 600 */
-  --color-text-3: #a8a29e;      /* Stone 400 */
+  --color-text: #1c1917; /* Warm Stone 900 */
+  --color-text-2: #57534e; /* Stone 600 */
+  --color-text-3: #a8a29e; /* Stone 400 */
 
-  --color-danger: #ef4444;      /* Red 500 */
+  --color-danger: #ef4444; /* Red 500 */
   --color-danger-light: #fef2f2;
   --color-danger-text: #dc2626;
 
@@ -47,7 +54,7 @@ body {
   --color-warning-light: #fffbeb;
   --color-warning-text: #d97706;
 
-  --color-success: #10b981;     /* Paid green status pill */
+  --color-success: #10b981; /* Paid green status pill */
   --color-success-light: #d1fae5;
   --color-success-text: #047857;
 
@@ -73,19 +80,19 @@ body {
 
 /* Dark mode — Deep Warm OLED with Terracotta Glow */
 .dark {
-  --color-brand: #f97316;       /* Terracotta Orange 500 */
-  --color-brand-dark: #fb923c;  /* Orange 400 */
+  --color-brand: #f97316; /* Terracotta Orange 500 */
+  --color-brand-dark: #fb923c; /* Orange 400 */
   --color-brand-light: #2a1708; /* Deep Amber Dark */
 
-  --color-surface: #141210;    /* Dark stone surface */
-  --color-surface-2: #0c0a09;  /* Deep OLED Stone background */
-  --color-surface-3: #1f1b18;  /* Input pill background */
-  --color-border: #292524;     /* Stone 800 */
+  --color-surface: #141210; /* Dark stone surface */
+  --color-surface-2: #0c0a09; /* Deep OLED Stone background */
+  --color-surface-3: #1f1b18; /* Input pill background */
+  --color-border: #292524; /* Stone 800 */
   --color-border-subtle: #1c1917;
 
-  --color-text: #fafaf9;       /* Stone 50 */
-  --color-text-2: #d6d3d1;     /* Stone 300 */
-  --color-text-3: #78716c;     /* Stone 500 */
+  --color-text: #fafaf9; /* Stone 50 */
+  --color-text-2: #d6d3d1; /* Stone 300 */
+  --color-text-3: #78716c; /* Stone 500 */
 
   --color-danger: #f87171;
   --color-danger-light: #450a0a;
@@ -102,18 +109,39 @@ body {
   --color-qris-bg: #2a1708;
   --color-qris-text: #f97316;
 
-  --shadow-sm: 0 2px 6px rgba(0,0,0,0.4);
-  --shadow-md: 0 10px 25px -4px rgba(0,0,0,0.5);
-  --shadow-lg: 0 20px 40px -8px rgba(0,0,0,0.7);
-  --shadow-dock: 0 16px 40px rgba(0,0,0,0.75);
+  --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 10px 25px -4px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 20px 40px -8px rgba(0, 0, 0, 0.7);
+  --shadow-dock: 0 16px 40px rgba(0, 0, 0, 0.75);
   --shadow-inner: inset 0 1px 1px rgba(255, 255, 255, 0.08);
 }
 
 /* Tabular Monospace price formatting */
 .price {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: "JetBrains Mono", monospace;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.03em;
+}
+
+/* Double-Bezel Squircle Doppelrand Card System */
+.doppelrand-shell {
+  background: var(--color-surface-2);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: 4px;
+  box-shadow: var(--shadow-sm);
+  transition: transform 150ms cubic-bezier(0.32, 0.72, 0, 1), box-shadow 150ms ease, border-color 150ms ease;
+}
+.doppelrand-shell:hover {
+  border-color: var(--color-brand);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+.doppelrand-core {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: calc(var(--radius-xl) - 4px);
+  padding: 20px;
 }
 
 /* Squircle Card Container */
@@ -131,7 +159,7 @@ body {
   color: #ffffff;
   border-bottom-left-radius: 28px;
   border-bottom-right-radius: 28px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
 }
 
 /* Floating Bottom Capsule Navigation Dock */
@@ -168,7 +196,9 @@ body {
 
 /* Tactile Spring Press Effect */
 .press-tactile {
-  transition: transform 150ms cubic-bezier(0.32, 0.72, 0, 1), opacity 150ms ease;
+  transition:
+    transform 150ms cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 150ms ease;
 }
 .press-tactile:active {
   transform: scale(0.95);
@@ -186,28 +216,52 @@ body {
 
 /* Animation Keyframes & Utility Classes */
 @keyframes backdropFade {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes modalPop {
-  from { opacity: 0; transform: scale(0.94) translateY(12px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
+  from {
+    opacity: 0;
+    transform: scale(0.94) translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 @keyframes drawerSlideUp {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
 }
 
 @keyframes sidebarSlideIn {
-  from { transform: translateX(-100%); }
-  to { transform: translateX(0); }
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
 }
 
 @keyframes floatPillUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .animate-backdrop {
@@ -274,27 +328,71 @@ body {
   }
 }
 
-/* Print styles for thermal receipt */
+/* Thermal Receipt Printer CSS (58mm/80mm POS format) */
 @media print {
-  body * { visibility: hidden; }
-  .receipt-print, .receipt-print * { visibility: visible; }
+  @page {
+    size: 80mm auto;
+    margin: 0;
+  }
+  html, body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  body * {
+    display: none !important;
+    visibility: hidden !important;
+  }
+  .receipt-print,
+  .receipt-print * {
+    display: block !important;
+    visibility: visible !important;
+    color: #000000 !important;
+    background: transparent !important;
+  }
   .receipt-print {
-    position: fixed;
-    left: 0; top: 0;
-    width: 80mm;
-    padding: 4mm;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    color: #000;
-    background: #fff;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 80mm !important;
+    padding: 12px !important;
+    margin: 0 auto !important;
+    box-shadow: none !important;
+    border: none !important;
+    font-family: "JetBrains Mono", monospace !important;
+  }
+  .receipt-print div,
+  .receipt-print span,
+  .receipt-print strong,
+  .receipt-print p {
+    color: #000000 !important;
+    border-color: #000000 !important;
+  }
+  .no-print {
+    display: none !important;
   }
 }
 
 /* Custom Scrollbar */
-::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 99px; }
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 99px;
+}
 
-button, input, select, textarea {
+button,
+input,
+select,
+textarea {
   font-family: inherit;
 }

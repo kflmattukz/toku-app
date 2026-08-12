@@ -5,6 +5,7 @@ import { authClient } from '#/lib/auth-client'
 import { useState } from 'react'
 import { formatIDR, formatIDRInput, parseIDRInput, compressImage } from '#/lib/utils'
 import type { Id } from '../../../convex/_generated/dataModel'
+import { toast } from 'sonner'
 import {
   PlusIcon,
   MagnifyingGlassIcon,
@@ -57,8 +58,9 @@ function Produk() {
     try {
       const dataUrl = await compressImage(file)
       setForm((prev) => ({ ...prev, imageId: dataUrl }))
+      toast.success('Foto produk berhasil diupload!')
     } catch {
-      alert('Gagal memuat gambar. Silakan coba file lain.')
+      toast.error('Gagal memuat gambar. Silakan coba file lain.')
     }
   }
 
@@ -78,6 +80,7 @@ function Produk() {
           barcode: form.barcode || undefined,
           imageId: form.imageId || undefined,
         })
+        toast.success(`Produk "${form.name}" berhasil diperbarui!`)
       } else {
         await createProduct({
           storeId: store._id,
@@ -88,10 +91,24 @@ function Produk() {
           barcode: form.barcode || undefined,
           imageId: form.imageId || undefined,
         })
+        toast.success(`Produk "${form.name}" berhasil ditambahkan!`, { description: formatIDR(numericPrice) })
       }
       setShowModal(false)
+    } catch {
+      toast.error('Gagal menyimpan produk. Silakan coba lagi.')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleRemove = async (p: any) => {
+    if (confirm(`Hapus produk ${p.name}?`)) {
+      try {
+        await removeProduct({ id: p._id })
+        toast.success(`Produk "${p.name}" berhasil dihapus`)
+      } catch {
+        toast.error(`Gagal menghapus produk "${p.name}"`)
+      }
     }
   }
 
@@ -193,7 +210,7 @@ function Produk() {
                             <PencilSimpleIcon size={14} weight="bold" /> Edit
                           </button>
                           <button
-                            onClick={() => { if (confirm(`Hapus "${p.name}"?`)) removeProduct({ id: p._id }) }}
+                            onClick={() => handleRemove(p)}
                             className="press-tactile"
                             style={{ ...ghostPillBtn, color: 'var(--color-danger)', borderColor: 'var(--color-danger-light)', background: 'var(--color-danger-light)' }}
                           >
@@ -242,17 +259,16 @@ function Produk() {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 4 }}>
                     <div style={{ fontSize: 13, color: p.stock <= 5 ? 'var(--color-danger-text)' : 'var(--color-text-2)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 5 }}>
                       {p.stock <= 5 && <WarningIcon size={15} weight="fill" />}
-                      Stok: {p.stock} pcs {p.stock <= 5 && '(Rendah)'}
+                      Stok: {p.stock} pcs
                     </div>
-
                     <div style={{ display: 'flex', gap: 8 }}>
-                      <button onClick={() => openEdit(p)} className="press-tactile" style={{ ...ghostPillBtn, padding: '7px 14px', fontSize: 13 }}>
+                      <button onClick={() => openEdit(p)} className="press-tactile" style={ghostPillBtn}>
                         <PencilSimpleIcon size={14} weight="bold" /> Edit
                       </button>
                       <button
-                        onClick={() => { if (confirm(`Hapus "${p.name}"?`)) removeProduct({ id: p._id }) }}
+                        onClick={() => handleRemove(p)}
                         className="press-tactile"
-                        style={{ ...ghostPillBtn, padding: '7px 14px', fontSize: 13, color: 'var(--color-danger-text)', background: 'var(--color-danger-light)', borderColor: 'transparent' }}
+                        style={{ ...ghostPillBtn, color: 'var(--color-danger)', borderColor: 'var(--color-danger-light)', background: 'var(--color-danger-light)' }}
                       >
                         <TrashIcon size={14} weight="bold" /> Hapus
                       </button>

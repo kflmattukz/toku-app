@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { formatIDR } from "#/lib/utils";
 import { enqueueOfflineTx, getOfflineQueue, clearOfflineQueue } from "#/lib/offline-queue";
 import type { Id } from "../../../convex/_generated/dataModel";
+import { toast } from "sonner";
 import {
   MagnifyingGlassIcon,
   ShoppingCartIcon,
@@ -24,6 +25,7 @@ import {
   FadersIcon,
   FireIcon,
   ImageIcon,
+  StorefrontIcon,
 } from "@phosphor-icons/react";
 
 export const Route = createFileRoute("/_app/kasir")({ component: Kasir });
@@ -60,9 +62,13 @@ function Kasir() {
   useEffect(() => {
     const on = () => {
       setIsOnline(true);
+      toast.success("Koneksi kembali online", { description: "Transaksi offline disinkronkan ke cloud" });
       flushOfflineQueue();
     };
-    const off = () => setIsOnline(false);
+    const off = () => {
+      setIsOnline(false);
+      toast.warning("Koneksi internet terputus", { description: "Toku POS berjalan dalam Mode Offline" });
+    };
     window.addEventListener("online", on);
     window.addEventListener("offline", off);
     return () => {
@@ -93,6 +99,10 @@ function Kasir() {
   });
 
   const addToCart = (product: (typeof filtered)[0]) => {
+    if (product.stock <= 0) {
+      toast.error(`Stok ${product.name} habis!`, { description: "Silakan restok terlebih dahulu" });
+      return;
+    }
     setCart((prev) => {
       const existing = prev.find((i) => i.productId === product._id);
       if (existing)
@@ -102,6 +112,10 @@ function Kasir() {
         { productId: product._id, name: product.name, price: product.price, qty: 1 },
       ];
     });
+    toast.success(`${product.name} ditambahkan`, { description: formatIDR(product.price) });
+    if (product.stock <= 5) {
+      toast.warning(`Peringatan Stok: ${product.name} tersisa ${product.stock} pcs!`);
+    }
   };
 
   const updateQty = (productId: string, delta: number) => {
@@ -131,13 +145,16 @@ function Kasir() {
     if (!isOnline) {
       enqueueOfflineTx({ ...tx, storeId: store._id as string });
       setLastTx({ ...tx, storeName: store.name });
+      toast.warning("Mode Offline: Disimpan di Perangkat", { description: "Akan otomatis disinkron saat internet pulih" });
     } else {
       try {
         await createTx(tx);
         setLastTx({ ...tx, storeName: store.name });
+        toast.success("Pembayaran Berhasil Lunas!", { description: `Total ${formatIDR(total)} (${payMethod.toUpperCase()})` });
       } catch {
         enqueueOfflineTx({ ...tx, storeId: store._id as string });
         setLastTx({ ...tx, storeName: store.name });
+        toast.warning("Tersimpan Offline (Gagal Koneksi)", { description: "Transaksi tetap aman di memori lokal" });
       }
     }
     setShowPayment(false);
@@ -159,7 +176,7 @@ function Kasir() {
             style={{
               display: "flex",
               alignItems: "center",
-              justify: "space-between",
+              justifyContent: "space-between",
               marginBottom: 16,
               flexWrap: "wrap",
               gap: 8,
@@ -259,7 +276,9 @@ function Kasir() {
                   style={{
                     padding: "10px 20px",
                     borderRadius: 99,
-                    border: active ? "1.5px solid var(--color-brand)" : "1.5px solid var(--color-border)",
+                    border: active
+                      ? "1.5px solid var(--color-brand)"
+                      : "1.5px solid var(--color-border)",
                     background: active ? "var(--color-brand)" : "var(--color-surface)",
                     color: active ? "#ffffff" : "var(--color-text-2)",
                     fontSize: 13,
@@ -273,7 +292,13 @@ function Kasir() {
                     gap: 6,
                   }}
                 >
-                  {cat === "Semua" && <FireIcon size={16} weight="fill" color={active ? "#ffffff" : "var(--color-brand)"} />}
+                  {cat === "Semua" && (
+                    <FireIcon
+                      size={16}
+                      weight="fill"
+                      color={active ? "#ffffff" : "var(--color-brand)"}
+                    />
+                  )}
                   {cat}
                 </button>
               );
@@ -319,20 +344,46 @@ function Kasir() {
                     padding: "12px",
                     display: "flex",
                     flexDirection: "column",
-                    justify: "space-between",
+                    justifyContent: "space-between",
                     minHeight: 200,
                     position: "relative",
                     userSelect: "none",
-                    border: inCart ? "2px solid var(--color-brand)" : "1.5px solid var(--color-border)",
+                    border: inCart
+                      ? "2px solid var(--color-brand)"
+                      : "1.5px solid var(--color-border)",
                     boxShadow: inCart ? "0 8px 24px rgba(234, 88, 12, 0.2)" : "var(--shadow-sm)",
                   }}
                 >
                   {/* Image Header area with Orange Checkmark Badge if selected */}
-                  <div style={{ position: "relative", width: "100%", height: 110, borderRadius: "var(--radius-md)", overflow: "hidden", marginBottom: 10, background: "var(--color-surface-2)", border: "1px solid var(--color-border)" }}>
+                  <div
+                    style={{
+                      position: "relative",
+                      width: "100%",
+                      height: 110,
+                      borderRadius: "var(--radius-md)",
+                      overflow: "hidden",
+                      marginBottom: 10,
+                      background: "var(--color-surface-2)",
+                      border: "1px solid var(--color-border)",
+                    }}
+                  >
                     {p.imageId ? (
-                      <img src={p.imageId} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      <img
+                        src={p.imageId}
+                        alt={p.name}
+                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                      />
                     ) : (
-                      <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--color-text-3)" }}>
+                      <div
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          color: "var(--color-text-3)",
+                        }}
+                      >
                         <ImageIcon size={36} weight="duotone" />
                       </div>
                     )}
@@ -398,7 +449,10 @@ function Kasir() {
                     >
                       {p.name}
                     </div>
-                    <span className="price" style={{ fontSize: 15, fontWeight: 800, color: "var(--color-brand)" }}>
+                    <span
+                      className="price"
+                      style={{ fontSize: 15, fontWeight: 800, color: "var(--color-brand)" }}
+                    >
                       {formatIDR(p.price)}
                     </span>
                   </div>
@@ -415,7 +469,14 @@ function Kasir() {
                     }}
                   >
                     {inCart ? (
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          width: "100%",
+                        }}
+                      >
                         <button
                           onClick={() => updateQty(p._id, -1)}
                           className="press-tactile"
@@ -544,7 +605,10 @@ function Kasir() {
               {totalItems} Items
             </span>
             <span style={{ color: "var(--color-border)" }}>|</span>
-            <span className="price" style={{ fontSize: 16, fontWeight: 800, color: "var(--color-brand)" }}>
+            <span
+              className="price"
+              style={{ fontSize: 16, fontWeight: 800, color: "var(--color-brand)" }}
+            >
               {formatIDR(total)}
             </span>
           </div>
@@ -613,7 +677,7 @@ function Kasir() {
             <div
               style={{
                 display: "flex",
-                justify: "space-between",
+                justifyContent: "space-between",
                 alignItems: "center",
                 marginBottom: 16,
               }}
@@ -647,7 +711,10 @@ function Kasir() {
 
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <button
-                  onClick={() => setCart([])}
+                  onClick={() => {
+                    setCart([]);
+                    toast.info("Keranjang dikosongkan");
+                  }}
                   className="press-tactile"
                   style={{
                     background: "var(--color-danger-light)",
@@ -685,7 +752,16 @@ function Kasir() {
             </div>
 
             {/* Itemized List Cards */}
-            <div style={{ overflowY: "auto", flex: 1, marginBottom: 20, display: "flex", flexDirection: "column", gap: 10 }}>
+            <div
+              style={{
+                overflowY: "auto",
+                flex: 1,
+                marginBottom: 20,
+                display: "flex",
+                flexDirection: "column",
+                gap: 10,
+              }}
+            >
               {cart.map((item) => {
                 const productData = products.find((p) => p._id === item.productId);
                 return (
@@ -707,7 +783,14 @@ function Kasir() {
                       <img
                         src={productData.imageId}
                         alt={item.name}
-                        style={{ width: 48, height: 48, borderRadius: "var(--radius-sm)", objectFit: "cover", flexShrink: 0, border: "1px solid var(--color-border)" }}
+                        style={{
+                          width: 48,
+                          height: 48,
+                          borderRadius: "var(--radius-sm)",
+                          objectFit: "cover",
+                          flexShrink: 0,
+                          border: "1px solid var(--color-border)",
+                        }}
                       />
                     ) : (
                       <div
@@ -748,8 +831,19 @@ function Kasir() {
                     </div>
 
                     {/* Subtotal & Quantity Steppers */}
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6, flexShrink: 0 }}>
-                      <span className="price" style={{ fontSize: 15, fontWeight: 800, color: "var(--color-brand)" }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "flex-end",
+                        gap: 6,
+                        flexShrink: 0,
+                      }}
+                    >
+                      <span
+                        className="price"
+                        style={{ fontSize: 15, fontWeight: 800, color: "var(--color-brand)" }}
+                      >
                         {formatIDR(item.price * item.qty)}
                       </span>
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -774,7 +868,11 @@ function Kasir() {
                         <button
                           onClick={() => updateQty(item.productId, 1)}
                           className="press-tactile"
-                          style={{ ...qtyBtnStyle, background: "var(--color-brand)", color: "#ffffff" }}
+                          style={{
+                            ...qtyBtnStyle,
+                            background: "var(--color-brand)",
+                            color: "#ffffff",
+                          }}
                         >
                           <PlusIcon size={12} weight="bold" />
                         </button>
@@ -958,11 +1056,11 @@ function Kasir() {
                   paddingBottom: 4,
                 }}
               >
-                {[total, 10000, 20000, 50000, 100000]
+                {Array.from(new Set([total, 10000, 20000, 50000, 100000]))
                   .filter((v) => v >= total)
-                  .map((preset) => (
+                  .map((preset, idx) => (
                     <button
-                      key={preset}
+                      key={`${preset}-${idx}`}
                       type="button"
                       onClick={() => setCashInput(String(preset))}
                       className="press-tactile price"
@@ -987,7 +1085,9 @@ function Kasir() {
                 <div
                   style={{
                     background:
-                      cashPaid >= total ? "var(--color-success-light)" : "var(--color-danger-light)",
+                      cashPaid >= total
+                        ? "var(--color-success-light)"
+                        : "var(--color-danger-light)",
                     border: `1px solid ${cashPaid >= total ? "var(--color-success)" : "var(--color-danger)"}`,
                     borderRadius: "var(--radius-md)",
                     padding: "14px 18px",
@@ -999,7 +1099,9 @@ function Kasir() {
                     style={{
                       fontSize: 15,
                       color:
-                        cashPaid >= total ? "var(--color-success-text)" : "var(--color-danger-text)",
+                        cashPaid >= total
+                          ? "var(--color-success-text)"
+                          : "var(--color-danger-text)",
                       fontWeight: 800,
                     }}
                   >
@@ -1302,65 +1404,239 @@ function CartContent({ cart, total, updateQty, setCart, onCheckout }: any) {
 
 function Receipt({ tx, storeName }: { tx: any; storeName: string }) {
   const now = new Date(tx.createdAt);
+  const txId = tx._id
+    ? `TX-${String(tx._id).slice(-6).toUpperCase()}`
+    : `TX-${now.getTime().toString().slice(-6)}`;
+
   return (
     <div
       style={{
         fontFamily: "'JetBrains Mono', monospace",
         fontSize: 13,
-        color: "#000",
+        color: "var(--color-text)",
         lineHeight: 1.5,
+        background: "var(--color-surface-2)",
+        border: "1.5px solid var(--color-border)",
+        borderRadius: "var(--radius-lg)",
+        padding: "24px 20px",
+        boxShadow: "var(--shadow-sm)",
       }}
     >
+      {/* Store Header */}
       <div
         style={{
           textAlign: "center",
-          borderBottom: "1px dashed #000",
-          paddingBottom: 10,
-          marginBottom: 10,
+          borderBottom: "2px dashed var(--color-border)",
+          paddingBottom: 16,
+          marginBottom: 16,
         }}
       >
-        <strong style={{ fontSize: 17 }}>{storeName}</strong>
-        <div style={{ fontSize: 11, marginTop: 4 }}>
-          {now.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}{" "}
+        <div
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: 99,
+            background: "var(--color-brand)",
+            color: "#ffffff",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            margin: "0 auto 8px",
+            boxShadow: "0 4px 12px rgba(234, 88, 12, 0.3)",
+          }}
+        >
+          <StorefrontIcon size={24} weight="fill" color="#ffffff" />
+        </div>
+        <strong
+          style={{
+            fontSize: 18,
+            color: "var(--color-text)",
+            display: "block",
+            letterSpacing: "-0.02em",
+          }}
+        >
+          {storeName}
+        </strong>
+        <div style={{ fontSize: 11, color: "var(--color-text-3)", marginTop: 4 }}>
+          {now.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })} ·{" "}
           {now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
         </div>
-      </div>
-      {tx.items.map((item: CartItem, i: number) => (
-        <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "2px 0" }}>
-          <span>
-            {item.name} x{item.qty}
-          </span>
-          <span>{formatIDR(item.price * item.qty)}</span>
+        <div
+          style={{
+            display: "inline-block",
+            marginTop: 8,
+            padding: "2px 10px",
+            borderRadius: 99,
+            background: "var(--color-surface)",
+            border: "1px solid var(--color-border)",
+            fontSize: 11,
+            fontWeight: 800,
+            color: "var(--color-brand)",
+          }}
+        >
+          #{txId}
         </div>
-      ))}
-      <div style={{ borderTop: "1px dashed #000", marginTop: 10, paddingTop: 10 }}>
+      </div>
+
+      {/* Item List */}
+      <div style={{ marginBottom: 16 }}>
         <div
           style={{
             display: "flex",
             justifyContent: "space-between",
+            fontSize: 10,
             fontWeight: 800,
-            fontSize: 14,
+            color: "var(--color-text-3)",
+            textTransform: "uppercase",
+            letterSpacing: "0.1em",
+            marginBottom: 8,
           }}
         >
-          <span>TOTAL</span>
-          <span>{formatIDR(tx.total)}</span>
+          <span>ITEM BARANG</span>
+          <span>SUBTOTAL</span>
         </div>
+
+        {tx.items.map((item: CartItem, i: number) => (
+          <div
+            key={i}
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+              padding: "6px 0",
+              borderBottom:
+                i === tx.items.length - 1 ? "none" : "1px solid var(--color-border-subtle)",
+            }}
+          >
+            <div style={{ flex: 1, minWidth: 0, paddingRight: 12 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--color-text)" }}>
+                {item.name}
+              </div>
+              <div style={{ fontSize: 11, color: "var(--color-text-3)" }}>
+                {item.qty} x <span className="price">{formatIDR(item.price)}</span>
+              </div>
+            </div>
+            <span
+              className="price"
+              style={{ fontSize: 13, fontWeight: 800, color: "var(--color-text)" }}
+            >
+              {formatIDR(item.price * item.qty)}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {/* Payment Details */}
+      <div
+        style={{
+          borderTop: "2px dashed var(--color-border)",
+          paddingTop: 14,
+          marginBottom: 16,
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            marginBottom: 6,
+            fontSize: 12,
+            color: "var(--color-text-2)",
+          }}
+        >
+          <span>Metode Bayar</span>
+          <span style={{ fontWeight: 800, color: "var(--color-text)" }}>
+            {tx.paymentMethod === "cash" ? "Tunai (Cash)" : "QRIS Digital"}
+          </span>
+        </div>
+
         {tx.paymentMethod === "cash" && (
           <>
-            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
-              <span>Tunai</span>
-              <span>{formatIDR(tx.cashPaid)}</span>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                marginBottom: 4,
+                fontSize: 12,
+                color: "var(--color-text-2)",
+              }}
+            >
+              <span>Uang Diterima</span>
+              <span className="price" style={{ color: "var(--color-text)" }}>
+                {formatIDR(tx.cashPaid)}
+              </span>
             </div>
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <span>Kembali</span>
-              <span>{formatIDR(tx.change)}</span>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                marginBottom: 6,
+                fontSize: 12,
+                color: "var(--color-text-2)",
+              }}
+            >
+              <span>Kembalian</span>
+              <span
+                className="price"
+                style={{ fontWeight: 800, color: "var(--color-success-text)" }}
+              >
+                {formatIDR(tx.change)}
+              </span>
             </div>
           </>
         )}
-        {tx.paymentMethod === "qris" && <div style={{ marginTop: 4 }}>Bayar via QRIS Digital</div>}
       </div>
-      <div style={{ textAlign: "center", marginTop: 16, fontSize: 11, color: "#666" }}>
-        Terima kasih atas kunjungan Anda!
+
+      {/* Total Banner */}
+      <div
+        style={{
+          background: "var(--color-brand-light)",
+          border: "1.5px solid var(--color-brand)",
+          borderRadius: "var(--radius-md)",
+          padding: "12px 16px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 20,
+        }}
+      >
+        <span
+          style={{
+            fontSize: 12,
+            fontWeight: 800,
+            color: "var(--color-brand)",
+            textTransform: "uppercase",
+            letterSpacing: "0.05em",
+          }}
+        >
+          TOTAL BAYAR
+        </span>
+        <span
+          className="price"
+          style={{ fontSize: 22, fontWeight: 800, color: "var(--color-brand)" }}
+        >
+          {formatIDR(tx.total)}
+        </span>
+      </div>
+
+      {/* Thermal Barcode Graphic & Footer */}
+      <div style={{ textAlign: "center", paddingTop: 4 }}>
+        <div
+          style={{
+            fontSize: 18,
+            letterSpacing: "4px",
+            color: "var(--color-text-3)",
+            marginBottom: 8,
+            opacity: 0.7,
+          }}
+        >
+          ||| | || |||| | ||| || |||
+        </div>
+        <div style={{ fontSize: 11, color: "var(--color-text-3)", fontWeight: 600 }}>
+          Terima kasih telah berbelanja!
+        </div>
+        <div style={{ fontSize: 10, color: "var(--color-brand)", fontWeight: 800, marginTop: 2 }}>
+          Toku POS · Kasir Digital UMKM
+        </div>
       </div>
     </div>
   );

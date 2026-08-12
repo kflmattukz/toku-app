@@ -5,6 +5,7 @@ import { authClient } from '#/lib/auth-client'
 import { useState } from 'react'
 import { formatIDR } from '#/lib/utils'
 import type { Id } from '../../../convex/_generated/dataModel'
+import { toast } from 'sonner'
 import { WarningIcon, CheckCircleIcon, PlusIcon, PackageIcon } from '@phosphor-icons/react'
 
 export const Route = createFileRoute('/_app/stok')({ component: Stok })
@@ -25,10 +26,19 @@ function Stok() {
 
   const handleRestock = async (id: Id<'products'>) => {
     const amt = parseInt(restockAmt) || 0
-    if (amt <= 0) return
-    await adjustStock({ id, delta: amt })
-    setRestockId(null)
-    setRestockAmt('')
+    if (amt <= 0) {
+      toast.error('Jumlah restok harus lebih besar dari 0')
+      return
+    }
+    const target = products?.find((p) => p._id === id)
+    try {
+      await adjustStock({ id, delta: amt })
+      toast.success(`Stok ${target?.name ?? 'produk'} bertambah ${amt} pcs!`, { description: `Stok baru: ${(target?.stock ?? 0) + amt} pcs` })
+      setRestockId(null)
+      setRestockAmt('')
+    } catch {
+      toast.error('Gagal memperbarui stok. Silakan coba lagi.')
+    }
   }
 
   if (!products) return <Loader />
