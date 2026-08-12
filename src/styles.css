@@ -39,6 +39,7 @@ body {
   --color-surface: #ffffff;
   --color-surface-2: #f7f4ee; /* Soft warm ivory background (from image) */
   --color-surface-3: #efeae2; /* Inset search & pill background */
+
   --color-border: #e7e0d5; /* Warm beige border */
   --color-border-subtle: #f3ece1;
 
@@ -75,7 +76,50 @@ body {
   /* Custom Easing Curves */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
-  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+}
+
+/* Hero Ambient Backgrounds & Dot Pattern */
+.bg-grid-pattern {
+  background-image: radial-gradient(#d6cebe 1.5px, transparent 1.5px);
+  background-size: 28px 28px;
+  opacity: 0.65;
+}
+
+.hero-glow-1 {
+  position: absolute;
+  top: -80px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 760px;
+  height: 520px;
+  background: radial-gradient(circle, rgba(234, 88, 12, 0.22) 0%, rgba(249, 115, 22, 0.08) 50%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(40px);
+}
+
+.hero-glow-2 {
+  position: absolute;
+  top: 450px;
+  right: -5%;
+  width: 550px;
+  height: 550px;
+  background: radial-gradient(circle, rgba(234, 88, 12, 0.14) 0%, transparent 65%);
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(50px);
+}
+
+.hero-glow-3 {
+  position: absolute;
+  top: 1050px;
+  left: -5%;
+  width: 550px;
+  height: 550px;
+  background: radial-gradient(circle, rgba(249, 115, 22, 0.12) 0%, transparent 65%);
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(50px);
 }
 
 /* Dark mode — Deep Warm OLED with Terracotta Glow */
