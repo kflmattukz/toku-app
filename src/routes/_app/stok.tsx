@@ -284,15 +284,19 @@ function Stok() {
         <h2
           style={{ fontSize: 17, fontWeight: 800, margin: "0 0 14px", color: "var(--color-text)" }}
         >
-          Semua Persediaan Produk
+          Semua Persediaan Produk ({products.length})
         </h2>
+
+        {/* Desktop Table View */}
         <div
+          className="desktop-only"
           style={{
             background: "var(--color-surface)",
-            border: "1px solid var(--color-border)",
+            border: "1.5px solid var(--color-border)",
             borderRadius: "var(--radius-xl)",
             overflow: "hidden",
             boxShadow: "var(--shadow-md)",
+            flexDirection: "column",
           }}
         >
           <div style={{ overflowX: "auto" }}>
@@ -449,6 +453,144 @@ function Stok() {
               </tbody>
             </table>
           </div>
+        </div>
+
+        {/* Mobile Touch Card List View */}
+        <div className="mobile-topbar" style={{ flexDirection: "column", gap: 12 }}>
+          {products.map((p) => {
+            const isLow = p.stock <= LOW_STOCK;
+            return (
+              <div
+                key={p._id}
+                className="squircle-card"
+                style={{
+                  padding: "16px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 12,
+                  border: isLow
+                    ? "1.5px solid var(--color-danger)"
+                    : "1.5px solid var(--color-border)",
+                }}
+              >
+                {/* Product Name & Category */}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
+                  <div>
+                    <div style={{ fontSize: 16, fontWeight: 800, color: "var(--color-text)", marginBottom: 4 }}>
+                      {p.name}
+                    </div>
+                    <span
+                      style={{
+                        background: "var(--color-surface-2)",
+                        border: "1px solid var(--color-border)",
+                        borderRadius: 99,
+                        padding: "3px 10px",
+                        fontSize: 11,
+                        color: "var(--color-text-2)",
+                        fontWeight: 600,
+                      }}
+                    >
+                      {p.category}
+                    </span>
+                  </div>
+                  <span className="price" style={{ fontSize: 16, fontWeight: 800, color: "var(--color-brand)" }}>
+                    {formatIDR(p.price)}
+                  </span>
+                </div>
+
+                {/* Status & Stock Count */}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 4, borderTop: "1px solid var(--color-border-subtle)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <span style={{ fontSize: 13, color: "var(--color-text-3)", fontWeight: 600 }}>Stok:</span>
+                    <span
+                      className="price"
+                      style={{
+                        fontWeight: 800,
+                        fontSize: 18,
+                        color: isLow ? "var(--color-danger)" : "var(--color-text)",
+                      }}
+                    >
+                      {p.stock} pcs
+                    </span>
+                  </div>
+
+                  <span
+                    style={{
+                      background: isLow ? "var(--color-danger-light)" : "var(--color-brand-light)",
+                      color: isLow ? "var(--color-danger-text)" : "var(--color-brand-dark)",
+                      borderRadius: 99,
+                      padding: "4px 12px",
+                      fontSize: 11,
+                      fontWeight: 800,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 4,
+                    }}
+                  >
+                    {isLow ? <WarningIcon size={12} weight="fill" /> : <CheckCircleIcon size={12} weight="fill" />}
+                    {isLow ? "Stok Rendah" : "Aman"}
+                  </span>
+                </div>
+
+                {/* Inline Restock Action Footer */}
+                <div style={{ paddingTop: 8, borderTop: "1px solid var(--color-border-subtle)", display: "flex", justifyContent: "flex-end" }}>
+                  {restockId === p._id ? (
+                    <div style={{ display: "flex", gap: 6, alignItems: "center", width: "100%" }}>
+                      <input
+                        type="number"
+                        placeholder="+Stok"
+                        value={restockAmt}
+                        onChange={(e) => setRestockAmt(e.target.value)}
+                        style={{
+                          flex: 1,
+                          padding: "8px 12px",
+                          border: "1.5px solid var(--color-border)",
+                          borderRadius: "var(--radius-sm)",
+                          fontSize: 14,
+                          background: "var(--color-surface-2)",
+                          color: "var(--color-text)",
+                          fontWeight: 700,
+                          outline: "none",
+                        }}
+                        autoFocus
+                      />
+                      <button
+                        onClick={() => handleRestock(p._id)}
+                        className="press-tactile"
+                        style={{ ...smallPrimaryBtn, padding: "8px 16px" }}
+                      >
+                        Simpan
+                      </button>
+                      <button
+                        onClick={() => setRestockId(null)}
+                        className="press-tactile"
+                        style={{
+                          ...smallPrimaryBtn,
+                          padding: "8px 14px",
+                          background: "var(--color-surface-2)",
+                          color: "var(--color-text-2)",
+                          border: "1px solid var(--color-border)",
+                        }}
+                      >
+                        Batal
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setRestockId(p._id);
+                        setRestockAmt("");
+                      }}
+                      className="press-tactile"
+                      style={{ ...smallPrimaryBtn, width: "100%", justifyContent: "center", padding: "10px" }}
+                    >
+                      <PlusIcon size={16} weight="bold" /> Tambah Stok
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </section>
     </div>
