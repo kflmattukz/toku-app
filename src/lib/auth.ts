@@ -1,6 +1,6 @@
-import { betterAuth } from 'better-auth'
-import { memoryAdapter } from 'better-auth/adapters/memory'
-import { tanstackStartCookies } from 'better-auth/tanstack-start'
+import { betterAuth } from "better-auth";
+import { memoryAdapter } from "better-auth/adapters/memory";
+import { tanstackStartCookies } from "better-auth/tanstack-start";
 
 // ponytail: memory adapter — fine for dev/single-instance.
 // Swap to a persistent adapter (Drizzle+SQLite or Convex custom) when multi-instance deployment matters.
@@ -9,7 +9,7 @@ const db: Parameters<typeof memoryAdapter>[0] = {
   session: [],
   account: [],
   verification: [],
-}
+};
 
 export const auth = betterAuth({
   database: memoryAdapter(db),
@@ -20,4 +20,4 @@ export const auth = betterAuth({
     },
   },
   plugins: [tanstackStartCookies()],
-})
+});

@@ -8,249 +8,249 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as AppRouteImport } from './routes/_app'
-import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
-import { Route as AppKasirRouteImport } from './routes/_app/kasir'
-import { Route as AppLaporanRouteImport } from './routes/_app/laporan'
-import { Route as AppOnboardingRouteImport } from './routes/_app/onboarding'
-import { Route as AppPengaturanRouteImport } from './routes/_app/pengaturan'
-import { Route as AppProdukRouteImport } from './routes/_app/produk'
-import { Route as AppStokRouteImport } from './routes/_app/stok'
-import { Route as AppTransaksiRouteImport } from './routes/_app/transaksi'
-import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as rootRouteImport } from "./routes/__root";
+import { Route as IndexRouteImport } from "./routes/index";
+import { Route as AppRouteImport } from "./routes/_app";
+import { Route as AppDashboardRouteImport } from "./routes/_app/dashboard";
+import { Route as AppKasirRouteImport } from "./routes/_app/kasir";
+import { Route as AppLaporanRouteImport } from "./routes/_app/laporan";
+import { Route as AppOnboardingRouteImport } from "./routes/_app/onboarding";
+import { Route as AppPengaturanRouteImport } from "./routes/_app/pengaturan";
+import { Route as AppProdukRouteImport } from "./routes/_app/produk";
+import { Route as AppStokRouteImport } from "./routes/_app/stok";
+import { Route as AppTransaksiRouteImport } from "./routes/_app/transaksi";
+import { Route as ApiAuthSplatRouteImport } from "./routes/api/auth/$";
 
 const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+  id: "/",
+  path: "/",
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const AppRoute = AppRouteImport.update({
-  id: '/_app',
+  id: "/_app",
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const AppDashboardRoute = AppDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
+  id: "/dashboard",
+  path: "/dashboard",
   getParentRoute: () => AppRoute,
-} as any)
+} as any);
 const AppKasirRoute = AppKasirRouteImport.update({
-  id: '/kasir',
-  path: '/kasir',
+  id: "/kasir",
+  path: "/kasir",
   getParentRoute: () => AppRoute,
-} as any)
+} as any);
 const AppLaporanRoute = AppLaporanRouteImport.update({
-  id: '/laporan',
-  path: '/laporan',
+  id: "/laporan",
+  path: "/laporan",
   getParentRoute: () => AppRoute,
-} as any)
+} as any);
 const AppOnboardingRoute = AppOnboardingRouteImport.update({
-  id: '/onboarding',
-  path: '/onboarding',
+  id: "/onboarding",
+  path: "/onboarding",
   getParentRoute: () => AppRoute,
-} as any)
+} as any);
 const AppPengaturanRoute = AppPengaturanRouteImport.update({
-  id: '/pengaturan',
-  path: '/pengaturan',
+  id: "/pengaturan",
+  path: "/pengaturan",
   getParentRoute: () => AppRoute,
-} as any)
+} as any);
 const AppProdukRoute = AppProdukRouteImport.update({
-  id: '/produk',
-  path: '/produk',
+  id: "/produk",
+  path: "/produk",
   getParentRoute: () => AppRoute,
-} as any)
+} as any);
 const AppStokRoute = AppStokRouteImport.update({
-  id: '/stok',
-  path: '/stok',
+  id: "/stok",
+  path: "/stok",
   getParentRoute: () => AppRoute,
-} as any)
+} as any);
 const AppTransaksiRoute = AppTransaksiRouteImport.update({
-  id: '/transaksi',
-  path: '/transaksi',
+  id: "/transaksi",
+  path: "/transaksi",
   getParentRoute: () => AppRoute,
-} as any)
+} as any);
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
-  id: '/api/auth/$',
-  path: '/api/auth/$',
+  id: "/api/auth/$",
+  path: "/api/auth/$",
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/dashboard': typeof AppDashboardRoute
-  '/kasir': typeof AppKasirRoute
-  '/laporan': typeof AppLaporanRoute
-  '/onboarding': typeof AppOnboardingRoute
-  '/pengaturan': typeof AppPengaturanRoute
-  '/produk': typeof AppProdukRoute
-  '/stok': typeof AppStokRoute
-  '/transaksi': typeof AppTransaksiRoute
-  '/api/auth/$': typeof ApiAuthSplatRoute
+  "/": typeof IndexRoute;
+  "/dashboard": typeof AppDashboardRoute;
+  "/kasir": typeof AppKasirRoute;
+  "/laporan": typeof AppLaporanRoute;
+  "/onboarding": typeof AppOnboardingRoute;
+  "/pengaturan": typeof AppPengaturanRoute;
+  "/produk": typeof AppProdukRoute;
+  "/stok": typeof AppStokRoute;
+  "/transaksi": typeof AppTransaksiRoute;
+  "/api/auth/$": typeof ApiAuthSplatRoute;
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/dashboard': typeof AppDashboardRoute
-  '/kasir': typeof AppKasirRoute
-  '/laporan': typeof AppLaporanRoute
-  '/onboarding': typeof AppOnboardingRoute
-  '/pengaturan': typeof AppPengaturanRoute
-  '/produk': typeof AppProdukRoute
-  '/stok': typeof AppStokRoute
-  '/transaksi': typeof AppTransaksiRoute
-  '/api/auth/$': typeof ApiAuthSplatRoute
+  "/": typeof IndexRoute;
+  "/dashboard": typeof AppDashboardRoute;
+  "/kasir": typeof AppKasirRoute;
+  "/laporan": typeof AppLaporanRoute;
+  "/onboarding": typeof AppOnboardingRoute;
+  "/pengaturan": typeof AppPengaturanRoute;
+  "/produk": typeof AppProdukRoute;
+  "/stok": typeof AppStokRoute;
+  "/transaksi": typeof AppTransaksiRoute;
+  "/api/auth/$": typeof ApiAuthSplatRoute;
 }
 export interface FileRoutesById {
-  __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/_app': typeof AppRouteWithChildren
-  '/_app/dashboard': typeof AppDashboardRoute
-  '/_app/kasir': typeof AppKasirRoute
-  '/_app/laporan': typeof AppLaporanRoute
-  '/_app/onboarding': typeof AppOnboardingRoute
-  '/_app/pengaturan': typeof AppPengaturanRoute
-  '/_app/produk': typeof AppProdukRoute
-  '/_app/stok': typeof AppStokRoute
-  '/_app/transaksi': typeof AppTransaksiRoute
-  '/api/auth/$': typeof ApiAuthSplatRoute
+  __root__: typeof rootRouteImport;
+  "/": typeof IndexRoute;
+  "/_app": typeof AppRouteWithChildren;
+  "/_app/dashboard": typeof AppDashboardRoute;
+  "/_app/kasir": typeof AppKasirRoute;
+  "/_app/laporan": typeof AppLaporanRoute;
+  "/_app/onboarding": typeof AppOnboardingRoute;
+  "/_app/pengaturan": typeof AppPengaturanRoute;
+  "/_app/produk": typeof AppProdukRoute;
+  "/_app/stok": typeof AppStokRoute;
+  "/_app/transaksi": typeof AppTransaksiRoute;
+  "/api/auth/$": typeof ApiAuthSplatRoute;
 }
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath
+  fileRoutesByFullPath: FileRoutesByFullPath;
   fullPaths:
-    | '/'
-    | '/dashboard'
-    | '/kasir'
-    | '/laporan'
-    | '/onboarding'
-    | '/pengaturan'
-    | '/produk'
-    | '/stok'
-    | '/transaksi'
-    | '/api/auth/$'
-  fileRoutesByTo: FileRoutesByTo
+    | "/"
+    | "/dashboard"
+    | "/kasir"
+    | "/laporan"
+    | "/onboarding"
+    | "/pengaturan"
+    | "/produk"
+    | "/stok"
+    | "/transaksi"
+    | "/api/auth/$";
+  fileRoutesByTo: FileRoutesByTo;
   to:
-    | '/'
-    | '/dashboard'
-    | '/kasir'
-    | '/laporan'
-    | '/onboarding'
-    | '/pengaturan'
-    | '/produk'
-    | '/stok'
-    | '/transaksi'
-    | '/api/auth/$'
+    | "/"
+    | "/dashboard"
+    | "/kasir"
+    | "/laporan"
+    | "/onboarding"
+    | "/pengaturan"
+    | "/produk"
+    | "/stok"
+    | "/transaksi"
+    | "/api/auth/$";
   id:
-    | '__root__'
-    | '/'
-    | '/_app'
-    | '/_app/dashboard'
-    | '/_app/kasir'
-    | '/_app/laporan'
-    | '/_app/onboarding'
-    | '/_app/pengaturan'
-    | '/_app/produk'
-    | '/_app/stok'
-    | '/_app/transaksi'
-    | '/api/auth/$'
-  fileRoutesById: FileRoutesById
+    | "__root__"
+    | "/"
+    | "/_app"
+    | "/_app/dashboard"
+    | "/_app/kasir"
+    | "/_app/laporan"
+    | "/_app/onboarding"
+    | "/_app/pengaturan"
+    | "/_app/produk"
+    | "/_app/stok"
+    | "/_app/transaksi"
+    | "/api/auth/$";
+  fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  AppRoute: typeof AppRouteWithChildren
-  ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  IndexRoute: typeof IndexRoute;
+  AppRoute: typeof AppRouteWithChildren;
+  ApiAuthSplatRoute: typeof ApiAuthSplatRoute;
 }
 
-declare module '@tanstack/react-router' {
+declare module "@tanstack/react-router" {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_app': {
-      id: '/_app'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AppRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_app/dashboard': {
-      id: '/_app/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AppDashboardRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/kasir': {
-      id: '/_app/kasir'
-      path: '/kasir'
-      fullPath: '/kasir'
-      preLoaderRoute: typeof AppKasirRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/laporan': {
-      id: '/_app/laporan'
-      path: '/laporan'
-      fullPath: '/laporan'
-      preLoaderRoute: typeof AppLaporanRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/onboarding': {
-      id: '/_app/onboarding'
-      path: '/onboarding'
-      fullPath: '/onboarding'
-      preLoaderRoute: typeof AppOnboardingRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/pengaturan': {
-      id: '/_app/pengaturan'
-      path: '/pengaturan'
-      fullPath: '/pengaturan'
-      preLoaderRoute: typeof AppPengaturanRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/produk': {
-      id: '/_app/produk'
-      path: '/produk'
-      fullPath: '/produk'
-      preLoaderRoute: typeof AppProdukRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/stok': {
-      id: '/_app/stok'
-      path: '/stok'
-      fullPath: '/stok'
-      preLoaderRoute: typeof AppStokRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/transaksi': {
-      id: '/_app/transaksi'
-      path: '/transaksi'
-      fullPath: '/transaksi'
-      preLoaderRoute: typeof AppTransaksiRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/api/auth/$': {
-      id: '/api/auth/$'
-      path: '/api/auth/$'
-      fullPath: '/api/auth/$'
-      preLoaderRoute: typeof ApiAuthSplatRouteImport
-      parentRoute: typeof rootRouteImport
-    }
+    "/": {
+      id: "/";
+      path: "/";
+      fullPath: "/";
+      preLoaderRoute: typeof IndexRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/_app": {
+      id: "/_app";
+      path: "";
+      fullPath: "/";
+      preLoaderRoute: typeof AppRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/_app/dashboard": {
+      id: "/_app/dashboard";
+      path: "/dashboard";
+      fullPath: "/dashboard";
+      preLoaderRoute: typeof AppDashboardRouteImport;
+      parentRoute: typeof AppRoute;
+    };
+    "/_app/kasir": {
+      id: "/_app/kasir";
+      path: "/kasir";
+      fullPath: "/kasir";
+      preLoaderRoute: typeof AppKasirRouteImport;
+      parentRoute: typeof AppRoute;
+    };
+    "/_app/laporan": {
+      id: "/_app/laporan";
+      path: "/laporan";
+      fullPath: "/laporan";
+      preLoaderRoute: typeof AppLaporanRouteImport;
+      parentRoute: typeof AppRoute;
+    };
+    "/_app/onboarding": {
+      id: "/_app/onboarding";
+      path: "/onboarding";
+      fullPath: "/onboarding";
+      preLoaderRoute: typeof AppOnboardingRouteImport;
+      parentRoute: typeof AppRoute;
+    };
+    "/_app/pengaturan": {
+      id: "/_app/pengaturan";
+      path: "/pengaturan";
+      fullPath: "/pengaturan";
+      preLoaderRoute: typeof AppPengaturanRouteImport;
+      parentRoute: typeof AppRoute;
+    };
+    "/_app/produk": {
+      id: "/_app/produk";
+      path: "/produk";
+      fullPath: "/produk";
+      preLoaderRoute: typeof AppProdukRouteImport;
+      parentRoute: typeof AppRoute;
+    };
+    "/_app/stok": {
+      id: "/_app/stok";
+      path: "/stok";
+      fullPath: "/stok";
+      preLoaderRoute: typeof AppStokRouteImport;
+      parentRoute: typeof AppRoute;
+    };
+    "/_app/transaksi": {
+      id: "/_app/transaksi";
+      path: "/transaksi";
+      fullPath: "/transaksi";
+      preLoaderRoute: typeof AppTransaksiRouteImport;
+      parentRoute: typeof AppRoute;
+    };
+    "/api/auth/$": {
+      id: "/api/auth/$";
+      path: "/api/auth/$";
+      fullPath: "/api/auth/$";
+      preLoaderRoute: typeof ApiAuthSplatRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
   }
 }
 
 interface AppRouteChildren {
-  AppDashboardRoute: typeof AppDashboardRoute
-  AppKasirRoute: typeof AppKasirRoute
-  AppLaporanRoute: typeof AppLaporanRoute
-  AppOnboardingRoute: typeof AppOnboardingRoute
-  AppPengaturanRoute: typeof AppPengaturanRoute
-  AppProdukRoute: typeof AppProdukRoute
-  AppStokRoute: typeof AppStokRoute
-  AppTransaksiRoute: typeof AppTransaksiRoute
+  AppDashboardRoute: typeof AppDashboardRoute;
+  AppKasirRoute: typeof AppKasirRoute;
+  AppLaporanRoute: typeof AppLaporanRoute;
+  AppOnboardingRoute: typeof AppOnboardingRoute;
+  AppPengaturanRoute: typeof AppPengaturanRoute;
+  AppProdukRoute: typeof AppProdukRoute;
+  AppStokRoute: typeof AppStokRoute;
+  AppTransaksiRoute: typeof AppTransaksiRoute;
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -262,24 +262,24 @@ const AppRouteChildren: AppRouteChildren = {
   AppProdukRoute: AppProdukRoute,
   AppStokRoute: AppStokRoute,
   AppTransaksiRoute: AppTransaksiRoute,
-}
+};
 
-const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren);
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
-}
+};
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>()
+  ._addFileTypes<FileRouteTypes>();
 
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
+import type { getRouter } from "./router.tsx";
+import type { createStart } from "@tanstack/react-start";
+declare module "@tanstack/react-start" {
   interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
+    ssr: true;
+    router: Awaited<ReturnType<typeof getRouter>>;
   }
 }

@@ -92,7 +92,12 @@ body {
   transform: translateX(-50%);
   width: 760px;
   height: 520px;
-  background: radial-gradient(circle, rgba(234, 88, 12, 0.22) 0%, rgba(249, 115, 22, 0.08) 50%, transparent 70%);
+  background: radial-gradient(
+    circle,
+    rgba(234, 88, 12, 0.22) 0%,
+    rgba(249, 115, 22, 0.08) 50%,
+    transparent 70%
+  );
   pointer-events: none;
   z-index: 0;
   filter: blur(40px);
@@ -174,7 +179,10 @@ body {
   border-radius: var(--radius-xl);
   padding: 4px;
   box-shadow: var(--shadow-sm);
-  transition: transform 150ms cubic-bezier(0.32, 0.72, 0, 1), box-shadow 150ms ease, border-color 150ms ease;
+  transition:
+    transform 150ms cubic-bezier(0.32, 0.72, 0, 1),
+    box-shadow 150ms ease,
+    border-color 150ms ease;
 }
 .doppelrand-shell:hover {
   border-color: var(--color-brand);
@@ -191,9 +199,10 @@ body {
 /* Interactive POS Product Card (Hover lift, active press spring, image zoom) */
 .product-card-interactive {
   cursor: pointer;
-  transition: transform 180ms cubic-bezier(0.32, 0.72, 0, 1),
-              box-shadow 180ms ease,
-              border-color 180ms ease;
+  transition:
+    transform 180ms cubic-bezier(0.32, 0.72, 0, 1),
+    box-shadow 180ms ease,
+    border-color 180ms ease;
   will-change: transform, box-shadow;
 }
 
@@ -224,7 +233,10 @@ body {
   border: 1.5px solid var(--color-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
-  transition: transform 150ms cubic-bezier(0.32, 0.72, 0, 1), box-shadow 150ms ease, border-color 150ms ease;
+  transition:
+    transform 150ms cubic-bezier(0.32, 0.72, 0, 1),
+    box-shadow 150ms ease,
+    border-color 150ms ease;
 }
 
 /* Warm Header Deck Curve */
@@ -408,7 +420,8 @@ body {
     size: 80mm auto;
     margin: 0;
   }
-  html, body {
+  html,
+  body {
     background: #ffffff !important;
     color: #000000 !important;
     margin: 0 !important;

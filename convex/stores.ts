@@ -1,5 +1,5 @@
-import { query, mutation } from './_generated/server'
-import { v } from 'convex/values'
+import { query, mutation } from "./_generated/server";
+import { v } from "convex/values";
 
 export const getByUserId = query({
   args: {
@@ -9,29 +9,29 @@ export const getByUserId = query({
   handler: async (ctx, { userId, userEmail }) => {
     // 1. Try finding by current userId
     const storeByUserId = await ctx.db
-      .query('stores')
-      .withIndex('by_userId', (q) => q.eq('userId', userId))
-      .first()
+      .query("stores")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .first();
 
-    if (storeByUserId) return storeByUserId
+    if (storeByUserId) return storeByUserId;
 
     // 2. Try finding by userEmail if provided
     if (userEmail) {
       const storeByEmail = await ctx.db
-        .query('stores')
-        .withIndex('by_userEmail', (q) => q.eq('userEmail', userEmail))
-        .first()
+        .query("stores")
+        .withIndex("by_userEmail", (q) => q.eq("userEmail", userEmail))
+        .first();
 
-      if (storeByEmail) return storeByEmail
+      if (storeByEmail) return storeByEmail;
     }
 
     // 3. Fallback for single store environments: if a store exists in Convex, reclaim it
-    const anyStore = await ctx.db.query('stores').first()
-    if (anyStore) return anyStore
+    const anyStore = await ctx.db.query("stores").first();
+    if (anyStore) return anyStore;
 
-    return null
+    return null;
   },
-})
+});
 
 export const create = mutation({
   args: {
@@ -39,12 +39,12 @@ export const create = mutation({
     userEmail: v.optional(v.string()),
     name: v.string(),
     category: v.union(
-      v.literal('sembako'),
-      v.literal('warung_kopi'),
-      v.literal('apotek'),
-      v.literal('konter_pulsa'),
-      v.literal('kelontong'),
-      v.literal('lainnya'),
+      v.literal("sembako"),
+      v.literal("warung_kopi"),
+      v.literal("apotek"),
+      v.literal("konter_pulsa"),
+      v.literal("kelontong"),
+      v.literal("lainnya"),
     ),
     address: v.optional(v.string()),
   },
@@ -52,9 +52,9 @@ export const create = mutation({
     // Check if store already exists for userEmail
     if (args.userEmail) {
       const existingByEmail = await ctx.db
-        .query('stores')
-        .withIndex('by_userEmail', (q) => q.eq('userEmail', args.userEmail))
-        .first()
+        .query("stores")
+        .withIndex("by_userEmail", (q) => q.eq("userEmail", args.userEmail))
+        .first();
       if (existingByEmail) {
         await ctx.db.patch(existingByEmail._id, {
           userId: args.userId,
@@ -62,16 +62,16 @@ export const create = mutation({
           name: args.name,
           category: args.category,
           address: args.address,
-        })
-        return existingByEmail._id
+        });
+        return existingByEmail._id;
       }
     }
 
     // Check if store already exists for userId
     const existingById = await ctx.db
-      .query('stores')
-      .withIndex('by_userId', (q) => q.eq('userId', args.userId))
-      .first()
+      .query("stores")
+      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+      .first();
     if (existingById) {
       await ctx.db.patch(existingById._id, {
         userId: args.userId,
@@ -79,12 +79,12 @@ export const create = mutation({
         name: args.name,
         category: args.category,
         address: args.address,
-      })
-      return existingById._id
+      });
+      return existingById._id;
     }
 
     // Fallback: check if there's any orphaned store document to update
-    const orphanStore = await ctx.db.query('stores').first()
+    const orphanStore = await ctx.db.query("stores").first();
     if (orphanStore) {
       await ctx.db.patch(orphanStore._id, {
         userId: args.userId,
@@ -92,38 +92,38 @@ export const create = mutation({
         name: args.name,
         category: args.category,
         address: args.address,
-      })
-      return orphanStore._id
+      });
+      return orphanStore._id;
     }
 
-    return ctx.db.insert('stores', {
+    return ctx.db.insert("stores", {
       userId: args.userId,
       userEmail: args.userEmail,
       name: args.name,
       category: args.category,
       address: args.address,
       createdAt: Date.now(),
-    })
+    });
   },
-})
+});
 
 export const update = mutation({
   args: {
-    id: v.id('stores'),
+    id: v.id("stores"),
     name: v.optional(v.string()),
     category: v.optional(
       v.union(
-        v.literal('sembako'),
-        v.literal('warung_kopi'),
-        v.literal('apotek'),
-        v.literal('konter_pulsa'),
-        v.literal('kelontong'),
-        v.literal('lainnya'),
+        v.literal("sembako"),
+        v.literal("warung_kopi"),
+        v.literal("apotek"),
+        v.literal("konter_pulsa"),
+        v.literal("kelontong"),
+        v.literal("lainnya"),
       ),
     ),
     address: v.optional(v.string()),
   },
   handler: async (ctx, { id, ...patch }) => {
-    await ctx.db.patch(id, patch)
+    await ctx.db.patch(id, patch);
   },
-})
+});

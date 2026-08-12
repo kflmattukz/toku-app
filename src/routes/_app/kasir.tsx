@@ -62,12 +62,16 @@ function Kasir() {
   useEffect(() => {
     const on = () => {
       setIsOnline(true);
-      toast.success("Koneksi kembali online", { description: "Transaksi offline disinkronkan ke cloud" });
+      toast.success("Koneksi kembali online", {
+        description: "Transaksi offline disinkronkan ke cloud",
+      });
       flushOfflineQueue();
     };
     const off = () => {
       setIsOnline(false);
-      toast.warning("Koneksi internet terputus", { description: "Toku POS berjalan dalam Mode Offline" });
+      toast.warning("Koneksi internet terputus", {
+        description: "Toku POS berjalan dalam Mode Offline",
+      });
     };
     window.addEventListener("online", on);
     window.addEventListener("offline", off);
@@ -145,16 +149,22 @@ function Kasir() {
     if (!isOnline) {
       enqueueOfflineTx({ ...tx, storeId: store._id as string });
       setLastTx({ ...tx, storeName: store.name });
-      toast.warning("Mode Offline: Disimpan di Perangkat", { description: "Akan otomatis disinkron saat internet pulih" });
+      toast.warning("Mode Offline: Disimpan di Perangkat", {
+        description: "Akan otomatis disinkron saat internet pulih",
+      });
     } else {
       try {
         await createTx(tx);
         setLastTx({ ...tx, storeName: store.name });
-        toast.success("Pembayaran Berhasil Lunas!", { description: `Total ${formatIDR(total)} (${payMethod.toUpperCase()})` });
+        toast.success("Pembayaran Berhasil Lunas!", {
+          description: `Total ${formatIDR(total)} (${payMethod.toUpperCase()})`,
+        });
       } catch {
         enqueueOfflineTx({ ...tx, storeId: store._id as string });
         setLastTx({ ...tx, storeName: store.name });
-        toast.warning("Tersimpan Offline (Gagal Koneksi)", { description: "Transaksi tetap aman di memori lokal" });
+        toast.warning("Tersimpan Offline (Gagal Koneksi)", {
+          description: "Transaksi tetap aman di memori lokal",
+        });
       }
     }
     setShowPayment(false);
