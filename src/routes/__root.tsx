@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Toaster } from "sonner";
 import ConvexProvider from "../integrations/convex/provider";
 import appCss from "../styles.css?url";
+import { NotFoundPage, ErrorPage } from "../components/ErrorPages";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -31,6 +32,8 @@ export const Route = createRootRoute({
       { rel: "manifest", href: "/favicon/site.webmanifest" },
     ],
   }),
+  notFoundComponent: NotFoundPage,
+  errorComponent: ErrorPage,
   shellComponent: RootDocument,
 });
 
