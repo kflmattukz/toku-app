@@ -17,6 +17,8 @@ import {
   FadersIcon,
   CameraIcon,
   ImageIcon,
+  CaretLeftIcon,
+  CaretRightIcon,
 } from "@phosphor-icons/react";
 
 export const Route = createFileRoute("/_app/produk")({ component: Produk });
@@ -43,6 +45,10 @@ function Produk() {
   const [form, setForm] = useState<Form>(emptyForm);
   const [search, setSearch] = useState("");
   const [saving, setSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [pageSize, setPageSize] = useState<number>(10);
+  const [page, setPage] = useState<number>(1);
 
   const openAdd = () => {
     setEditId(null);
@@ -77,33 +83,36 @@ function Produk() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!store) return;
-    const numericPrice = parseIDRInput(form.price);
+    const priceNum = parseIDRInput(form.price);
+    const stockNum = parseInt(form.stock) || 0;
+    if (!form.name.trim() || !form.category.trim() || priceNum <= 0) {
+      toast.error("Mohon lengkapi nama, kategori, dan harga yang valid");
+      return;
+    }
     setSaving(true);
     try {
       if (editId) {
         await updateProduct({
           id: editId,
-          name: form.name,
-          category: form.category,
-          price: numericPrice,
-          stock: Number(form.stock),
-          barcode: form.barcode || undefined,
-          imageId: form.imageId || undefined,
+          name: form.name.trim(),
+          category: form.category.trim(),
+          price: priceNum,
+          stock: stockNum,
+          barcode: form.barcode.trim() || undefined,
+          imageId: form.imageId.trim() || undefined,
         });
-        toast.success(`Produk "${form.name}" berhasil diperbarui!`);
+        toast.success(`Produk "${form.name}" berhasil diperbarui`);
       } else {
         await createProduct({
           storeId: store._id,
-          name: form.name,
-          category: form.category,
-          price: numericPrice,
-          stock: Number(form.stock),
-          barcode: form.barcode || undefined,
-          imageId: form.imageId || undefined,
+          name: form.name.trim(),
+          category: form.category.trim(),
+          price: priceNum,
+          stock: stockNum,
+          barcode: form.barcode.trim() || undefined,
+          imageId: form.imageId.trim() || undefined,
         });
-        toast.success(`Produk "${form.name}" berhasil ditambahkan!`, {
-          description: formatIDR(numericPrice),
-        });
+        toast.success(`Produk "${form.name}" berhasil ditambahkan`);
       }
       setShowModal(false);
     } catch {
@@ -113,14 +122,21 @@ function Produk() {
     }
   };
 
-  const handleRemove = async (p: any) => {
-    if (confirm(`Hapus produk ${p.name}?`)) {
-      try {
-        await removeProduct({ id: p._id });
-        toast.success(`Produk "${p.name}" berhasil dihapus`);
-      } catch {
-        toast.error(`Gagal menghapus produk "${p.name}"`);
-      }
+  const handleRemove = (p: any) => {
+    setDeleteTarget(p);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await removeProduct({ id: deleteTarget._id });
+      toast.success(`Produk "${deleteTarget.name}" berhasil dihapus`);
+      setDeleteTarget(null);
+    } catch {
+      toast.error(`Gagal menghapus produk "${deleteTarget.name}"`);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -129,6 +145,19 @@ function Produk() {
       p.name.toLowerCase().includes(search.toLowerCase()) ||
       p.category.toLowerCase().includes(search.toLowerCase()),
   );
+
+  const totalCount = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+  const currentPage = Math.min(Math.max(1, page), totalPages);
+
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, totalCount);
+  const pagedProducts = filtered.slice(startIndex, endIndex);
+
+  const handlePageSizeChange = (newSize: number) => {
+    setPageSize(newSize);
+    setPage(1);
+  };
 
   return (
     <div>
@@ -185,7 +214,10 @@ function Produk() {
           type="text"
           placeholder="Cari berdasarkan nama atau kategori..."
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(1);
+          }}
           className="pill-search-input"
           style={{ width: "100%", paddingRight: 48 }}
         />
@@ -257,7 +289,7 @@ function Produk() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((p) => (
+                  {pagedProducts.map((p) => (
                     <tr key={p._id} style={{ borderBottom: "1px solid var(--color-border)" }}>
                       <td style={tdStyle}>
                         {p.imageId ? (
@@ -378,7 +410,7 @@ function Produk() {
 
             {/* Mobile Touch Card List View */}
             <div className="mobile-topbar" style={{ flexDirection: "column" }}>
-              {filtered.map((p) => (
+              {pagedProducts.map((p) => (
                 <div
                   key={p._id}
                   style={{
@@ -512,6 +544,136 @@ function Produk() {
           </>
         )}
       </div>
+
+      {/* Pagination Controls Bar */}
+      {totalCount > 0 && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: 16,
+            marginTop: 20,
+            padding: "14px 18px",
+            background: "var(--color-surface)",
+            border: "1.5px solid var(--color-border)",
+            borderRadius: "var(--radius-xl)",
+            boxShadow: "var(--shadow-sm)",
+          }}
+        >
+          {/* Left: Summary & Page Size Selector */}
+          <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+            <span style={{ fontSize: 13, color: "var(--color-text-2)", fontWeight: 600 }}>
+              Menampilkan{" "}
+              <strong style={{ color: "var(--color-text)" }}>
+                {totalCount > 0 ? startIndex + 1 : 0}-{endIndex}
+              </strong>{" "}
+              dari <strong style={{ color: "var(--color-text)" }}>{totalCount}</strong> produk
+            </span>
+
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontSize: 12, color: "var(--color-text-3)", fontWeight: 700 }}>
+                Per halaman:
+              </span>
+              <div style={{ display: "flex", gap: 4 }}>
+                {[5, 10, 20, 50].map((size) => {
+                  const active = pageSize === size;
+                  return (
+                    <button
+                      key={size}
+                      type="button"
+                      onClick={() => handlePageSizeChange(size)}
+                      className="press-tactile"
+                      style={{
+                        padding: "4px 10px",
+                        borderRadius: 99,
+                        fontSize: 12,
+                        fontWeight: active ? 800 : 600,
+                        background: active ? "var(--color-brand)" : "var(--color-surface-2)",
+                        color: active ? "#ffffff" : "var(--color-text-2)",
+                        border: `1px solid ${active ? "var(--color-brand)" : "var(--color-border)"}`,
+                        cursor: "pointer",
+                        transition: "all 150ms ease",
+                      }}
+                    >
+                      {size}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Right: Page Navigation Buttons */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <button
+              type="button"
+              disabled={currentPage <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              className="press-tactile"
+              style={{
+                padding: "6px 14px",
+                borderRadius: 99,
+                border: "1px solid var(--color-border)",
+                background:
+                  currentPage <= 1 ? "var(--color-surface-2)" : "var(--color-surface)",
+                color: currentPage <= 1 ? "var(--color-text-3)" : "var(--color-text)",
+                fontSize: 13,
+                fontWeight: 700,
+                cursor: currentPage <= 1 ? "not-allowed" : "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
+                opacity: currentPage <= 1 ? 0.6 : 1,
+              }}
+              title="Halaman Sebelumnya"
+            >
+              <CaretLeftIcon size={14} weight="bold" />
+              <span>Prev</span>
+            </button>
+
+            <span
+              style={{
+                fontSize: 13,
+                fontWeight: 800,
+                color: "var(--color-text)",
+                padding: "0 6px",
+              }}
+            >
+              {currentPage} / {totalPages}
+            </span>
+
+            <button
+              type="button"
+              disabled={currentPage >= totalPages}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              className="press-tactile"
+              style={{
+                padding: "6px 14px",
+                borderRadius: 99,
+                border: "1px solid var(--color-border)",
+                background:
+                  currentPage >= totalPages
+                    ? "var(--color-surface-2)"
+                    : "var(--color-surface)",
+                color: currentPage >= totalPages ? "var(--color-text-3)" : "var(--color-text)",
+                fontSize: 13,
+                fontWeight: 700,
+                cursor: currentPage >= totalPages ? "not-allowed" : "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
+                opacity: currentPage >= totalPages ? 0.6 : 1,
+              }}
+              title="Halaman Berikutnya"
+            >
+              <span>Next</span>
+              <CaretRightIcon size={14} weight="bold" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Modal Form with Image Upload & Instant Live Preview */}
       {showModal && (
@@ -723,6 +885,92 @@ function Produk() {
               </button>
             </div>
           </form>
+        </Modal>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteTarget && (
+        <Modal onClose={() => !deleting && setDeleteTarget(null)}>
+          <div style={{ textAlign: "center", padding: "8px 0" }}>
+            <div
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: 99,
+                background: "rgba(239, 68, 68, 0.12)",
+                color: "var(--color-danger)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                margin: "0 auto 16px",
+              }}
+            >
+              <TrashIcon size={28} weight="duotone" />
+            </div>
+            <h3
+              style={{
+                fontSize: 18,
+                fontWeight: 800,
+                margin: "0 0 8px",
+                color: "var(--color-text)",
+              }}
+            >
+              Hapus Produk?
+            </h3>
+            <p
+              style={{
+                fontSize: 14,
+                color: "var(--color-text-2)",
+                margin: "0 0 24px",
+                lineHeight: 1.5,
+              }}
+            >
+              Apakah Anda yakin ingin menghapus{" "}
+              <strong style={{ color: "var(--color-text)" }}>"{deleteTarget.name}"</strong>?
+              Tindakan ini tidak dapat diurungkan.
+            </p>
+            <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={() => setDeleteTarget(null)}
+                className="press-tactile"
+                style={{
+                  flex: 1,
+                  padding: "12px 18px",
+                  borderRadius: 99,
+                  border: "1.5px solid var(--color-border)",
+                  background: "var(--color-surface-2)",
+                  color: "var(--color-text)",
+                  fontWeight: 700,
+                  fontSize: 14,
+                  cursor: "pointer",
+                }}
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={confirmDelete}
+                className="press-tactile"
+                style={{
+                  flex: 1,
+                  padding: "12px 18px",
+                  borderRadius: 99,
+                  border: "none",
+                  background: "var(--color-danger)",
+                  color: "#ffffff",
+                  fontWeight: 700,
+                  fontSize: 14,
+                  cursor: deleting ? "not-allowed" : "pointer",
+                  boxShadow: "0 4px 14px rgba(239, 68, 68, 0.35)",
+                }}
+              >
+                {deleting ? "Menghapus..." : "Ya, Hapus"}
+              </button>
+            </div>
+          </div>
         </Modal>
       )}
     </div>

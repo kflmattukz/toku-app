@@ -390,6 +390,9 @@ body {
 .desktop-only {
   display: flex !important;
 }
+.mobile-only {
+  display: none !important;
+}
 .mobile-topbar {
   display: none !important;
 }
@@ -397,9 +400,16 @@ body {
   display: none !important;
 }
 
+.tx-table-row:hover {
+  background: var(--color-surface-2) !important;
+}
+
 @media (max-width: 768px) {
   .desktop-only {
     display: none !important;
+  }
+  .mobile-only {
+    display: block !important;
   }
   .mobile-topbar {
     display: flex !important;

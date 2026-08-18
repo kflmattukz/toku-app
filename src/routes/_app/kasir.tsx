@@ -126,6 +126,10 @@ function Kasir() {
     );
   };
 
+  const removeFromCart = (productId: string) => {
+    setCart((prev) => prev.filter((i) => i.productId !== productId));
+  };
+
   const totalItems = cart.reduce((sum, i) => sum + i.qty, 0);
   const total = cart.reduce((sum, i) => sum + i.price * i.qty, 0);
   const cashPaid = parseFloat(cashInput) || 0;
@@ -483,20 +487,25 @@ function Kasir() {
                           updateQty(p._id, -1);
                         }}
                         className="press-tactile"
+                        title={inCart.qty === 1 ? "Hapus dari keranjang" : "Kurangi"}
                         style={{
                           width: 28,
                           height: 28,
                           borderRadius: 99,
-                          background: "var(--color-surface-3)",
+                          background: inCart.qty === 1 ? "rgba(239, 68, 68, 0.1)" : "var(--color-surface-3)",
                           border: "none",
-                          color: "var(--color-text-2)",
+                          color: inCart.qty === 1 ? "var(--color-danger)" : "var(--color-text-2)",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
                           cursor: "pointer",
                         }}
                       >
-                        <MinusIcon size={13} weight="bold" />
+                        {inCart.qty === 1 ? (
+                          <TrashIcon size={13} />
+                        ) : (
+                          <MinusIcon size={13} weight="bold" />
+                        )}
                       </button>
                       <span style={{ fontSize: 14, fontWeight: 800, color: "var(--color-text)" }}>
                         {inCart.qty}
@@ -554,6 +563,7 @@ function Kasir() {
           cart={cart}
           total={total}
           updateQty={updateQty}
+          removeFromCart={removeFromCart}
           setCart={setCart}
           onCheckout={() => setShowPayment(true)}
         />
@@ -857,6 +867,20 @@ function Kasir() {
                           }}
                         >
                           <PlusIcon size={12} weight="bold" />
+                        </button>
+                        <button
+                          onClick={() => removeFromCart(item.productId)}
+                          title="Hapus dari keranjang"
+                          className="press-tactile"
+                          style={{
+                            ...qtyBtnStyle,
+                            background: "rgba(239, 68, 68, 0.1)",
+                            color: "var(--color-danger)",
+                            borderColor: "transparent",
+                            marginLeft: 4,
+                          }}
+                        >
+                          <TrashIcon size={14} />
                         </button>
                       </div>
                     </div>
@@ -1199,7 +1223,7 @@ function Kasir() {
   );
 }
 
-function CartContent({ cart, total, updateQty, setCart, onCheckout }: any) {
+function CartContent({ cart, total, updateQty, removeFromCart, setCart, onCheckout }: any) {
   return (
     <>
       <div
@@ -1300,6 +1324,20 @@ function CartContent({ cart, total, updateQty, setCart, onCheckout }: any) {
                   style={{ ...qtyBtnStyle, background: "var(--color-brand)", color: "#ffffff" }}
                 >
                   <PlusIcon size={12} weight="bold" />
+                </button>
+                <button
+                  onClick={() => removeFromCart(item.productId)}
+                  title="Hapus dari keranjang"
+                  className="press-tactile"
+                  style={{
+                    ...qtyBtnStyle,
+                    background: "transparent",
+                    color: "var(--color-danger)",
+                    borderColor: "transparent",
+                    marginLeft: 2,
+                  }}
+                >
+                  <TrashIcon size={14} />
                 </button>
               </div>
             </div>

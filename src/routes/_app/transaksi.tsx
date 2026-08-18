@@ -12,6 +12,8 @@ import {
   XIcon,
   PackageIcon,
   CheckCircleIcon,
+  CaretLeftIcon,
+  CaretRightIcon,
 } from "@phosphor-icons/react";
 
 export const Route = createFileRoute("/_app/transaksi")({ component: Transaksi });
@@ -20,8 +22,23 @@ function Transaksi() {
   const { store } = useAppStore();
   const transactions = useQuery(api.transactions.list, store ? { storeId: store._id } : "skip");
   const [selected, setSelected] = useState<any>(null);
+  const [pageSize, setPageSize] = useState<number>(10);
+  const [page, setPage] = useState<number>(1);
 
   if (!transactions) return <Loader />;
+
+  const totalCount = transactions.length;
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+  const currentPage = Math.min(Math.max(1, page), totalPages);
+
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, totalCount);
+  const pagedTransactions = transactions.slice(startIndex, endIndex);
+
+  const handlePageSizeChange = (newSize: number) => {
+    setPageSize(newSize);
+    setPage(1);
+  };
 
   return (
     <div>
@@ -61,119 +78,446 @@ function Transaksi() {
           </p>
         </div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {transactions.map((tx, idx) => (
+        <>
+          {/* PC / Laptop / Tablet Table View (Visible on screens > 768px) */}
+          <div className="desktop-only" style={{ width: "100%", flexDirection: "column" }}>
             <div
-              key={tx._id}
-              onClick={() => setSelected(tx)}
-              className="squircle-card press-tactile"
               style={{
-                padding: "18px 20px",
+                background: "var(--color-surface)",
+                border: "1.5px solid var(--color-border)",
+                borderRadius: "var(--radius-xl)",
+                overflow: "hidden",
+                boxShadow: "var(--shadow-sm)",
+                width: "100%",
+              }}
+            >
+              <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
+                <thead>
+                  <tr
+                    style={{
+                      background: "var(--color-surface-2)",
+                      borderBottom: "1.5px solid var(--color-border)",
+                    }}
+                  >
+                    <th style={thStyle}>No. Transaksi</th>
+                    <th style={thStyle}>Waktu</th>
+                    <th style={thStyle}>Metode Bayar</th>
+                    <th style={thStyle}>Ringkasan Item</th>
+                    <th style={{ ...thStyle, textAlign: "right" }}>Total</th>
+                    <th style={{ ...thStyle, textAlign: "center" }}>Status</th>
+                    <th style={{ ...thStyle, textAlign: "right" }}>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pagedTransactions.map((tx, idx) => {
+                    const totalQty = tx.items.reduce((s: number, i: any) => s + i.qty, 0);
+                    const itemsSummary = tx.items
+                      .map((i: any) => `${i.qty}x ${i.name}`)
+                      .join(", ");
+                    const txNumber = totalCount - (startIndex + idx);
+                    return (
+                      <tr
+                        key={tx._id}
+                        onClick={() => setSelected(tx)}
+                        className="press-tactile tx-table-row"
+                        style={{
+                          borderBottom: "1px solid var(--color-border-subtle)",
+                          cursor: "pointer",
+                          transition: "background 150ms ease",
+                        }}
+                      >
+                        <td style={tdStyle}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            <span
+                              style={{
+                                fontWeight: 800,
+                                fontSize: 13,
+                                color: "var(--color-brand)",
+                              }}
+                            >
+                              #{txNumber}
+                            </span>
+                            {tx.syncedFromOffline && (
+                              <span
+                                style={{
+                                  fontSize: 10,
+                                  fontWeight: 800,
+                                  background: "var(--color-warning-light)",
+                                  color: "var(--color-warning-text)",
+                                  padding: "2px 8px",
+                                  borderRadius: 99,
+                                }}
+                              >
+                                Offline
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td style={tdStyle}>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text)" }}>
+                            {formatDate(tx.createdAt)}
+                          </div>
+                        </td>
+                        <td style={tdStyle}>
+                          <div style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                            <span
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 6,
+                                padding: "4px 10px",
+                                borderRadius: 99,
+                                fontSize: 12,
+                                fontWeight: 700,
+                                background:
+                                  tx.paymentMethod === "cash"
+                                    ? "var(--color-brand-light)"
+                                    : "var(--color-qris-bg)",
+                                color:
+                                  tx.paymentMethod === "cash"
+                                    ? "var(--color-brand)"
+                                    : "var(--color-qris-text)",
+                              }}
+                            >
+                              {tx.paymentMethod === "cash" ? (
+                                <MoneyIcon size={15} weight="duotone" />
+                              ) : (
+                                <QrCodeIcon size={15} weight="duotone" />
+                              )}
+                              {tx.paymentMethod === "cash" ? "Tunai" : "QRIS"}
+                            </span>
+                          </div>
+                        </td>
+                        <td style={{ ...tdStyle, maxWidth: 280 }}>
+                          <div
+                            style={{
+                              fontSize: 13,
+                              color: "var(--color-text-2)",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                            title={itemsSummary}
+                          >
+                            <strong style={{ color: "var(--color-text)" }}>{totalQty} item</strong>{" "}
+                            ({itemsSummary})
+                          </div>
+                        </td>
+                        <td style={{ ...tdStyle, textAlign: "right" }}>
+                          <span
+                            className="price"
+                            style={{ fontSize: 15, fontWeight: 800, color: "var(--color-text)" }}
+                          >
+                            {formatIDR(tx.total)}
+                          </span>
+                        </td>
+                        <td style={{ ...tdStyle, textAlign: "center" }}>
+                          <span
+                            style={{
+                              background: "var(--color-success-light)",
+                              color: "var(--color-success-text)",
+                              borderRadius: 99,
+                              padding: "3px 10px",
+                              fontSize: 11,
+                              fontWeight: 800,
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 4,
+                            }}
+                          >
+                            <CheckCircleIcon size={12} weight="fill" />
+                            Lunas
+                          </span>
+                        </td>
+                        <td style={{ ...tdStyle, textAlign: "right" }}>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelected(tx);
+                            }}
+                            className="press-tactile"
+                            style={{
+                              padding: "6px 14px",
+                              borderRadius: 99,
+                              border: "1px solid var(--color-border)",
+                              background: "var(--color-surface-2)",
+                              color: "var(--color-text)",
+                              fontSize: 12,
+                              fontWeight: 700,
+                              cursor: "pointer",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 6,
+                            }}
+                          >
+                            <PrinterIcon size={14} />
+                            Struk
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Mobile Phone Card View (Visible on screens <= 768px) */}
+          <div className="mobile-only" style={{ width: "100%" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {pagedTransactions.map((tx, idx) => {
+                const txNumber = totalCount - (startIndex + idx);
+                return (
+                  <div
+                    key={tx._id}
+                    onClick={() => setSelected(tx)}
+                    className="squircle-card press-tactile"
+                    style={{
+                      padding: "18px 20px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: 16,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
+                      <div
+                        style={{
+                          width: 42,
+                          height: 42,
+                          borderRadius: 99,
+                          background:
+                            tx.paymentMethod === "cash"
+                              ? "var(--color-brand-light)"
+                              : "var(--color-qris-bg)",
+                          color:
+                            tx.paymentMethod === "cash"
+                              ? "var(--color-brand)"
+                              : "var(--color-qris-text)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                        }}
+                      >
+                        {tx.paymentMethod === "cash" ? (
+                          <MoneyIcon size={22} weight="duotone" />
+                        ) : (
+                          <QrCodeIcon size={22} weight="duotone" />
+                        )}
+                      </div>
+
+                      <div style={{ minWidth: 0 }}>
+                        <div
+                          style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}
+                        >
+                          <span
+                            style={{
+                              fontSize: 11,
+                              fontWeight: 800,
+                              color: "var(--color-brand)",
+                              textTransform: "uppercase",
+                              letterSpacing: "0.05em",
+                            }}
+                          >
+                            Penjualan #{txNumber}
+                          </span>
+                          {tx.syncedFromOffline && (
+                            <span
+                              style={{
+                                fontSize: 10,
+                                fontWeight: 800,
+                                background: "var(--color-warning-light)",
+                                color: "var(--color-warning-text)",
+                                padding: "2px 8px",
+                                borderRadius: 99,
+                              }}
+                            >
+                              Synced Offline
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ fontSize: 15, fontWeight: 800, color: "var(--color-text)" }}>
+                          {tx.paymentMethod === "cash"
+                            ? "Pembayaran Tunai"
+                            : "Pembayaran QRIS Digital"}
+                        </div>
+                        <div style={{ fontSize: 12, color: "var(--color-text-3)", marginTop: 2 }}>
+                          {formatDate(tx.createdAt)} ·{" "}
+                          {tx.items.reduce((s: number, i: any) => s + i.qty, 0)} item
+                        </div>
+                      </div>
+                    </div>
+
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "flex-end",
+                        gap: 6,
+                        flexShrink: 0,
+                      }}
+                    >
+                      <span
+                        className="price"
+                        style={{ fontSize: 17, fontWeight: 800, color: "var(--color-text)" }}
+                      >
+                        {formatIDR(tx.total)}
+                      </span>
+                      <span
+                        style={{
+                          background: "var(--color-success-light)",
+                          color: "var(--color-success-text)",
+                          borderRadius: 99,
+                          padding: "3px 10px",
+                          fontSize: 11,
+                          fontWeight: 800,
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 4,
+                        }}
+                      >
+                        <CheckCircleIcon size={12} weight="fill" />
+                        Lunas
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Pagination Controls Bar */}
+          {totalCount > 0 && (
+            <div
+              style={{
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
+                flexWrap: "wrap",
                 gap: 16,
-                cursor: "pointer",
+                marginTop: 20,
+                padding: "14px 18px",
+                background: "var(--color-surface)",
+                border: "1.5px solid var(--color-border)",
+                borderRadius: "var(--radius-xl)",
+                boxShadow: "var(--shadow-sm)",
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
-                <div
+              {/* Left: Summary & Page Size Selector */}
+              <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+                <span style={{ fontSize: 13, color: "var(--color-text-2)", fontWeight: 600 }}>
+                  Menampilkan{" "}
+                  <strong style={{ color: "var(--color-text)" }}>
+                    {totalCount > 0 ? startIndex + 1 : 0}-{endIndex}
+                  </strong>{" "}
+                  dari <strong style={{ color: "var(--color-text)" }}>{totalCount}</strong> transaksi
+                </span>
+
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 12, color: "var(--color-text-3)", fontWeight: 700 }}>
+                    Per halaman:
+                  </span>
+                  <div style={{ display: "flex", gap: 4 }}>
+                    {[5, 10, 20, 50].map((size) => {
+                      const active = pageSize === size;
+                      return (
+                        <button
+                          key={size}
+                          type="button"
+                          onClick={() => handlePageSizeChange(size)}
+                          className="press-tactile"
+                          style={{
+                            padding: "4px 10px",
+                            borderRadius: 99,
+                            fontSize: 12,
+                            fontWeight: active ? 800 : 600,
+                            background: active ? "var(--color-brand)" : "var(--color-surface-2)",
+                            color: active ? "#ffffff" : "var(--color-text-2)",
+                            border: `1px solid ${active ? "var(--color-brand)" : "var(--color-border)"}`,
+                            cursor: "pointer",
+                            transition: "all 150ms ease",
+                          }}
+                        >
+                          {size}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right: Page Navigation Buttons */}
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <button
+                  type="button"
+                  disabled={currentPage <= 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  className="press-tactile"
                   style={{
-                    width: 42,
-                    height: 42,
+                    padding: "6px 14px",
                     borderRadius: 99,
+                    border: "1px solid var(--color-border)",
                     background:
-                      tx.paymentMethod === "cash"
-                        ? "var(--color-brand-light)"
-                        : "var(--color-qris-bg)",
-                    color:
-                      tx.paymentMethod === "cash" ? "var(--color-brand)" : "var(--color-qris-text)",
+                      currentPage <= 1 ? "var(--color-surface-2)" : "var(--color-surface)",
+                    color: currentPage <= 1 ? "var(--color-text-3)" : "var(--color-text)",
+                    fontSize: 13,
+                    fontWeight: 700,
+                    cursor: currentPage <= 1 ? "not-allowed" : "pointer",
                     display: "flex",
                     alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
+                    gap: 4,
+                    opacity: currentPage <= 1 ? 0.6 : 1,
                   }}
+                  title="Halaman Sebelumnya"
                 >
-                  {tx.paymentMethod === "cash" ? (
-                    <MoneyIcon size={22} weight="duotone" />
-                  ) : (
-                    <QrCodeIcon size={22} weight="duotone" />
-                  )}
-                </div>
+                  <CaretLeftIcon size={14} weight="bold" />
+                  <span>Prev</span>
+                </button>
 
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 2 }}>
-                    <span
-                      style={{
-                        fontSize: 11,
-                        fontWeight: 800,
-                        color: "var(--color-brand)",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.05em",
-                      }}
-                    >
-                      Penjualan #{transactions.length - idx}
-                    </span>
-                    {tx.syncedFromOffline && (
-                      <span
-                        style={{
-                          fontSize: 10,
-                          fontWeight: 800,
-                          background: "var(--color-warning-light)",
-                          color: "var(--color-warning-text)",
-                          padding: "2px 8px",
-                          borderRadius: 99,
-                        }}
-                      >
-                        Synced Offline
-                      </span>
-                    )}
-                  </div>
-                  <div style={{ fontSize: 15, fontWeight: 800, color: "var(--color-text)" }}>
-                    {tx.paymentMethod === "cash" ? "Pembayaran Tunai" : "Pembayaran QRIS Digital"}
-                  </div>
-                  <div style={{ fontSize: 12, color: "var(--color-text-3)", marginTop: 2 }}>
-                    {formatDate(tx.createdAt)} ·{" "}
-                    {tx.items.reduce((s: number, i: any) => s + i.qty, 0)} item
-                  </div>
-                </div>
-              </div>
-
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "flex-end",
-                  gap: 6,
-                  flexShrink: 0,
-                }}
-              >
-                <span
-                  className="price"
-                  style={{ fontSize: 17, fontWeight: 800, color: "var(--color-text)" }}
-                >
-                  {formatIDR(tx.total)}
-                </span>
                 <span
                   style={{
-                    background: "var(--color-success-light)",
-                    color: "var(--color-success-text)",
-                    borderRadius: 99,
-                    padding: "3px 10px",
-                    fontSize: 11,
+                    fontSize: 13,
                     fontWeight: 800,
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 4,
+                    color: "var(--color-text)",
+                    padding: "0 6px",
                   }}
                 >
-                  <CheckCircleIcon size={12} weight="fill" />
-                  Lunas
+                  {currentPage} / {totalPages}
                 </span>
+
+                <button
+                  type="button"
+                  disabled={currentPage >= totalPages}
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  className="press-tactile"
+                  style={{
+                    padding: "6px 14px",
+                    borderRadius: 99,
+                    border: "1px solid var(--color-border)",
+                    background:
+                      currentPage >= totalPages
+                        ? "var(--color-surface-2)"
+                        : "var(--color-surface)",
+                    color: currentPage >= totalPages ? "var(--color-text-3)" : "var(--color-text)",
+                    fontSize: 13,
+                    fontWeight: 700,
+                    cursor: currentPage >= totalPages ? "not-allowed" : "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 4,
+                    opacity: currentPage >= totalPages ? 0.6 : 1,
+                  }}
+                  title="Halaman Berikutnya"
+                >
+                  <span>Next</span>
+                  <CaretRightIcon size={14} weight="bold" />
+                </button>
               </div>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
 
       {/* Receipt Modal */}
@@ -530,4 +874,21 @@ const payBtnStyle: React.CSSProperties = {
   fontWeight: 800,
   cursor: "pointer",
   color: "#ffffff",
+};
+
+const thStyle: React.CSSProperties = {
+  padding: "14px 18px",
+  fontSize: 12,
+  fontWeight: 800,
+  color: "var(--color-text-3)",
+  textTransform: "uppercase",
+  letterSpacing: "0.06em",
+  whiteSpace: "nowrap",
+};
+
+const tdStyle: React.CSSProperties = {
+  padding: "16px 18px",
+  fontSize: 14,
+  color: "var(--color-text)",
+  verticalAlign: "middle",
 };
