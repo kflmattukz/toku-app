@@ -473,7 +473,7 @@ function Transaksi() {
                   title="Halaman Sebelumnya"
                 >
                   <CaretLeftIcon size={14} weight="bold" />
-                  <span>Prev</span>
+                  <span>Sebelumnya</span>
                 </button>
 
                 <span
@@ -511,7 +511,7 @@ function Transaksi() {
                   }}
                   title="Halaman Berikutnya"
                 >
-                  <span>Next</span>
+                  <span>Berikutnya</span>
                   <CaretRightIcon size={14} weight="bold" />
                 </button>
               </div>
