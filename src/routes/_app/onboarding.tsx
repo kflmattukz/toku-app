@@ -67,7 +67,7 @@ function Onboarding() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
     if (!name.trim() || !category || !session) return;
     setSaving(true);

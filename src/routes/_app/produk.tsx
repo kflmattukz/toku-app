@@ -80,7 +80,7 @@ function Produk() {
     }
   };
 
-  const handleSave = async (e: React.FormEvent) => {
+  const handleSave = async (e: React.SubmitEvent) => {
     e.preventDefault();
     if (!store) return;
     const priceNum = parseIDRInput(form.price);
@@ -616,8 +616,7 @@ function Produk() {
                 padding: "6px 14px",
                 borderRadius: 99,
                 border: "1px solid var(--color-border)",
-                background:
-                  currentPage <= 1 ? "var(--color-surface-2)" : "var(--color-surface)",
+                background: currentPage <= 1 ? "var(--color-surface-2)" : "var(--color-surface)",
                 color: currentPage <= 1 ? "var(--color-text-3)" : "var(--color-text)",
                 fontSize: 13,
                 fontWeight: 700,
@@ -654,9 +653,7 @@ function Produk() {
                 borderRadius: 99,
                 border: "1px solid var(--color-border)",
                 background:
-                  currentPage >= totalPages
-                    ? "var(--color-surface-2)"
-                    : "var(--color-surface)",
+                  currentPage >= totalPages ? "var(--color-surface-2)" : "var(--color-surface)",
                 color: currentPage >= totalPages ? "var(--color-text-3)" : "var(--color-text)",
                 fontSize: 13,
                 fontWeight: 700,

@@ -56,7 +56,7 @@ function Pengaturan() {
     toast.info(`Mode tampilan diubah ke ${next ? "Gelap" : "Terang"}`);
   };
 
-  const handleSave = async (e: React.FormEvent) => {
+  const handleSave = async (e: React.SubmitEvent) => {
     e.preventDefault();
     if (!store) return;
     setSaving(true);
