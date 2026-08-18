@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
-import { authClient } from "#/lib/auth-client";
+import { useAppStore } from "#/lib/store-context";
 import { useState, useEffect } from "react";
 import { formatIDR } from "#/lib/utils";
 import { enqueueOfflineTx, getOfflineQueue, clearOfflineQueue } from "#/lib/offline-queue";
@@ -40,11 +40,7 @@ type CartItem = {
 type PaymentMethod = "cash" | "qris";
 
 function Kasir() {
-  const { data: session } = authClient.useSession();
-  const store = useQuery(
-    api.stores.getByUserId,
-    session ? { userId: session.user.id, userEmail: session.user.email } : "skip",
-  );
+  const { store } = useAppStore();
   const products = useQuery(api.products.list, store ? { storeId: store._id } : "skip");
   const createTx = useMutation(api.transactions.create);
 

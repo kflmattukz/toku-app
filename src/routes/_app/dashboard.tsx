@@ -1,19 +1,12 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "convex/react";
-import { api } from "../../../convex/_generated/api";
-import { authClient } from "#/lib/auth-client";
+import { useAppStore } from "#/lib/store-context";
 import { useEffect } from "react";
 
 export const Route = createFileRoute("/_app/dashboard")({ component: Dashboard });
 
 function Dashboard() {
-  const { data: session } = authClient.useSession();
   const navigate = useNavigate();
-
-  const store = useQuery(
-    api.stores.getByUserId,
-    session ? { userId: session.user.id, userEmail: session.user.email } : "skip",
-  );
+  const { store } = useAppStore();
 
   useEffect(() => {
     if (store === undefined) return; // still loading

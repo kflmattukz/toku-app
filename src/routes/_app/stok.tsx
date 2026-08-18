@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
-import { authClient } from "#/lib/auth-client";
+import { useAppStore } from "#/lib/store-context";
 import { useState } from "react";
 import { formatIDR } from "#/lib/utils";
 import type { Id } from "../../../convex/_generated/dataModel";
@@ -13,11 +13,7 @@ export const Route = createFileRoute("/_app/stok")({ component: Stok });
 const LOW_STOCK = 5;
 
 function Stok() {
-  const { data: session } = authClient.useSession();
-  const store = useQuery(
-    api.stores.getByUserId,
-    session ? { userId: session.user.id, userEmail: session.user.email } : "skip",
-  );
+  const { store } = useAppStore();
   const products = useQuery(api.products.list, store ? { storeId: store._id } : "skip");
   const adjustStock = useMutation(api.products.adjustStock);
 

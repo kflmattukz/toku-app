@@ -13,6 +13,14 @@ const db: Parameters<typeof memoryAdapter>[0] = {
 
 export const auth = betterAuth({
   database: memoryAdapter(db),
+  session: {
+    expiresIn: 60 * 60 * 24 * 30, // 30 days (1 month)
+    updateAge: 60 * 60 * 24, // 1 day - auto-refresh session if active
+    cookieCache: {
+      enabled: true,
+      maxAge: 60 * 60 * 24 * 30, // 30 days
+    },
+  },
   socialProviders: {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID!,

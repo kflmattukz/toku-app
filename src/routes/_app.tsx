@@ -3,6 +3,7 @@ import { authClient } from "#/lib/auth-client";
 import { useEffect, useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
+import { AppStoreContext } from "#/lib/store-context";
 import {
   StorefrontIcon,
   PackageIcon,
@@ -306,7 +307,9 @@ function AppShell() {
             boxSizing: "border-box",
           }}
         >
-          <Outlet />
+          <AppStoreContext.Provider value={{ store, session }}>
+            <Outlet />
+          </AppStoreContext.Provider>
         </main>
 
         {/* Mobile Floating Capsule Dock (Exact match to vibrant image dock) */}
@@ -325,6 +328,7 @@ function AppShell() {
               <Link
                 key={item.to}
                 to={item.to}
+                preload="intent"
                 className="press-tactile"
                 style={{
                   display: "flex",
@@ -433,6 +437,7 @@ function SidebarContent({
             <Link
               key={item.to}
               to={item.to}
+              preload="intent"
               className="press-tactile"
               style={{
                 display: "flex",
@@ -523,7 +528,13 @@ function SidebarContent({
 
         <button
           onClick={() =>
-            authClient.signOut({ fetchOptions: { onSuccess: () => (window.location.href = "/") } })
+            authClient.signOut({
+              fetchOptions: {
+                onSuccess: () => {
+                  window.location.href = "/";
+                },
+              },
+            })
           }
           className="press-tactile"
           style={{

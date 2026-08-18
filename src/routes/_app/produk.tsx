@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
-import { authClient } from "#/lib/auth-client";
+import { useAppStore } from "#/lib/store-context";
 import { useState } from "react";
 import { formatIDR, formatIDRInput, parseIDRInput, compressImage } from "#/lib/utils";
 import type { Id } from "../../../convex/_generated/dataModel";
@@ -32,11 +32,7 @@ type Form = {
 const emptyForm: Form = { name: "", category: "", price: "", stock: "", barcode: "", imageId: "" };
 
 function Produk() {
-  const { data: session } = authClient.useSession();
-  const store = useQuery(
-    api.stores.getByUserId,
-    session ? { userId: session.user.id, userEmail: session.user.email } : "skip",
-  );
+  const { store } = useAppStore();
   const products = useQuery(api.products.list, store ? { storeId: store._id } : "skip");
   const createProduct = useMutation(api.products.create);
   const updateProduct = useMutation(api.products.update);

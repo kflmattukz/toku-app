@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMutation, useQuery } from "convex/react";
+import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { authClient } from "#/lib/auth-client";
+import { useAppStore } from "#/lib/store-context";
 import { useEffect, useState } from "react";
 import { isDarkMode, toggleTheme } from "#/lib/utils";
 import { toast } from "sonner";
@@ -27,11 +28,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 };
 
 function Pengaturan() {
-  const { data: session } = authClient.useSession();
-  const store = useQuery(
-    api.stores.getByUserId,
-    session ? { userId: session.user.id, userEmail: session.user.email } : "skip",
-  );
+  const { store, session } = useAppStore();
   const updateStore = useMutation(api.stores.update);
 
   const [name, setName] = useState("");
@@ -77,7 +74,13 @@ function Pengaturan() {
 
   const handleLogout = () => {
     toast.info("Keluar dari Toku POS...");
-    authClient.signOut({ fetchOptions: { onSuccess: () => (window.location.href = "/") } });
+    authClient.signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          window.location.href = "/";
+        },
+      },
+    });
   };
 
   if (!store) return <Loader />;

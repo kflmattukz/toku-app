@@ -1,0 +1,23 @@
+{
+  "user": [],
+  "session": [],
+  "account": [],
+  "verification": [
+    {
+      "identifier": "YrQQGcsOSbcsAtaMuq8y9Z8jtT_UmzSM",
+      "value": "{\"callbackURL\":\"/dashboard\",\"codeVerifier\":\"kXrEgj5-pbyvk6nlKFbgKcr65RrhK9udsokWX_v7wBYwyKyqVocoRIRp1_we2sZPa61N3x0JtaMCTfxJiDnpCfzrrNoQkJlTGZp7Zp6JPCn-03p4dQpR2mkbRLdthFLk\",\"expiresAt\":1787026431194,\"oauthState\":\"YrQQGcsOSbcsAtaMuq8y9Z8jtT_UmzSM\"}",
+      "expiresAt": "2026-08-18T04:13:51.198Z",
+      "createdAt": "2026-08-18T04:03:51.198Z",
+      "updatedAt": "2026-08-18T04:03:51.198Z",
+      "id": "zd9pMBFTZh2yxE5NsTyKUWx09YCg9a67"
+    },
+    {
+      "identifier": "4A0ivzBihVGkTN0q09_7oYYyl66kn_sJ",
+      "value": "{\"callbackURL\":\"/dashboard\",\"codeVerifier\":\"xaopj41fNDjnLHiEc1BJJFhd26v3_Qas2ojlYzGFS2Tc_uwKD1eKg3gtsLjY_x9wJhrYaa8Lk3aAs35wfyGKVa_pSsDTm3bpo4vK9cI3N198rPsnU5UNUmjxydjfaNyC\",\"expiresAt\":1787026667142,\"oauthState\":\"4A0ivzBihVGkTN0q09_7oYYyl66kn_sJ\"}",
+      "expiresAt": "2026-08-18T04:17:47.142Z",
+      "createdAt": "2026-08-18T04:07:47.142Z",
+      "updatedAt": "2026-08-18T04:07:47.142Z",
+      "id": "5OJ8Auz3suoWNsvmPnjgtqnm0TUwNcrH"
+    }
+  ]
+}

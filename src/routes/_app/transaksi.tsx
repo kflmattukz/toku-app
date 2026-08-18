@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
-import { authClient } from "#/lib/auth-client";
+import { useAppStore } from "#/lib/store-context";
 import { useState } from "react";
 import { formatIDR, formatDate } from "#/lib/utils";
 import {
@@ -17,11 +17,7 @@ import {
 export const Route = createFileRoute("/_app/transaksi")({ component: Transaksi });
 
 function Transaksi() {
-  const { data: session } = authClient.useSession();
-  const store = useQuery(
-    api.stores.getByUserId,
-    session ? { userId: session.user.id, userEmail: session.user.email } : "skip",
-  );
+  const { store } = useAppStore();
   const transactions = useQuery(api.transactions.list, store ? { storeId: store._id } : "skip");
   const [selected, setSelected] = useState<any>(null);
 
