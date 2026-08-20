@@ -4,6 +4,7 @@ import { api } from "../../../convex/_generated/api";
 import { useAppStore } from "#/lib/store-context";
 import { useState } from "react";
 import { formatIDR, formatIDRInput, parseIDRInput, compressImage } from "#/lib/utils";
+import { Modal } from "#/components/Modal";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { toast } from "sonner";
 import {
@@ -672,106 +673,157 @@ function Produk() {
         </div>
       )}
 
-      {/* Modal Form with Image Upload & Instant Live Preview */}
+      {/* Add / Edit Product Modal */}
       {showModal && (
-        <Modal onClose={() => setShowModal(false)}>
+        <Modal onClose={() => setShowModal(false)} maxWidth={540}>
           <div style={{ marginBottom: 20 }}>
-            <div className="eyebrow-tag">{editId ? "UBAH DATA" : "TAMBAH BARANG"}</div>
+            <div className="eyebrow-tag" style={{ marginBottom: 6 }}>
+              {editId ? "UBAH DATA" : "TAMBAH BARANG"}
+            </div>
             <h2
               style={{
-                fontSize: 20,
+                fontSize: 22,
                 fontWeight: 800,
-                margin: "2px 0 0",
+                margin: 0,
                 color: "var(--color-text)",
                 letterSpacing: "-0.02em",
               }}
             >
               {editId ? "Edit Produk" : "Tambah Produk Baru"}
             </h2>
+            <p style={{ fontSize: 13, color: "var(--color-text-3)", margin: "4px 0 0" }}>
+              {editId
+                ? "Perbarui rincian produk, harga, stok, dan barcode"
+                : "Lengkapi data produk untuk mulai menjual di kasir"}
+            </p>
           </div>
 
           <form onSubmit={handleSave}>
-            {/* Image Upload & Live Preview Component */}
-            <div style={{ marginBottom: 20 }}>
-              <label style={labelStyle}>Foto Produk (opsional)</label>
-              {form.imageId ? (
+            {/* 1:1 Box Style Image Upload & Live Preview */}
+            <div
+              style={{
+                marginBottom: 20,
+                padding: "14px 16px",
+                borderRadius: "var(--radius-lg)",
+                background: "var(--color-surface-2)",
+                border: "1px solid var(--color-border)",
+                display: "flex",
+                alignItems: "center",
+                gap: 16,
+              }}
+            >
+              {/* Square 1:1 Box Preview */}
+              <div
+                style={{
+                  position: "relative",
+                  width: 104,
+                  height: 104,
+                  minWidth: 104,
+                  borderRadius: 16,
+                  overflow: "hidden",
+                  border: form.imageId
+                    ? "1.5px solid var(--color-border)"
+                    : "2px dashed var(--color-border)",
+                  background: "var(--color-surface)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  boxShadow: "var(--shadow-sm)",
+                  flexShrink: 0,
+                }}
+              >
+                {form.imageId ? (
+                  <>
+                    <img
+                      src={form.imageId}
+                      alt="Preview"
+                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setForm((prev) => ({ ...prev, imageId: "" }))}
+                      className="press-tactile"
+                      style={{
+                        position: "absolute",
+                        top: 6,
+                        right: 6,
+                        background: "rgba(0, 0, 0, 0.75)",
+                        color: "#ffffff",
+                        border: "none",
+                        borderRadius: 99,
+                        width: 24,
+                        height: 24,
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        padding: 0,
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+                      }}
+                      title="Hapus foto"
+                    >
+                      <XIcon size={13} weight="bold" />
+                    </button>
+                  </>
+                ) : (
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      gap: 4,
+                      color: "var(--color-text-3)",
+                    }}
+                  >
+                    <CameraIcon size={28} weight="duotone" color="var(--color-brand)" />
+                    <span style={{ fontSize: 10, fontWeight: 700, color: "var(--color-text-3)" }}>
+                      1:1 Kotak
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Upload Action / Info */}
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <div
                   style={{
-                    position: "relative",
-                    width: "100%",
-                    height: 160,
-                    borderRadius: "var(--radius-md)",
-                    overflow: "hidden",
-                    border: "1px solid var(--color-border)",
-                    boxShadow: "var(--shadow-sm)",
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: "var(--color-text)",
+                    marginBottom: 2,
                   }}
                 >
-                  <img
-                    src={form.imageId}
-                    alt="Preview"
-                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setForm((prev) => ({ ...prev, imageId: "" }))}
-                    className="press-tactile"
-                    style={{
-                      position: "absolute",
-                      top: 10,
-                      right: 10,
-                      background: "#18181b",
-                      color: "#ffffff",
-                      border: "none",
-                      borderRadius: 99,
-                      padding: 6,
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
-                    }}
-                    title="Hapus foto"
-                  >
-                    <XIcon size={16} weight="bold" />
-                  </button>
+                  Foto Produk
                 </div>
-              ) : (
+                <div
+                  style={{
+                    fontSize: 11,
+                    color: "var(--color-text-3)",
+                    lineHeight: 1.4,
+                    marginBottom: 10,
+                  }}
+                >
+                  Format JPG, PNG atau WebP. Gambar kotak (1:1) akan tampil paling optimal di kasir.
+                </div>
                 <label
                   className="press-tactile"
                   style={{
-                    display: "flex",
-                    flexDirection: "column",
+                    display: "inline-flex",
                     alignItems: "center",
-                    justifyContent: "center",
-                    gap: 8,
-                    padding: "24px 16px",
-                    border: "2px dashed var(--color-border)",
-                    borderRadius: "var(--radius-md)",
-                    background: "var(--color-surface-2)",
+                    gap: 6,
+                    padding: "7px 14px",
+                    borderRadius: 99,
+                    background: "var(--color-surface)",
+                    border: "1px solid var(--color-border)",
+                    color: "var(--color-text)",
+                    fontSize: 12,
+                    fontWeight: 700,
                     cursor: "pointer",
-                    color: "var(--color-text-2)",
+                    boxShadow: "var(--shadow-sm)",
                   }}
                 >
-                  <div
-                    style={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: 99,
-                      background: "var(--color-surface)",
-                      border: "1px solid var(--color-border)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <CameraIcon size={22} weight="duotone" color="var(--color-text)" />
-                  </div>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: "var(--color-text)" }}>
-                    Unggah Foto Produk
-                  </span>
-                  <span style={{ fontSize: 11, color: "var(--color-text-3)" }}>
-                    Klik untuk memilih gambar dari galeri/perangkat
-                  </span>
+                  <CameraIcon size={15} weight="bold" color="var(--color-brand)" />
+                  <span>{form.imageId ? "Ganti Foto" : "Pilih Foto"}</span>
                   <input
                     type="file"
                     accept="image/*"
@@ -779,88 +831,91 @@ function Produk() {
                     style={{ display: "none" }}
                   />
                 </label>
-              )}
+              </div>
             </div>
 
             <div style={{ marginBottom: 16 }}>
               <label style={labelStyle}>Nama Produk</label>
               <input
                 type="text"
-                placeholder="Contoh: Nike Kobe 5 Protro..."
+                placeholder="Contoh: Kopi Susu Aren..."
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 required
-                style={{ ...inputStyle, borderRadius: 99, padding: "12px 20px" }}
+                style={{ ...inputStyle, borderRadius: "var(--radius-md)" }}
               />
             </div>
 
-            <div style={{ marginBottom: 16 }}>
-              <label style={labelStyle}>Kategori Produk</label>
-              <input
-                type="text"
-                placeholder="Contoh: Apparel, Sembako, Minuman..."
-                value={form.category}
-                onChange={(e) => setForm({ ...form, category: e.target.value })}
-                required
-                style={{ ...inputStyle, borderRadius: 99, padding: "12px 20px" }}
-              />
-            </div>
-
-            {/* Formatted Price Input */}
-            <div style={{ marginBottom: 16 }}>
-              <label style={labelStyle}>Harga Jual (IDR)</label>
-              <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-                <span
-                  style={{
-                    position: "absolute",
-                    left: 16,
-                    fontSize: 15,
-                    fontWeight: 800,
-                    color: "var(--color-text-2)",
-                  }}
-                >
-                  Rp
-                </span>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 16 }}>
+              <div>
+                <label style={labelStyle}>Kategori Produk</label>
                 <input
                   type="text"
-                  inputMode="numeric"
-                  placeholder="120.000"
-                  value={form.price}
-                  onChange={(e) => setForm({ ...form, price: formatIDRInput(e.target.value) })}
+                  placeholder="Contoh: Minuman"
+                  value={form.category}
+                  onChange={(e) => setForm({ ...form, category: e.target.value })}
                   required
-                  className="price"
-                  style={{
-                    ...inputStyle,
-                    paddingLeft: 48,
-                    fontWeight: 800,
-                    fontSize: 16,
-                    borderRadius: 99,
-                  }}
+                  style={{ ...inputStyle, borderRadius: "var(--radius-md)" }}
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>Jumlah Stok Awal</label>
+                <input
+                  type="number"
+                  placeholder="50"
+                  value={form.stock}
+                  onChange={(e) => setForm({ ...form, stock: e.target.value })}
+                  required
+                  style={{ ...inputStyle, borderRadius: "var(--radius-md)" }}
                 />
               </div>
             </div>
 
-            <div style={{ marginBottom: 16 }}>
-              <label style={labelStyle}>Jumlah Stok Awal</label>
-              <input
-                type="number"
-                placeholder="50"
-                value={form.stock}
-                onChange={(e) => setForm({ ...form, stock: e.target.value })}
-                required
-                style={{ ...inputStyle, borderRadius: 99, padding: "12px 20px" }}
-              />
-            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 24 }}>
+              {/* Formatted Price Input */}
+              <div>
+                <label style={labelStyle}>Harga Jual (IDR)</label>
+                <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                  <span
+                    style={{
+                      position: "absolute",
+                      left: 14,
+                      fontSize: 14,
+                      fontWeight: 800,
+                      color: "var(--color-brand)",
+                    }}
+                  >
+                    Rp
+                  </span>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="15.000"
+                    value={form.price}
+                    onChange={(e) => setForm({ ...form, price: formatIDRInput(e.target.value) })}
+                    required
+                    className="price"
+                    style={{
+                      ...inputStyle,
+                      paddingLeft: 42,
+                      fontWeight: 800,
+                      fontSize: 15,
+                      borderRadius: "var(--radius-md)",
+                    }}
+                  />
+                </div>
+              </div>
 
-            <div style={{ marginBottom: 24 }}>
-              <label style={labelStyle}>Barcode / SKU (opsional)</label>
-              <input
-                type="text"
-                placeholder="Kode Barcode / SKUs"
-                value={form.barcode}
-                onChange={(e) => setForm({ ...form, barcode: e.target.value })}
-                style={{ ...inputStyle, borderRadius: 99, padding: "12px 20px" }}
-              />
+              <div>
+                <label style={labelStyle}>Barcode / SKU (opsional)</label>
+                <input
+                  type="text"
+                  placeholder="Kode Barcode / SKU"
+                  value={form.barcode}
+                  onChange={(e) => setForm({ ...form, barcode: e.target.value })}
+                  style={{ ...inputStyle, borderRadius: "var(--radius-md)" }}
+                />
+              </div>
             </div>
 
             <div style={{ display: "flex", gap: 12 }}>
@@ -868,7 +923,7 @@ function Produk() {
                 type="button"
                 onClick={() => setShowModal(false)}
                 className="press-tactile"
-                style={{ ...ghostPillBtn, flex: 1, padding: "12px", justifyContent: "center" }}
+                style={{ ...ghostPillBtn, flex: 1, padding: "12px", justifyContent: "center", borderRadius: 99 }}
               >
                 Batal
               </button>
@@ -876,7 +931,22 @@ function Produk() {
                 type="submit"
                 disabled={saving}
                 className="press-tactile"
-                style={{ ...darkPillBtn, flex: 1, padding: "12px", justifyContent: "center" }}
+                style={{
+                  flex: 1,
+                  padding: "12px",
+                  justifyContent: "center",
+                  borderRadius: 99,
+                  background: "var(--color-brand)",
+                  color: "#ffffff",
+                  fontWeight: 800,
+                  fontSize: 14,
+                  border: "none",
+                  cursor: saving ? "not-allowed" : "pointer",
+                  boxShadow: "0 4px 14px rgba(234, 88, 12, 0.3)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                }}
               >
                 {saving ? "Menyimpan..." : "Simpan Produk"}
               </button>
@@ -887,7 +957,7 @@ function Produk() {
 
       {/* Delete Confirmation Modal */}
       {deleteTarget && (
-        <Modal onClose={() => !deleting && setDeleteTarget(null)}>
+        <Modal onClose={() => !deleting && setDeleteTarget(null)} maxWidth={440}>
           <div style={{ textAlign: "center", padding: "8px 0" }}>
             <div
               style={{
@@ -970,62 +1040,6 @@ function Produk() {
           </div>
         </Modal>
       )}
-    </div>
-  );
-}
-
-function Modal({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
-  return (
-    <div
-      className="animate-backdrop"
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0,0,0,.65)",
-        backdropFilter: "blur(8px)",
-        zIndex: 100,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 16,
-      }}
-      onClick={(e) => e.target === e.currentTarget && onClose()}
-    >
-      <div
-        className="animate-modal"
-        style={{
-          background: "var(--color-surface)",
-          border: "1px solid var(--color-border)",
-          borderRadius: "var(--radius-xl)",
-          padding: 28,
-          width: "100%",
-          maxWidth: 480,
-          boxShadow: "var(--shadow-lg)",
-          maxHeight: "90vh",
-          overflowY: "auto",
-          position: "relative",
-        }}
-      >
-        <button
-          onClick={onClose}
-          className="press-tactile"
-          style={{
-            position: "absolute",
-            top: 20,
-            right: 20,
-            background: "var(--color-surface-2)",
-            border: "1px solid var(--color-border)",
-            borderRadius: 99,
-            cursor: "pointer",
-            color: "var(--color-text-2)",
-            display: "flex",
-            padding: 6,
-          }}
-        >
-          <XIcon size={18} />
-        </button>
-        {children}
-      </div>
     </div>
   );
 }

@@ -280,6 +280,26 @@ body {
   box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.15);
 }
 
+/* Product Card Interactive Aesthetics */
+.product-card-interactive {
+  cursor: pointer;
+  transition: transform 180ms cubic-bezier(0.32, 0.72, 0, 1), box-shadow 180ms ease, border-color 180ms ease;
+}
+.product-card-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-brand) !important;
+}
+.product-card-interactive:hover .card-img-zoom {
+  transform: scale(1.04);
+}
+.product-card-interactive:active {
+  transform: scale(0.98);
+}
+.card-img-zoom {
+  transition: transform 260ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
 /* Tactile Spring Press Effect */
 .press-tactile {
   transition:
@@ -382,7 +402,6 @@ body {
 
 .page-enter-animation {
   animation: pageEnter 200ms cubic-bezier(0.23, 1, 0.32, 1) forwards;
-  will-change: opacity, transform;
 }
 
 /* Sidebar Nav Item Tooltip for Collapsed Mode */

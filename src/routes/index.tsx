@@ -26,7 +26,7 @@ import {
   WifiHighIcon,
   XCircleIcon,
 } from "@phosphor-icons/react";
-import { createFileRoute, Link, useNavigate, Navigate } from "@tanstack/react-router";
+import { Link, Navigate, createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
 export const Route = createFileRoute("/")({ component: Landing });

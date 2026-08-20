@@ -18,7 +18,10 @@ import {
   UserIcon,
   CaretLeftIcon,
   CaretRightIcon,
+  SunIcon,
+  MoonIcon,
 } from "@phosphor-icons/react";
+import { isDarkMode, toggleTheme } from "#/lib/utils";
 
 export const Route = createFileRoute("/_app")({
   component: AppShell,
@@ -401,6 +404,14 @@ function SidebarContent({
   collapsed?: boolean;
   onToggleCollapse?: () => void;
 }) {
+  const [dark, setDark] = useState(isDarkMode);
+
+  useEffect(() => {
+    const handleThemeChange = (e: CustomEvent<boolean>) => setDark(e.detail);
+    window.addEventListener("toku_theme_change" as any, handleThemeChange);
+    return () => window.removeEventListener("toku_theme_change" as any, handleThemeChange);
+  }, []);
+
   return (
     <>
       {/* Sidebar Header */}
@@ -659,6 +670,61 @@ function SidebarContent({
               >
                 {session.user.email}
               </div>
+            </div>
+          )}
+        </div>
+
+        {/* Dark/Light Mode Switcher */}
+        <div className="nav-item-container" style={{ width: "100%", marginBottom: 8 }}>
+          <button
+            onClick={() => setDark(toggleTheme())}
+            className="press-tactile"
+            title={dark ? "Ubah ke Mode Terang" : "Ubah ke Mode Gelap"}
+            aria-label="Toggle theme"
+            style={{
+              width: "100%",
+              padding: collapsed ? "8px 0" : "8px 12px",
+              borderRadius: collapsed ? 12 : 99,
+              border: "1px solid var(--color-border)",
+              background: "var(--color-surface)",
+              color: "var(--color-text)",
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: collapsed ? "center" : "space-between",
+              boxShadow: "var(--shadow-sm)",
+              transition: "all 150ms ease",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              {dark ? (
+                <MoonIcon size={16} weight="fill" color="var(--color-brand)" style={{ flexShrink: 0 }} />
+              ) : (
+                <SunIcon size={16} weight="fill" color="var(--color-brand)" style={{ flexShrink: 0 }} />
+              )}
+              {!collapsed && <span>{dark ? "Mode Gelap" : "Mode Terang"}</span>}
+            </div>
+            {!collapsed && (
+              <span
+                style={{
+                  fontSize: 10,
+                  fontWeight: 800,
+                  color: "var(--color-brand)",
+                  background: "var(--color-brand-light)",
+                  padding: "2px 8px",
+                  borderRadius: 99,
+                  border: "1px solid var(--color-border)",
+                }}
+              >
+                {dark ? "GELAP" : "TERANG"}
+              </span>
+            )}
+          </button>
+          {collapsed && (
+            <div className="sidebar-tooltip">
+              {dark ? "Mode Terang" : "Mode Gelap"}
             </div>
           )}
         </div>

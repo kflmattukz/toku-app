@@ -1,21 +1,21 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "convex/react";
-import { api } from "../../../convex/_generated/api";
-import { useAppStore } from "#/lib/store-context";
-import { useState } from "react";
-import { formatIDR, formatDate } from "#/lib/utils";
+import { Modal } from "#/components/Modal";
 import { printReceipt } from "#/lib/print";
+import { useAppStore } from "#/lib/store-context";
+import { formatDate, formatIDR } from "#/lib/utils";
 import {
-  ReceiptIcon,
-  MoneyIcon,
-  QrCodeIcon,
-  PrinterIcon,
-  XIcon,
-  PackageIcon,
-  CheckCircleIcon,
   CaretLeftIcon,
   CaretRightIcon,
+  CheckCircleIcon,
+  MoneyIcon,
+  PackageIcon,
+  PrinterIcon,
+  QrCodeIcon,
+  ReceiptIcon,
 } from "@phosphor-icons/react";
+import { createFileRoute } from "@tanstack/react-router";
+import { useQuery } from "convex/react";
+import { useState } from "react";
+import { api } from "../../../convex/_generated/api";
 
 export const Route = createFileRoute("/_app/transaksi")({ component: Transaksi });
 
@@ -112,9 +112,7 @@ function Transaksi() {
                 <tbody>
                   {pagedTransactions.map((tx, idx) => {
                     const totalQty = tx.items.reduce((s: number, i: any) => s + i.qty, 0);
-                    const itemsSummary = tx.items
-                      .map((i: any) => `${i.qty}x ${i.name}`)
-                      .join(", ");
+                    const itemsSummary = tx.items.map((i: any) => `${i.qty}x ${i.name}`).join(", ");
                     const txNumber = totalCount - (startIndex + idx);
                     return (
                       <tr
@@ -155,7 +153,9 @@ function Transaksi() {
                           </div>
                         </td>
                         <td style={tdStyle}>
-                          <div style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text)" }}>
+                          <div
+                            style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text)" }}
+                          >
                             {formatDate(tx.createdAt)}
                           </div>
                         </td>
@@ -413,7 +413,8 @@ function Transaksi() {
                   <strong style={{ color: "var(--color-text)" }}>
                     {totalCount > 0 ? startIndex + 1 : 0}-{endIndex}
                   </strong>{" "}
-                  dari <strong style={{ color: "var(--color-text)" }}>{totalCount}</strong> transaksi
+                  dari <strong style={{ color: "var(--color-text)" }}>{totalCount}</strong>{" "}
+                  transaksi
                 </span>
 
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -498,9 +499,7 @@ function Transaksi() {
                     borderRadius: 99,
                     border: "1px solid var(--color-border)",
                     background:
-                      currentPage >= totalPages
-                        ? "var(--color-surface-2)"
-                        : "var(--color-surface)",
+                      currentPage >= totalPages ? "var(--color-surface-2)" : "var(--color-surface)",
                     color: currentPage >= totalPages ? "var(--color-text-3)" : "var(--color-text)",
                     fontSize: 13,
                     fontWeight: 700,
@@ -597,7 +596,11 @@ function Receipt({ tx, storeName }: { tx: any; storeName: string }) {
             boxShadow: "0 4px 12px rgba(234, 88, 12, 0.25)",
           }}
         >
-          <img src="/logo.png" alt="Toku POS" style={{ width: 28, height: 28, objectFit: "contain" }} />
+          <img
+            src="/logo.png"
+            alt="Toku POS"
+            style={{ width: 28, height: 28, objectFit: "contain" }}
+          />
         </div>
         <strong
           style={{
@@ -777,62 +780,6 @@ function Receipt({ tx, storeName }: { tx: any; storeName: string }) {
         <div style={{ fontSize: 10, color: "#ea580c", fontWeight: 800, marginTop: 2 }}>
           Toku POS · Kasir Digital UMKM
         </div>
-      </div>
-    </div>
-  );
-}
-
-function Modal({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
-  return (
-    <div
-      className="animate-backdrop"
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0,0,0,.65)",
-        backdropFilter: "blur(8px)",
-        zIndex: 100,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 16,
-      }}
-      onClick={(e) => e.target === e.currentTarget && onClose()}
-    >
-      <div
-        className="animate-modal"
-        style={{
-          background: "var(--color-surface)",
-          border: "1px solid var(--color-border)",
-          borderRadius: "var(--radius-xl)",
-          padding: "28px",
-          width: "100%",
-          maxWidth: 460,
-          boxShadow: "var(--shadow-lg)",
-          maxHeight: "90vh",
-          overflowY: "auto",
-          position: "relative",
-        }}
-      >
-        <button
-          onClick={onClose}
-          className="press-tactile no-print"
-          style={{
-            position: "absolute",
-            top: 20,
-            right: 20,
-            background: "var(--color-surface-2)",
-            border: "1px solid var(--color-border)",
-            borderRadius: 99,
-            cursor: "pointer",
-            color: "var(--color-text-2)",
-            display: "flex",
-            padding: 6,
-          }}
-        >
-          <XIcon size={18} />
-        </button>
-        {children}
       </div>
     </div>
   );

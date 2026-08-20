@@ -1,33 +1,33 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useMutation, useQuery } from "convex/react";
-import { api } from "../../../convex/_generated/api";
-import { useAppStore } from "#/lib/store-context";
-import { useState, useEffect } from "react";
-import { formatIDR } from "#/lib/utils";
+import { Modal } from "#/components/Modal";
+import { clearOfflineQueue, enqueueOfflineTx, getOfflineQueue } from "#/lib/offline-queue";
 import { printReceipt } from "#/lib/print";
-import { enqueueOfflineTx, getOfflineQueue, clearOfflineQueue } from "#/lib/offline-queue";
-import type { Id } from "../../../convex/_generated/dataModel";
-import { toast } from "sonner";
+import { useAppStore } from "#/lib/store-context";
+import { formatIDR } from "#/lib/utils";
 import {
-  MagnifyingGlassIcon,
-  ShoppingCartIcon,
-  TrashIcon,
-  MoneyIcon,
-  QrCodeIcon,
-  PrinterIcon,
-  XIcon,
-  WarningIcon,
-  PackageIcon,
-  PlusIcon,
-  MinusIcon,
+  ArrowRightIcon,
   CaretUpIcon,
   CheckCircleIcon,
-  ArrowRightIcon,
   FadersIcon,
   FireIcon,
   ImageIcon,
-  StorefrontIcon,
+  MagnifyingGlassIcon,
+  MinusIcon,
+  MoneyIcon,
+  PackageIcon,
+  PlusIcon,
+  PrinterIcon,
+  QrCodeIcon,
+  ShoppingCartIcon,
+  TrashIcon,
+  WarningIcon,
+  XIcon,
 } from "@phosphor-icons/react";
+import { createFileRoute } from "@tanstack/react-router";
+import { useMutation, useQuery } from "convex/react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { api } from "../../../convex/_generated/api";
+import type { Id } from "../../../convex/_generated/dataModel";
 
 export const Route = createFileRoute("/_app/kasir")({ component: Kasir });
 
@@ -366,17 +366,20 @@ function Kasir() {
                     boxShadow: inCart ? "0 8px 24px rgba(234, 88, 12, 0.2)" : "var(--shadow-sm)",
                   }}
                 >
-                  {/* Image Header area with Orange Checkmark Badge if selected */}
+                  {/* 1:1 Box Style Image Container */}
                   <div
                     style={{
                       position: "relative",
                       width: "100%",
-                      height: 110,
+                      aspectRatio: "1 / 1",
                       borderRadius: "var(--radius-md)",
                       overflow: "hidden",
                       marginBottom: 10,
                       background: "var(--color-surface-2)",
                       border: "1px solid var(--color-border)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
                     }}
                   >
                     {p.imageId ? (
@@ -392,12 +395,21 @@ function Kasir() {
                           width: "100%",
                           height: "100%",
                           display: "flex",
+                          flexDirection: "column",
                           alignItems: "center",
                           justifyContent: "center",
+                          gap: 4,
                           color: "var(--color-text-3)",
+                          background: "var(--color-surface-2)",
                         }}
                       >
-                        <ImageIcon size={36} weight="duotone" />
+                        <PackageIcon
+                          size={38}
+                          weight="duotone"
+                          color="var(--color-brand)"
+                          style={{ opacity: 0.6 }}
+                        />
+                        <span style={{ fontSize: 10, fontWeight: 700, opacity: 0.6 }}>Toku POS</span>
                       </div>
                     )}
 
@@ -409,16 +421,18 @@ function Kasir() {
                           right: 8,
                           background: "var(--color-brand)",
                           color: "#ffffff",
-                          width: 24,
-                          height: 24,
+                          padding: "3px 8px",
                           borderRadius: 99,
                           display: "flex",
                           alignItems: "center",
-                          justifyContent: "center",
+                          gap: 4,
+                          fontSize: 11,
+                          fontWeight: 800,
                           boxShadow: "0 2px 8px rgba(234, 88, 12, 0.4)",
                         }}
                       >
-                        <CheckCircleIcon size={16} weight="fill" />
+                        <CheckCircleIcon size={13} weight="fill" />
+                        <span>{inCart.qty}x</span>
                       </div>
                     )}
 
@@ -437,6 +451,7 @@ function Kasir() {
                           display: "flex",
                           alignItems: "center",
                           gap: 3,
+                          boxShadow: "0 2px 6px rgba(239, 68, 68, 0.3)",
                         }}
                       >
                         <WarningIcon size={11} weight="fill" />
@@ -493,7 +508,8 @@ function Kasir() {
                           width: 28,
                           height: 28,
                           borderRadius: 99,
-                          background: inCart.qty === 1 ? "rgba(239, 68, 68, 0.1)" : "var(--color-surface-3)",
+                          background:
+                            inCart.qty === 1 ? "rgba(239, 68, 68, 0.1)" : "var(--color-surface-3)",
                           border: "none",
                           color: inCart.qty === 1 ? "var(--color-danger)" : "var(--color-text-2)",
                           display: "flex",
@@ -1454,7 +1470,11 @@ function Receipt({ tx, storeName }: { tx: any; storeName: string }) {
             boxShadow: "0 4px 12px rgba(234, 88, 12, 0.25)",
           }}
         >
-          <img src="/logo.png" alt="Toku POS" style={{ width: 28, height: 28, objectFit: "contain" }} />
+          <img
+            src="/logo.png"
+            alt="Toku POS"
+            style={{ width: 28, height: 28, objectFit: "contain" }}
+          />
         </div>
         <strong
           style={{
@@ -1634,62 +1654,6 @@ function Receipt({ tx, storeName }: { tx: any; storeName: string }) {
         <div style={{ fontSize: 10, color: "#ea580c", fontWeight: 800, marginTop: 2 }}>
           Toku POS · Kasir Digital UMKM
         </div>
-      </div>
-    </div>
-  );
-}
-
-function Modal({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
-  return (
-    <div
-      className="animate-backdrop"
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0,0,0,.65)",
-        backdropFilter: "blur(8px)",
-        zIndex: 100,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 16,
-      }}
-      onClick={(e) => e.target === e.currentTarget && onClose()}
-    >
-      <div
-        className="animate-modal"
-        style={{
-          background: "var(--color-surface)",
-          border: "1px solid var(--color-border)",
-          borderRadius: "var(--radius-xl)",
-          padding: "28px",
-          width: "100%",
-          maxWidth: 460,
-          boxShadow: "var(--shadow-lg)",
-          maxHeight: "90vh",
-          overflowY: "auto",
-          position: "relative",
-        }}
-      >
-        <button
-          onClick={onClose}
-          className="press-tactile no-print"
-          style={{
-            position: "absolute",
-            top: 20,
-            right: 20,
-            background: "var(--color-surface-2)",
-            border: "1px solid var(--color-border)",
-            borderRadius: 99,
-            cursor: "pointer",
-            color: "var(--color-text-2)",
-            display: "flex",
-            padding: 6,
-          }}
-        >
-          <XIcon size={18} />
-        </button>
-        {children}
       </div>
     </div>
   );
