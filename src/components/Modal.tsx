@@ -66,8 +66,8 @@ export function Modal({
           aria-label="Tutup"
           style={{
             position: "absolute",
-            top: 18,
-            right: 18,
+            top: 25,
+            right: 25,
             width: 32,
             height: 32,
             background: "var(--color-surface-2)",
@@ -87,6 +87,6 @@ export function Modal({
         {children}
       </div>
     </div>,
-    document.body
+    document.body,
   );
 }

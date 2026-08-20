@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom";
 import { Modal } from "#/components/Modal";
 import { clearOfflineQueue, enqueueOfflineTx, getOfflineQueue } from "#/lib/offline-queue";
 import { printReceipt } from "#/lib/print";
@@ -296,7 +297,15 @@ function Kasir() {
   return (
     <div style={{ display: "flex", gap: 24, flex: 1, minHeight: "calc(100vh - 120px)" }}>
       {/* Products Panel */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
+      <div
+        style={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          minWidth: 0,
+          paddingBottom: cart.length > 0 ? 80 : 0,
+        }}
+      >
         {/* Header & Pill Search Control (Matching Image Style) */}
         <div style={{ marginBottom: 20 }}>
           <div
@@ -624,7 +633,9 @@ function Kasir() {
                     >
                       {p.name}
                     </div>
-                    <div style={{ display: "flex", alignItems: "baseline", gap: 6, flexWrap: "wrap" }}>
+                    <div
+                      style={{ display: "flex", alignItems: "baseline", gap: 6, flexWrap: "wrap" }}
+                    >
                       <span
                         className="price"
                         style={{ fontSize: 15, fontWeight: 800, color: "var(--color-brand)" }}
@@ -833,7 +844,11 @@ function Kasir() {
                 color: "var(--color-text-3)",
               }}
             >
-              <ShoppingCartIcon size={48} weight="duotone" style={{ opacity: 0.3, marginBottom: 12 }} />
+              <ShoppingCartIcon
+                size={48}
+                weight="duotone"
+                style={{ opacity: 0.3, marginBottom: 12 }}
+              />
               <p style={{ fontSize: 14, fontWeight: 700, margin: 0, color: "var(--color-text-2)" }}>
                 Keranjang Masih Kosong
               </p>
@@ -978,7 +993,9 @@ function Kasir() {
                       }}
                     >
                       <TagIcon size={12} weight="bold" />
-                      <span>{disc.hasDiscount ? `Disc ${disc.discountLabel}` : "+ Diskon Item"}</span>
+                      <span>
+                        {disc.hasDiscount ? `Disc ${disc.discountLabel}` : "+ Diskon Item"}
+                      </span>
                       <PencilSimpleIcon size={10} />
                     </button>
 
@@ -1056,7 +1073,10 @@ function Kasir() {
               <span style={{ fontSize: 12, fontWeight: 600, color: "var(--color-text-2)" }}>
                 Subtotal Produk ({totalItems} pcs)
               </span>
-              <span className="price" style={{ fontSize: 14, fontWeight: 700, color: "var(--color-text)" }}>
+              <span
+                className="price"
+                style={{ fontSize: 14, fontWeight: 700, color: "var(--color-text)" }}
+              >
                 {formatIDR(subtotal)}
               </span>
             </div>
@@ -1127,91 +1147,78 @@ function Kasir() {
       </div>
 
       {/* Mobile Floating Cart Summary Button */}
-      {cart.length > 0 && !showPayment && (
-        <div
-          className="mobile-only"
-          style={{
-            position: "fixed",
-            bottom: 20,
-            left: 16,
-            right: 16,
-            zIndex: 40,
-          }}
-        >
-          <button
-            onClick={() => setShowMobileCart(true)}
-            className="press-tactile"
+      {cart.length > 0 &&
+        !showPayment &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            className="mobile-only animate-float-pill"
             style={{
-              width: "100%",
-              padding: "14px 20px",
-              background: "var(--color-brand)",
-              color: "#ffffff",
-              border: "none",
-              borderRadius: 99,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              boxShadow: "0 8px 28px rgba(234, 88, 12, 0.4)",
-              cursor: "pointer",
+              position: "fixed",
+              bottom: "calc(78px + env(safe-area-inset-bottom, 0px))",
+              left: 16,
+              right: 16,
+              zIndex: 55,
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div
-                style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: 99,
-                  background: "rgba(255, 255, 255, 0.2)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 12,
-                  fontWeight: 800,
-                }}
-              >
-                {totalItems}
+            <button
+              onClick={() => setShowMobileCart(true)}
+              className="press-tactile"
+              style={{
+                width: "100%",
+                padding: "14px 18px",
+                background: "var(--color-brand)",
+                color: "#ffffff",
+                border: "none",
+                borderRadius: 99,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                boxShadow: "0 10px 30px rgba(234, 88, 12, 0.45)",
+                cursor: "pointer",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: 99,
+                    background: "rgba(255, 255, 255, 0.22)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 12,
+                    fontWeight: 800,
+                  }}
+                >
+                  {totalItems}
+                </div>
+                <span style={{ fontSize: 14, fontWeight: 800, letterSpacing: "-0.01em" }}>
+                  Lihat Keranjang
+                </span>
               </div>
-              <span style={{ fontSize: 14, fontWeight: 800 }}>Lihat Keranjang</span>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <span className="price" style={{ fontSize: 16, fontWeight: 800 }}>
-                {formatIDR(total)}
-              </span>
-              <ArrowRightIcon size={16} weight="bold" />
-            </div>
-          </button>
-        </div>
-      )}
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span className="price" style={{ fontSize: 16, fontWeight: 800 }}>
+                  {formatIDR(total)}
+                </span>
+                <ArrowRightIcon size={16} weight="bold" />
+              </div>
+            </button>
+          </div>,
+          document.body,
+        )}
 
-      {/* Mobile Cart Drawer Bottom Sheet */}
+      {/* Mobile Cart Floating Centered Modal */}
       {showMobileCart && (
-        <div
-          className="mobile-only"
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: "rgba(0, 0, 0, 0.6)",
-            backdropFilter: "blur(4px)",
-            zIndex: 60,
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "flex-end",
-          }}
-          onClick={() => setShowMobileCart(false)}
-        >
+        <Modal onClose={() => setShowMobileCart(false)} maxWidth={480}>
           <div
             style={{
-              background: "var(--color-surface)",
-              borderRadius: "24px 24px 0 0",
-              maxHeight: "85vh",
+              margin: "-12px -8px -12px",
               display: "flex",
               flexDirection: "column",
-              overflow: "hidden",
+              maxHeight: "78vh",
             }}
-            onClick={(e) => e.stopPropagation()}
           >
             <CartContent
               cart={cart}
@@ -1229,7 +1236,7 @@ function Kasir() {
               }}
             />
           </div>
-        </div>
+        </Modal>
       )}
 
       {/* ITEM DISCOUNT MODAL */}
@@ -1758,9 +1765,7 @@ function Kasir() {
                               ? "var(--color-brand)"
                               : "var(--color-surface)",
                           color:
-                            basketDiscountValue === String(pct)
-                              ? "#ffffff"
-                              : "var(--color-text)",
+                            basketDiscountValue === String(pct) ? "#ffffff" : "var(--color-text)",
                           fontSize: 11,
                           fontWeight: 700,
                           cursor: "pointer",
@@ -2152,6 +2157,8 @@ function CartContent({
           display: "flex",
           alignItems: "center",
           gap: 10,
+          borderTopLeftRadius: "var(--radius-lg)",
+          borderTopRightRadius: "var(--radius-lg)",
           background: "var(--color-surface-2)",
         }}
       >
@@ -2202,7 +2209,9 @@ function CartContent({
                   gap: 6,
                 }}
               >
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div
+                  style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}
+                >
                   <div style={{ flex: 1, minWidth: 0, paddingRight: 8 }}>
                     <div
                       style={{
@@ -2232,7 +2241,9 @@ function CartContent({
                   </span>
                 </div>
 
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div
+                  style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}
+                >
                   <button
                     type="button"
                     onClick={() => onEditItemDiscount(item)}
@@ -2513,10 +2524,7 @@ function Receipt({ tx, storeName }: { tx: any; storeName: string }) {
                 </div>
               </div>
               <div style={{ textAlign: "right" }}>
-                <span
-                  className="price"
-                  style={{ fontSize: 13, fontWeight: 800, color: "#1c1917" }}
-                >
+                <span className="price" style={{ fontSize: 13, fontWeight: 800, color: "#1c1917" }}>
                   {formatIDR(itemTotal)}
                 </span>
                 {disc.hasDiscount && (
