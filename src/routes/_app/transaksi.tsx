@@ -4,6 +4,7 @@ import { api } from "../../../convex/_generated/api";
 import { useAppStore } from "#/lib/store-context";
 import { useState } from "react";
 import { formatIDR, formatDate } from "#/lib/utils";
+import { printReceipt } from "#/lib/print";
 import {
   ReceiptIcon,
   MoneyIcon,
@@ -523,12 +524,12 @@ function Transaksi() {
       {/* Receipt Modal */}
       {selected && store && (
         <Modal onClose={() => setSelected(null)}>
-          <div className="receipt-print">
+          <div id="toku-receipt-content-tx" className="receipt-print">
             <Receipt tx={selected} storeName={store.name} />
           </div>
-          <div style={{ display: "flex", gap: 10, marginTop: 24 }}>
+          <div className="no-print" style={{ display: "flex", gap: 10, marginTop: 24 }}>
             <button
-              onClick={() => window.print()}
+              onClick={() => printReceipt("toku-receipt-content-tx")}
               className="press-tactile"
               style={{
                 ...payBtnStyle,
@@ -572,39 +573,43 @@ function Receipt({ tx, storeName }: { tx: any; storeName: string }) {
     : `TX-${now.getTime().toString().slice(-6)}`;
 
   return (
-    <div
-      style={{
-        fontFamily: "'JetBrains Mono', monospace",
-        fontSize: 13,
-        color: "var(--color-text)",
-        lineHeight: 1.5,
-        background: "var(--color-surface-2)",
-        border: "1.5px solid var(--color-border)",
-        borderRadius: "var(--radius-lg)",
-        padding: "24px 20px",
-        boxShadow: "var(--shadow-sm)",
-      }}
-    >
+    <div className="receipt-paper">
       {/* Store Header */}
       <div
         style={{
           textAlign: "center",
-          borderBottom: "2px dashed var(--color-border)",
+          borderBottom: "2px dashed #e5e5e5",
           paddingBottom: 16,
           marginBottom: 16,
         }}
       >
+        <div
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: 99,
+            background: "#ea580c",
+            color: "#ffffff",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            margin: "0 auto 8px",
+            boxShadow: "0 4px 12px rgba(234, 88, 12, 0.25)",
+          }}
+        >
+          <img src="/logo.png" alt="Toku POS" style={{ width: 28, height: 28, objectFit: "contain" }} />
+        </div>
         <strong
           style={{
             fontSize: 18,
-            color: "var(--color-text)",
+            color: "#1c1917",
             display: "block",
             letterSpacing: "-0.02em",
           }}
         >
           {storeName}
         </strong>
-        <div style={{ fontSize: 11, color: "var(--color-text-3)", marginTop: 4 }}>
+        <div style={{ fontSize: 11, color: "#78716c", marginTop: 4 }}>
           {now.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })} ·{" "}
           {now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
         </div>
@@ -614,11 +619,11 @@ function Receipt({ tx, storeName }: { tx: any; storeName: string }) {
             marginTop: 8,
             padding: "2px 10px",
             borderRadius: 99,
-            background: "var(--color-surface)",
-            border: "1px solid var(--color-border)",
+            background: "#f5f5f4",
+            border: "1px solid #e7e5e4",
             fontSize: 11,
             fontWeight: 800,
-            color: "var(--color-brand)",
+            color: "#ea580c",
           }}
         >
           #{txId}
@@ -633,7 +638,7 @@ function Receipt({ tx, storeName }: { tx: any; storeName: string }) {
             justifyContent: "space-between",
             fontSize: 10,
             fontWeight: 800,
-            color: "var(--color-text-3)",
+            color: "#78716c",
             textTransform: "uppercase",
             letterSpacing: "0.1em",
             marginBottom: 8,
@@ -651,22 +656,16 @@ function Receipt({ tx, storeName }: { tx: any; storeName: string }) {
               justifyContent: "space-between",
               alignItems: "flex-start",
               padding: "6px 0",
-              borderBottom:
-                i === tx.items.length - 1 ? "none" : "1px solid var(--color-border-subtle)",
+              borderBottom: i === tx.items.length - 1 ? "none" : "1px solid #f5f5f4",
             }}
           >
             <div style={{ flex: 1, minWidth: 0, paddingRight: 12 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "var(--color-text)" }}>
-                {item.name}
-              </div>
-              <div style={{ fontSize: 11, color: "var(--color-text-3)" }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#1c1917" }}>{item.name}</div>
+              <div style={{ fontSize: 11, color: "#78716c" }}>
                 {item.qty} x <span className="price">{formatIDR(item.price)}</span>
               </div>
             </div>
-            <span
-              className="price"
-              style={{ fontSize: 13, fontWeight: 800, color: "var(--color-text)" }}
-            >
+            <span className="price" style={{ fontSize: 13, fontWeight: 800, color: "#1c1917" }}>
               {formatIDR(item.price * item.qty)}
             </span>
           </div>
@@ -676,7 +675,7 @@ function Receipt({ tx, storeName }: { tx: any; storeName: string }) {
       {/* Payment Details */}
       <div
         style={{
-          borderTop: "2px dashed var(--color-border)",
+          borderTop: "2px dashed #e5e5e5",
           paddingTop: 14,
           marginBottom: 16,
         }}
@@ -687,11 +686,11 @@ function Receipt({ tx, storeName }: { tx: any; storeName: string }) {
             justifyContent: "space-between",
             marginBottom: 6,
             fontSize: 12,
-            color: "var(--color-text-2)",
+            color: "#57534e",
           }}
         >
           <span>Metode Bayar</span>
-          <span style={{ fontWeight: 800, color: "var(--color-text)" }}>
+          <span style={{ fontWeight: 800, color: "#1c1917" }}>
             {tx.paymentMethod === "cash" ? "Tunai (Cash)" : "QRIS Digital"}
           </span>
         </div>
@@ -704,11 +703,11 @@ function Receipt({ tx, storeName }: { tx: any; storeName: string }) {
                 justifyContent: "space-between",
                 marginBottom: 4,
                 fontSize: 12,
-                color: "var(--color-text-2)",
+                color: "#57534e",
               }}
             >
               <span>Uang Diterima</span>
-              <span className="price" style={{ color: "var(--color-text)" }}>
+              <span className="price" style={{ color: "#1c1917" }}>
                 {formatIDR(tx.cashPaid)}
               </span>
             </div>
@@ -718,14 +717,11 @@ function Receipt({ tx, storeName }: { tx: any; storeName: string }) {
                 justifyContent: "space-between",
                 marginBottom: 6,
                 fontSize: 12,
-                color: "var(--color-text-2)",
+                color: "#57534e",
               }}
             >
               <span>Kembalian</span>
-              <span
-                className="price"
-                style={{ fontWeight: 800, color: "var(--color-success-text)" }}
-              >
+              <span className="price" style={{ fontWeight: 800, color: "#047857" }}>
                 {formatIDR(tx.change)}
               </span>
             </div>
@@ -736,8 +732,8 @@ function Receipt({ tx, storeName }: { tx: any; storeName: string }) {
       {/* Total Banner */}
       <div
         style={{
-          background: "var(--color-brand-light)",
-          border: "1.5px solid var(--color-brand)",
+          background: "#fff7ed",
+          border: "1.5px solid #ea580c",
           borderRadius: "var(--radius-md)",
           padding: "12px 16px",
           display: "flex",
@@ -750,17 +746,14 @@ function Receipt({ tx, storeName }: { tx: any; storeName: string }) {
           style={{
             fontSize: 12,
             fontWeight: 800,
-            color: "var(--color-brand)",
+            color: "#ea580c",
             textTransform: "uppercase",
             letterSpacing: "0.05em",
           }}
         >
           TOTAL BAYAR
         </span>
-        <span
-          className="price"
-          style={{ fontSize: 22, fontWeight: 800, color: "var(--color-brand)" }}
-        >
+        <span className="price" style={{ fontSize: 22, fontWeight: 800, color: "#ea580c" }}>
           {formatIDR(tx.total)}
         </span>
       </div>
@@ -771,17 +764,17 @@ function Receipt({ tx, storeName }: { tx: any; storeName: string }) {
           style={{
             fontSize: 18,
             letterSpacing: "4px",
-            color: "var(--color-text-3)",
+            color: "#a8a29e",
             marginBottom: 8,
             opacity: 0.7,
           }}
         >
           ||| | || |||| | ||| || |||
         </div>
-        <div style={{ fontSize: 11, color: "var(--color-text-3)", fontWeight: 600 }}>
+        <div style={{ fontSize: 11, color: "#78716c", fontWeight: 600 }}>
           Terima kasih telah berbelanja!
         </div>
-        <div style={{ fontSize: 10, color: "var(--color-brand)", fontWeight: 800, marginTop: 2 }}>
+        <div style={{ fontSize: 10, color: "#ea580c", fontWeight: 800, marginTop: 2 }}>
           Toku POS · Kasir Digital UMKM
         </div>
       </div>
@@ -823,7 +816,7 @@ function Modal({ children, onClose }: { children: React.ReactNode; onClose: () =
       >
         <button
           onClick={onClose}
-          className="press-tactile"
+          className="press-tactile no-print"
           style={{
             position: "absolute",
             top: 20,
