@@ -113,22 +113,18 @@ function Onboarding() {
         }}
       >
         <div style={{ textAlign: "center", marginBottom: 32 }}>
-          <div
+          <img
+            src="/logo.png"
+            alt="Toku POS"
             style={{
-              width: 56,
-              height: 56,
-              borderRadius: 99,
-              background: "var(--color-brand-light)",
-              border: "1.5px solid var(--color-brand)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
+              width: 64,
+              height: 64,
+              borderRadius: 14,
+              objectFit: "contain",
+              display: "block",
               margin: "0 auto 16px",
-              boxShadow: "0 4px 14px rgba(234,88,12,0.25)",
             }}
-          >
-            <StorefrontIcon size={30} weight="duotone" color="var(--color-brand)" />
-          </div>
+          />
           <div className="eyebrow-tag" style={{ justifyContent: "center", marginBottom: 4 }}>
             ATUR TOKO KASIR
           </div>

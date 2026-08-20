@@ -237,20 +237,17 @@ function AppShell() {
                 whiteSpace: "nowrap",
               }}
             >
-              <div
+              <img
+                src="/logo.png"
+                alt="Toku POS"
                 style={{
                   width: 32,
                   height: 32,
-                  borderRadius: 99,
-                  background: "var(--color-brand-light)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  borderRadius: 8,
+                  objectFit: "contain",
                   flexShrink: 0,
                 }}
-              >
-                <StorefrontIcon size={18} weight="fill" color="var(--color-brand)" />
-              </div>
+              />
               <span
                 style={{
                   overflow: "hidden",
@@ -374,22 +371,17 @@ function SidebarContent({
           KASIR DIGITAL POS
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div
+          <img
+            src="/logo.png"
+            alt="Toku POS"
             style={{
               width: 40,
               height: 40,
-              borderRadius: 99,
-              background: "var(--color-brand)",
-              color: "#ffffff",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
+              borderRadius: 8,
+              objectFit: "contain",
               flexShrink: 0,
-              boxShadow: "0 4px 12px rgba(234, 88, 12, 0.25)",
             }}
-          >
-            <StorefrontIcon size={22} weight="fill" color="#ffffff" />
-          </div>
+          />
           <div style={{ minWidth: 0, flex: 1 }}>
             <div
               style={{
@@ -575,22 +567,18 @@ function Loader() {
       }}
     >
       <div style={{ textAlign: "center" }}>
-        <div
+        <img
+          src="/logo.png"
+          alt="Toku POS"
           style={{
-            width: 54,
-            height: 54,
-            borderRadius: 99,
-            background: "var(--color-brand)",
-            color: "#ffffff",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            width: 56,
+            height: 56,
+            borderRadius: 12,
+            objectFit: "contain",
+            display: "block",
             margin: "0 auto 16px",
-            boxShadow: "0 6px 18px rgba(234, 88, 12, 0.35)",
           }}
-        >
-          <StorefrontIcon size={28} weight="fill" />
-        </div>
+        />
         <p style={{ color: "var(--color-text-2)", fontSize: 14, fontWeight: 700 }}>
           Memuat Toku POS...
         </p>

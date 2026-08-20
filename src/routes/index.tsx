@@ -219,20 +219,16 @@ function Landing() {
               flexShrink: 0,
             }}
           >
-            <div
+            <img
+              src="/logo.png"
+              alt="Toku POS"
               style={{
                 width: 34,
                 height: 34,
-                borderRadius: 99,
-                background: "var(--color-brand-light)",
-                border: "1px solid var(--color-brand)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                objectFit: "contain",
+                borderRadius: 8,
               }}
-            >
-              <StorefrontIcon size={20} weight="fill" color="var(--color-brand)" />
-            </div>
+            />
             <span style={{ color: "var(--color-text)", letterSpacing: "-0.02em" }}>Toku POS</span>
           </span>
 
