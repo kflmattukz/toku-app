@@ -4,9 +4,17 @@ import { api } from "../../../convex/_generated/api";
 import { useAppStore } from "#/lib/store-context";
 import { useState } from "react";
 import { formatIDR } from "#/lib/utils";
+import { Modal } from "#/components/Modal";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { toast } from "sonner";
-import { WarningIcon, CheckCircleIcon, PlusIcon, PackageIcon } from "@phosphor-icons/react";
+import {
+  WarningIcon,
+  CheckCircleIcon,
+  PlusIcon,
+  MinusIcon,
+  CheckIcon,
+  PackageIcon,
+} from "@phosphor-icons/react";
 
 export const Route = createFileRoute("/_app/stok")({ component: Stok });
 
@@ -17,28 +25,37 @@ function Stok() {
   const products = useQuery(api.products.list, store ? { storeId: store._id } : "skip");
   const adjustStock = useMutation(api.products.adjustStock);
 
-  const [restockId, setRestockId] = useState<Id<"products"> | null>(null);
-  const [restockAmt, setRestockAmt] = useState("");
+  const [activeRestockProduct, setActiveRestockProduct] = useState<any | null>(null);
+  const [restockAmt, setRestockAmt] = useState("10");
+  const [saving, setSaving] = useState(false);
 
   const lowStock = (products ?? []).filter((p) => p.stock <= LOW_STOCK);
   const okStock = (products ?? []).filter((p) => p.stock > LOW_STOCK);
 
-  const handleRestock = async (id: Id<"products">) => {
-    const amt = parseInt(restockAmt) || 0;
+  const openRestock = (p: any) => {
+    setActiveRestockProduct(p);
+    setRestockAmt("10");
+  };
+
+  const handleRestock = async () => {
+    if (!activeRestockProduct) return;
+    const amt = parseInt(restockAmt, 10) || 0;
     if (amt <= 0) {
-      toast.error("Jumlah restok harus lebih besar dari 0");
+      toast.error("Jumlah restok harus minimal 1 pcs");
       return;
     }
-    const target = products?.find((p) => p._id === id);
+    setSaving(true);
     try {
-      await adjustStock({ id, delta: amt });
-      toast.success(`Stok ${target?.name ?? "produk"} bertambah ${amt} pcs!`, {
-        description: `Stok baru: ${(target?.stock ?? 0) + amt} pcs`,
+      await adjustStock({ id: activeRestockProduct._id, delta: amt });
+      toast.success(`Stok ${activeRestockProduct.name} bertambah ${amt} pcs!`, {
+        description: `Stok sekarang: ${(activeRestockProduct.stock ?? 0) + amt} pcs`,
       });
-      setRestockId(null);
-      setRestockAmt("");
+      setActiveRestockProduct(null);
+      setRestockAmt("10");
     } catch {
       toast.error("Gagal memperbarui stok. Silakan coba lagi.");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -228,46 +245,13 @@ function Stok() {
                   >
                     {formatIDR(p.price)}
                   </span>
-                  {restockId === p._id ? (
-                    <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                      <input
-                        type="number"
-                        placeholder="+Stok"
-                        value={restockAmt}
-                        onChange={(e) => setRestockAmt(e.target.value)}
-                        style={{
-                          width: 70,
-                          padding: "6px 10px",
-                          border: "1.5px solid var(--color-border)",
-                          borderRadius: "var(--radius-sm)",
-                          fontSize: 13,
-                          background: "var(--color-surface-2)",
-                          color: "var(--color-text)",
-                          fontWeight: 700,
-                          outline: "none",
-                        }}
-                        autoFocus
-                      />
-                      <button
-                        onClick={() => handleRestock(p._id)}
-                        className="press-tactile"
-                        style={smallPrimaryBtn}
-                      >
-                        Simpan
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => {
-                        setRestockId(p._id);
-                        setRestockAmt("");
-                      }}
-                      className="press-tactile"
-                      style={smallPrimaryBtn}
-                    >
-                      <PlusIcon size={14} weight="bold" /> Restock
-                    </button>
-                  )}
+                  <button
+                    onClick={() => openRestock(p)}
+                    className="press-tactile"
+                    style={smallPrimaryBtn}
+                  >
+                    <PlusIcon size={14} weight="bold" /> Restock
+                  </button>
                 </div>
               </div>
             ))}
@@ -390,58 +374,13 @@ function Stok() {
                         </span>
                       </td>
                       <td style={tdStyle}>
-                        {restockId === p._id ? (
-                          <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                            <input
-                              type="number"
-                              placeholder="+Stok"
-                              value={restockAmt}
-                              onChange={(e) => setRestockAmt(e.target.value)}
-                              style={{
-                                width: 80,
-                                padding: "6px 10px",
-                                border: "1.5px solid var(--color-border)",
-                                borderRadius: "var(--radius-sm)",
-                                fontSize: 13,
-                                background: "var(--color-surface-2)",
-                                color: "var(--color-text)",
-                                fontWeight: 700,
-                                outline: "none",
-                              }}
-                              autoFocus
-                            />
-                            <button
-                              onClick={() => handleRestock(p._id)}
-                              className="press-tactile"
-                              style={smallPrimaryBtn}
-                            >
-                              Simpan
-                            </button>
-                            <button
-                              onClick={() => setRestockId(null)}
-                              className="press-tactile"
-                              style={{
-                                ...smallPrimaryBtn,
-                                background: "var(--color-surface-2)",
-                                color: "var(--color-text-2)",
-                                border: "1px solid var(--color-border)",
-                              }}
-                            >
-                              Batal
-                            </button>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => {
-                              setRestockId(p._id);
-                              setRestockAmt("");
-                            }}
-                            className="press-tactile"
-                            style={smallPrimaryBtn}
-                          >
-                            <PlusIcon size={14} weight="bold" /> Tambah Stok
-                          </button>
-                        )}
+                        <button
+                          onClick={() => openRestock(p)}
+                          className="press-tactile"
+                          style={smallPrimaryBtn}
+                        >
+                          <PlusIcon size={14} weight="bold" /> Tambah Stok
+                        </button>
                       </td>
                     </tr>
                   );
@@ -530,65 +469,339 @@ function Stok() {
 
                 {/* Inline Restock Action Footer */}
                 <div style={{ paddingTop: 8, borderTop: "1px solid var(--color-border-subtle)", display: "flex", justifyContent: "flex-end" }}>
-                  {restockId === p._id ? (
-                    <div style={{ display: "flex", gap: 6, alignItems: "center", width: "100%" }}>
-                      <input
-                        type="number"
-                        placeholder="+Stok"
-                        value={restockAmt}
-                        onChange={(e) => setRestockAmt(e.target.value)}
-                        style={{
-                          flex: 1,
-                          padding: "8px 12px",
-                          border: "1.5px solid var(--color-border)",
-                          borderRadius: "var(--radius-sm)",
-                          fontSize: 14,
-                          background: "var(--color-surface-2)",
-                          color: "var(--color-text)",
-                          fontWeight: 700,
-                          outline: "none",
-                        }}
-                        autoFocus
-                      />
-                      <button
-                        onClick={() => handleRestock(p._id)}
-                        className="press-tactile"
-                        style={{ ...smallPrimaryBtn, padding: "8px 16px" }}
-                      >
-                        Simpan
-                      </button>
-                      <button
-                        onClick={() => setRestockId(null)}
-                        className="press-tactile"
-                        style={{
-                          ...smallPrimaryBtn,
-                          padding: "8px 14px",
-                          background: "var(--color-surface-2)",
-                          color: "var(--color-text-2)",
-                          border: "1px solid var(--color-border)",
-                        }}
-                      >
-                        Batal
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => {
-                        setRestockId(p._id);
-                        setRestockAmt("");
-                      }}
-                      className="press-tactile"
-                      style={{ ...smallPrimaryBtn, width: "100%", justifyContent: "center", padding: "10px" }}
-                    >
-                      <PlusIcon size={16} weight="bold" /> Tambah Stok
-                    </button>
-                  )}
+                  <button
+                    onClick={() => openRestock(p)}
+                    className="press-tactile"
+                    style={{ ...smallPrimaryBtn, width: "100%", justifyContent: "center", padding: "10px" }}
+                  >
+                    <PlusIcon size={16} weight="bold" /> Tambah Stok
+                  </button>
                 </div>
               </div>
             );
           })}
         </div>
       </section>
+
+      {/* Modern Restock Modal Dialog */}
+      {activeRestockProduct && (
+        <Modal onClose={() => !saving && setActiveRestockProduct(null)} maxWidth={440}>
+          <div style={{ marginBottom: 18 }}>
+            <div className="eyebrow-tag" style={{ marginBottom: 6 }}>
+              TAMBAH PERSEDIAAN
+            </div>
+            <h2
+              style={{
+                fontSize: 20,
+                fontWeight: 800,
+                margin: 0,
+                color: "var(--color-text)",
+                letterSpacing: "-0.02em",
+              }}
+            >
+              Restock {activeRestockProduct.name}
+            </h2>
+            <p style={{ fontSize: 13, color: "var(--color-text-3)", margin: "4px 0 0" }}>
+              Kategori: {activeRestockProduct.category} · Harga:{" "}
+              {formatIDR(activeRestockProduct.price)}
+            </p>
+          </div>
+
+          {/* Before / After Visual Comparison Card */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr auto 1fr",
+              alignItems: "center",
+              gap: 12,
+              padding: "14px 16px",
+              background: "var(--color-surface-2)",
+              border: "1px solid var(--color-border)",
+              borderRadius: "var(--radius-lg)",
+              marginBottom: 20,
+              textAlign: "center",
+            }}
+          >
+            <div>
+              <div
+                style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: "var(--color-text-3)",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
+                }}
+              >
+                Stok Saat Ini
+              </div>
+              <div
+                className="price"
+                style={{
+                  fontSize: 22,
+                  fontWeight: 800,
+                  color:
+                    activeRestockProduct.stock <= LOW_STOCK
+                      ? "var(--color-danger)"
+                      : "var(--color-text)",
+                  marginTop: 2,
+                }}
+              >
+                {activeRestockProduct.stock} pcs
+              </div>
+            </div>
+
+            <div style={{ color: "var(--color-text-3)", fontSize: 16, fontWeight: 800, opacity: 0.6 }}>
+              ➔
+            </div>
+
+            <div>
+              <div
+                style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: "var(--color-brand)",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
+                }}
+              >
+                Stok Baru
+              </div>
+              <div
+                className="price"
+                style={{
+                  fontSize: 22,
+                  fontWeight: 800,
+                  color: "var(--color-brand)",
+                  marginTop: 2,
+                }}
+              >
+                {activeRestockProduct.stock + (parseInt(restockAmt, 10) || 0)} pcs
+              </div>
+            </div>
+          </div>
+
+          {/* Stepper Input with Strict Validation */}
+          <div style={{ marginBottom: 18 }}>
+            <label
+              style={{
+                display: "block",
+                fontSize: 13,
+                fontWeight: 700,
+                color: "var(--color-text)",
+                marginBottom: 8,
+              }}
+            >
+              Jumlah Tambahan Stok (pcs)
+            </label>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                background: "var(--color-surface)",
+                border: "1.5px solid var(--color-brand)",
+                borderRadius: "var(--radius-lg)",
+                padding: "8px 12px",
+                boxShadow: "0 0 0 3px rgba(234, 88, 12, 0.15)",
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  const cur = parseInt(restockAmt, 10) || 0;
+                  setRestockAmt(String(Math.max(1, cur - 1)));
+                }}
+                disabled={(parseInt(restockAmt, 10) || 0) <= 1 || saving}
+                className="press-tactile"
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: "var(--radius-md)",
+                  background: "var(--color-surface-2)",
+                  border: "1px solid var(--color-border)",
+                  color:
+                    (parseInt(restockAmt, 10) || 0) <= 1
+                      ? "var(--color-text-3)"
+                      : "var(--color-text)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor:
+                    (parseInt(restockAmt, 10) || 0) <= 1 || saving
+                      ? "not-allowed"
+                      : "pointer",
+                  flexShrink: 0,
+                }}
+              >
+                <MinusIcon size={18} weight="bold" />
+              </button>
+
+              <div
+                style={{
+                  flex: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={restockAmt}
+                  onChange={(e) => {
+                    const raw = e.target.value.replace(/\D/g, "");
+                    const num = parseInt(raw, 10);
+                    setRestockAmt(num > 0 ? String(num) : "");
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && (parseInt(restockAmt, 10) || 0) > 0 && !saving) {
+                      e.preventDefault();
+                      handleRestock();
+                    }
+                  }}
+                  autoFocus
+                  placeholder="0"
+                  style={{
+                    width: "100%",
+                    textAlign: "center",
+                    fontSize: 26,
+                    fontWeight: 800,
+                    border: "none",
+                    background: "transparent",
+                    color: "var(--color-text)",
+                    outline: "none",
+                    fontFamily: "'JetBrains Mono', monospace",
+                  }}
+                />
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  const cur = parseInt(restockAmt, 10) || 0;
+                  setRestockAmt(String(cur + 1));
+                }}
+                disabled={saving}
+                className="press-tactile"
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: "var(--radius-md)",
+                  background: "var(--color-brand)",
+                  border: "none",
+                  color: "#ffffff",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: saving ? "not-allowed" : "pointer",
+                  boxShadow: "0 2px 8px rgba(234, 88, 12, 0.3)",
+                  flexShrink: 0,
+                }}
+              >
+                <PlusIcon size={18} weight="bold" />
+              </button>
+            </div>
+          </div>
+
+          {/* Quick Preset Pills */}
+          <div style={{ marginBottom: 24 }}>
+            <div
+              style={{
+                fontSize: 11,
+                color: "var(--color-text-3)",
+                fontWeight: 700,
+                marginBottom: 8,
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+              }}
+            >
+              Pilihan Cepat
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
+              {[5, 10, 20, 50].map((preset) => (
+                <button
+                  key={preset}
+                  type="button"
+                  onClick={() => setRestockAmt(String(preset))}
+                  className="press-tactile"
+                  style={{
+                    padding: "9px 6px",
+                    borderRadius: "var(--radius-md)",
+                    background:
+                      restockAmt === String(preset)
+                        ? "var(--color-brand)"
+                        : "var(--color-surface-2)",
+                    color:
+                      restockAmt === String(preset)
+                        ? "#ffffff"
+                        : "var(--color-text)",
+                    border:
+                      restockAmt === String(preset)
+                        ? "1px solid var(--color-brand)"
+                        : "1px solid var(--color-border)",
+                    fontSize: 13,
+                    fontWeight: 800,
+                    cursor: "pointer",
+                    transition: "all 150ms ease",
+                  }}
+                >
+                  +{preset} pcs
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Modal Action Buttons */}
+          <div style={{ display: "flex", gap: 12 }}>
+            <button
+              type="button"
+              disabled={saving}
+              onClick={() => setActiveRestockProduct(null)}
+              className="press-tactile"
+              style={{
+                flex: 1,
+                padding: "12px",
+                borderRadius: 99,
+                background: "var(--color-surface-2)",
+                border: "1px solid var(--color-border)",
+                color: "var(--color-text-2)",
+                fontSize: 14,
+                fontWeight: 700,
+                cursor: "pointer",
+              }}
+            >
+              Batal
+            </button>
+            <button
+              type="button"
+              disabled={(parseInt(restockAmt, 10) || 0) <= 0 || saving}
+              onClick={handleRestock}
+              className="press-tactile"
+              style={{
+                flex: 1.5,
+                padding: "12px",
+                borderRadius: 99,
+                background: "var(--color-brand)",
+                border: "none",
+                color: "#ffffff",
+                fontSize: 14,
+                fontWeight: 800,
+                cursor:
+                  (parseInt(restockAmt, 10) || 0) > 0 && !saving ? "pointer" : "not-allowed",
+                boxShadow: "0 4px 14px rgba(234, 88, 12, 0.35)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+                opacity: (parseInt(restockAmt, 10) || 0) <= 0 ? 0.6 : 1,
+              }}
+            >
+              <CheckIcon size={16} weight="bold" />
+              <span>{saving ? "Menyimpan..." : "Simpan Stok Baru"}</span>
+            </button>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }
@@ -628,5 +841,5 @@ const smallPrimaryBtn: React.CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
   gap: 4,
-  boxShadow: "0 2px 8px rgba(16,185,129,0.3)",
+  boxShadow: "0 2px 8px rgba(234, 88, 12, 0.3)",
 };
