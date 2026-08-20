@@ -26,7 +26,7 @@ import {
   WifiHighIcon,
   XCircleIcon,
 } from "@phosphor-icons/react";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, Navigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
 export const Route = createFileRoute("/")({ component: Landing });
@@ -142,22 +142,23 @@ const FAQS = [
 ];
 
 function Landing() {
-  const navigate = useNavigate();
   const { data: session, isPending } = authClient.useSession();
   const [dark, setDark] = useState(isDarkMode);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
-
-  useEffect(() => {
-    if (!isPending && session) {
-      navigate({ to: "/kasir" });
-    }
-  }, [session, isPending, navigate]);
 
   useEffect(() => {
     const handleThemeChange = (e: CustomEvent<boolean>) => setDark(e.detail);
     window.addEventListener("toku_theme_change" as any, handleThemeChange);
     return () => window.removeEventListener("toku_theme_change" as any, handleThemeChange);
   }, []);
+
+  if (isPending) {
+    return <div style={{ minHeight: "100vh", background: "var(--color-surface)" }} />;
+  }
+
+  if (session) {
+    return <Navigate to="/kasir" replace />;
+  }
 
   const handleGoogleLogin = () => {
     authClient.signIn.social({ provider: "google", callbackURL: "/kasir" });
