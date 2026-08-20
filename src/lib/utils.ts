@@ -21,6 +21,106 @@ export function parseIDRInput(value: string | number): number {
   return digits ? Number(digits) : 0;
 }
 
+export type DiscountType = "percentage" | "nominal";
+
+/** Calculate net item price and discount amount for a single product */
+export function calculateItemDiscount(
+  price: number,
+  discountType?: DiscountType | string,
+  discountValue?: number,
+): {
+  unitPrice: number;
+  discountAmount: number;
+  hasDiscount: boolean;
+  discountLabel: string;
+} {
+  if (!discountType || !discountValue || discountValue <= 0) {
+    return {
+      unitPrice: price,
+      discountAmount: 0,
+      hasDiscount: false,
+      discountLabel: "",
+    };
+  }
+
+  let discountAmount = 0;
+  let discountLabel = "";
+
+  if (discountType === "percentage") {
+    const pct = Math.min(100, Math.max(0, discountValue));
+    discountAmount = Math.round((price * pct) / 100);
+    discountLabel = `${pct}%`;
+  } else if (discountType === "nominal") {
+    discountAmount = Math.min(price, Math.max(0, discountValue));
+    discountLabel = formatIDR(discountAmount);
+  }
+
+  const unitPrice = Math.max(0, price - discountAmount);
+  return {
+    unitPrice,
+    discountAmount,
+    hasDiscount: discountAmount > 0,
+    discountLabel,
+  };
+}
+
+/** Calculate cart subtotals, item savings, basket-level discount, and final total */
+export function calculateCartTotals(
+  items: Array<{
+    price: number;
+    qty: number;
+    discountType?: DiscountType | string;
+    discountValue?: number;
+  }>,
+  basketDiscountType?: DiscountType | string,
+  basketDiscountValue?: number,
+): {
+  grossTotal: number;
+  itemsSubtotal: number;
+  itemsSavings: number;
+  basketDiscountAmount: number;
+  finalTotal: number;
+  totalSavings: number;
+} {
+  let grossTotal = 0;
+  let itemsSubtotal = 0;
+  let itemsSavings = 0;
+
+  for (const item of items) {
+    const { unitPrice, discountAmount } = calculateItemDiscount(
+      item.price,
+      item.discountType,
+      item.discountValue,
+    );
+    grossTotal += item.price * item.qty;
+    itemsSubtotal += unitPrice * item.qty;
+    itemsSavings += discountAmount * item.qty;
+  }
+
+  let basketDiscountAmount = 0;
+  if (basketDiscountType && basketDiscountValue && basketDiscountValue > 0) {
+    if (basketDiscountType === "percentage") {
+      const pct = Math.min(100, Math.max(0, basketDiscountValue));
+      basketDiscountAmount = Math.round((itemsSubtotal * pct) / 100);
+    } else if (basketDiscountType === "nominal") {
+      basketDiscountAmount = Math.min(itemsSubtotal, Math.max(0, basketDiscountValue));
+    }
+  }
+
+  const finalTotal = Math.max(0, itemsSubtotal - basketDiscountAmount);
+  const totalSavings = itemsSavings + basketDiscountAmount;
+
+  return {
+    grossTotal,
+    itemsSubtotal,
+    itemsSavings,
+    basketDiscountAmount,
+    finalTotal,
+    totalSavings,
+  };
+}
+
+
 /** Round IDR to nearest 100 */
 export function roundIDR(amount: number): number {
   return Math.round(amount / 100) * 100;

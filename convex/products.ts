@@ -48,6 +48,8 @@ export const create = mutation({
     stock: v.number(),
     barcode: v.optional(v.string()),
     imageId: v.optional(v.string()),
+    discountType: v.optional(v.union(v.literal("percentage"), v.literal("nominal"))),
+    discountValue: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     return ctx.db.insert("products", args);
@@ -63,6 +65,8 @@ export const update = mutation({
     stock: v.optional(v.number()),
     barcode: v.optional(v.string()),
     imageId: v.optional(v.string()),
+    discountType: v.optional(v.union(v.literal("percentage"), v.literal("nominal"))),
+    discountValue: v.optional(v.number()),
   },
   handler: async (ctx, { id, ...patch }) => {
     if (patch.imageId !== undefined) {

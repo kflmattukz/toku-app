@@ -2,10 +2,15 @@ import { Modal } from "#/components/Modal";
 import { clearOfflineQueue, enqueueOfflineTx, getOfflineQueue } from "#/lib/offline-queue";
 import { printReceipt } from "#/lib/print";
 import { useAppStore } from "#/lib/store-context";
-import { formatIDR } from "#/lib/utils";
+import {
+  formatIDR,
+  formatIDRInput,
+  parseIDRInput,
+  calculateItemDiscount,
+  calculateCartTotals,
+} from "#/lib/utils";
 import {
   ArrowRightIcon,
-  CaretUpIcon,
   CheckCircleIcon,
   FadersIcon,
   FireIcon,
@@ -19,7 +24,8 @@ import {
   ShoppingCartIcon,
   TrashIcon,
   WarningIcon,
-  XIcon,
+  TagIcon,
+  PencilSimpleIcon,
 } from "@phosphor-icons/react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery } from "convex/react";
@@ -35,6 +41,8 @@ type CartItem = {
   name: string;
   price: number;
   qty: number;
+  discountType?: "percentage" | "nominal";
+  discountValue?: number;
 };
 
 type PaymentMethod = "cash" | "qris";
@@ -54,6 +62,19 @@ function Kasir() {
   const [showReceipt, setShowReceipt] = useState(false);
   const [lastTx, setLastTx] = useState<any>(null);
   const [isOnline, setIsOnline] = useState(typeof window !== "undefined" ? navigator.onLine : true);
+
+  // Basket-level total discount on confirmation
+  const [basketDiscountType, setBasketDiscountType] = useState<"none" | "percentage" | "nominal">(
+    "none",
+  );
+  const [basketDiscountValue, setBasketDiscountValue] = useState<string>("");
+
+  // Item-level discount modal state
+  const [itemDiscountModal, setItemDiscountModal] = useState<{
+    item: CartItem;
+    discountType: "none" | "percentage" | "nominal";
+    discountValue: string;
+  } | null>(null);
 
   useEffect(() => {
     const on = () => {
@@ -109,10 +130,23 @@ function Kasir() {
         return prev.map((i) => (i.productId === product._id ? { ...i, qty: i.qty + 1 } : i));
       return [
         ...prev,
-        { productId: product._id, name: product.name, price: product.price, qty: 1 },
+        {
+          productId: product._id,
+          name: product.name,
+          price: product.price,
+          qty: 1,
+          discountType: product.discountType,
+          discountValue: product.discountValue,
+        },
       ];
     });
-    toast.success(`${product.name} ditambahkan`, { description: formatIDR(product.price) });
+
+    const disc = calculateItemDiscount(product.price, product.discountType, product.discountValue);
+    toast.success(`${product.name} ditambahkan`, {
+      description: disc.hasDiscount
+        ? `${formatIDR(disc.unitPrice)} (Diskon ${disc.discountLabel})`
+        : formatIDR(product.price),
+    });
     if (product.stock <= 5) {
       toast.warning(`Peringatan Stok: ${product.name} tersisa ${product.stock} pcs!`);
     }
@@ -130,8 +164,74 @@ function Kasir() {
     setCart((prev) => prev.filter((i) => i.productId !== productId));
   };
 
+  const openItemDiscountModal = (item: CartItem) => {
+    setItemDiscountModal({
+      item,
+      discountType: item.discountType ?? "none",
+      discountValue:
+        item.discountType === "percentage"
+          ? String(item.discountValue ?? "")
+          : item.discountType === "nominal"
+            ? formatIDRInput(item.discountValue ?? "")
+            : "",
+    });
+  };
+
+  const saveItemDiscount = () => {
+    if (!itemDiscountModal) return;
+    const { item, discountType, discountValue } = itemDiscountModal;
+
+    let discountTypeVal: "percentage" | "nominal" | undefined = undefined;
+    let discountNum: number | undefined = undefined;
+
+    if (discountType === "percentage") {
+      const pct = Math.min(100, Math.max(0, parseInt(discountValue, 10) || 0));
+      if (pct > 0) {
+        discountTypeVal = "percentage";
+        discountNum = pct;
+      }
+    } else if (discountType === "nominal") {
+      const nom = parseIDRInput(discountValue);
+      if (nom > 0) {
+        discountTypeVal = "nominal";
+        discountNum = Math.min(item.price, nom);
+      }
+    }
+
+    setCart((prev) =>
+      prev.map((i) =>
+        i.productId === item.productId
+          ? {
+              ...i,
+              discountType: discountTypeVal,
+              discountValue: discountNum,
+            }
+          : i,
+      ),
+    );
+    setItemDiscountModal(null);
+    toast.success(`Diskon ${item.name} berhasil diperbarui`);
+  };
+
+  // Cart & Basket totals calculation
+  const basketDiscountValNum =
+    basketDiscountType === "percentage"
+      ? parseInt(basketDiscountValue, 10) || 0
+      : basketDiscountType === "nominal"
+        ? parseIDRInput(basketDiscountValue)
+        : 0;
+
+  const cartTotals = calculateCartTotals(
+    cart,
+    basketDiscountType === "none" ? undefined : basketDiscountType,
+    basketDiscountValNum,
+  );
+
   const totalItems = cart.reduce((sum, i) => sum + i.qty, 0);
-  const total = cart.reduce((sum, i) => sum + i.price * i.qty, 0);
+  const subtotal = cartTotals.itemsSubtotal;
+  const total = cartTotals.finalTotal;
+  const basketDiscountAmount = cartTotals.basketDiscountAmount;
+  const totalSavings = cartTotals.totalSavings;
   const cashPaid = parseFloat(cashInput) || 0;
   const change = Math.max(0, cashPaid - total);
 
@@ -139,7 +239,22 @@ function Kasir() {
     if (cart.length === 0 || !store) return;
     const tx = {
       storeId: store._id,
-      items: cart,
+      items: cart.map((i) => {
+        const disc = calculateItemDiscount(i.price, i.discountType, i.discountValue);
+        return {
+          productId: i.productId,
+          name: i.name,
+          price: i.price,
+          qty: i.qty,
+          discountType: i.discountType,
+          discountValue: i.discountValue,
+          subtotal: disc.unitPrice * i.qty,
+        };
+      }),
+      subtotal,
+      discountType: basketDiscountType === "none" ? undefined : basketDiscountType,
+      discountValue: basketDiscountValNum > 0 ? basketDiscountValNum : undefined,
+      discountAmount: basketDiscountAmount > 0 ? basketDiscountAmount : undefined,
       total,
       paymentMethod: payMethod,
       cashPaid: payMethod === "cash" ? cashPaid : undefined,
@@ -172,6 +287,8 @@ function Kasir() {
     setShowReceipt(true);
     setCart([]);
     setCashInput("");
+    setBasketDiscountType("none");
+    setBasketDiscountValue("");
   };
 
   if (!store || !products) return <Loader />;
@@ -346,6 +463,7 @@ function Kasir() {
           ) : (
             filtered.map((p) => {
               const inCart = cart.find((i) => i.productId === p._id);
+              const disc = calculateItemDiscount(p.price, p.discountType, p.discountValue);
               return (
                 <div
                   key={p._id}
@@ -430,6 +548,7 @@ function Kasir() {
                           fontSize: 11,
                           fontWeight: 800,
                           boxShadow: "0 2px 8px rgba(234, 88, 12, 0.4)",
+                          zIndex: 2,
                         }}
                       >
                         <CheckCircleIcon size={13} weight="fill" />
@@ -437,7 +556,33 @@ function Kasir() {
                       </div>
                     )}
 
-                    {p.stock <= 5 && !inCart && (
+                    {disc.hasDiscount ? (
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: 8,
+                          left: 8,
+                          background: "var(--color-brand)",
+                          color: "#ffffff",
+                          fontSize: 10,
+                          fontWeight: 800,
+                          padding: "2px 7px",
+                          borderRadius: 99,
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 3,
+                          boxShadow: "0 2px 8px rgba(234, 88, 12, 0.4)",
+                          zIndex: 2,
+                        }}
+                      >
+                        <TagIcon size={11} weight="fill" />
+                        <span>
+                          {p.discountType === "percentage"
+                            ? `${p.discountValue}%`
+                            : `-${formatIDR(p.discountValue ?? 0)}`}
+                        </span>
+                      </div>
+                    ) : p.stock <= 5 && !inCart ? (
                       <div
                         style={{
                           position: "absolute",
@@ -453,12 +598,13 @@ function Kasir() {
                           alignItems: "center",
                           gap: 3,
                           boxShadow: "0 2px 6px rgba(239, 68, 68, 0.3)",
+                          zIndex: 2,
                         }}
                       >
                         <WarningIcon size={11} weight="fill" />
                         Stok {p.stock}
                       </div>
-                    )}
+                    ) : null}
                   </div>
 
                   {/* Product Title & Category */}
@@ -478,12 +624,26 @@ function Kasir() {
                     >
                       {p.name}
                     </div>
-                    <span
-                      className="price"
-                      style={{ fontSize: 15, fontWeight: 800, color: "var(--color-brand)" }}
-                    >
-                      {formatIDR(p.price)}
-                    </span>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 6, flexWrap: "wrap" }}>
+                      <span
+                        className="price"
+                        style={{ fontSize: 15, fontWeight: 800, color: "var(--color-brand)" }}
+                      >
+                        {formatIDR(disc.unitPrice)}
+                      </span>
+                      {disc.hasDiscount && (
+                        <span
+                          className="price"
+                          style={{
+                            fontSize: 11,
+                            color: "var(--color-text-3)",
+                            textDecoration: "line-through",
+                          }}
+                        >
+                          {formatIDR(p.price)}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {/* Integrated Quantity Stepper Controls (When in cart) */}
@@ -520,20 +680,30 @@ function Kasir() {
                         }}
                       >
                         {inCart.qty === 1 ? (
-                          <TrashIcon size={13} />
+                          <TrashIcon size={13} weight="bold" />
                         ) : (
-                          <MinusIcon size={13} weight="bold" />
+                          <MinusIcon size={12} weight="bold" />
                         )}
                       </button>
-                      <span style={{ fontSize: 14, fontWeight: 800, color: "var(--color-text)" }}>
-                        {inCart.qty}
+
+                      <span
+                        style={{
+                          fontSize: 13,
+                          fontWeight: 800,
+                          color: "var(--color-brand)",
+                          fontFamily: "var(--font-mono)",
+                        }}
+                      >
+                        {inCart.qty} pcs
                       </span>
+
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           updateQty(p._id, 1);
                         }}
                         className="press-tactile"
+                        title="Tambah"
                         style={{
                           width: 28,
                           height: 28,
@@ -545,10 +715,10 @@ function Kasir() {
                           alignItems: "center",
                           justifyContent: "center",
                           cursor: "pointer",
-                          boxShadow: "0 2px 8px rgba(234, 88, 12, 0.3)",
+                          boxShadow: "0 2px 6px rgba(234, 88, 12, 0.3)",
                         }}
                       >
-                        <PlusIcon size={13} weight="bold" />
+                        <PlusIcon size={12} weight="bold" />
                       </button>
                     </div>
                   )}
@@ -559,243 +729,146 @@ function Kasir() {
         </div>
       </div>
 
-      {/* Desktop Cart Sidebar — Squircle Panel */}
+      {/* Desktop Cart Sidebar */}
       <div
         className="desktop-only"
         style={{
-          width: 360,
-          flexShrink: 0,
+          width: 380,
           background: "var(--color-surface)",
-          border: "1.5px solid var(--color-border)",
-          borderRadius: "var(--radius-xl)",
+          border: "1px solid var(--color-border)",
+          borderRadius: "var(--radius-lg)",
+          display: "flex",
           flexDirection: "column",
-          boxShadow: "var(--shadow-md)",
-          height: "fit-content",
-          maxHeight: "calc(100vh - 100px)",
+          maxHeight: "calc(100vh - 120px)",
+          boxShadow: "var(--shadow-sm)",
           position: "sticky",
-          top: 80,
-          overflow: "hidden",
+          top: 24,
         }}
       >
-        <CartContent
-          cart={cart}
-          total={total}
-          updateQty={updateQty}
-          removeFromCart={removeFromCart}
-          setCart={setCart}
-          onCheckout={() => setShowPayment(true)}
-        />
-      </div>
-
-      {/* Mobile Floating Cart Action Bar (Exact match to terracotta image pill) */}
-      {cart.length > 0 && !showMobileCart && (
         <div
-          className="mobile-bottom-nav press-tactile animate-float-pill"
           style={{
-            position: "fixed",
-            bottom: 80,
-            left: 16,
-            right: 16,
-            zIndex: 45,
-            background: "var(--color-surface)",
-            borderRadius: 9999,
-            padding: "8px 10px 8px 18px",
-            color: "var(--color-text)",
+            padding: "20px 24px",
+            borderBottom: "1px solid var(--color-border)",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            boxShadow: "var(--shadow-dock)",
-            cursor: "pointer",
-            border: "1.5px solid var(--color-border)",
           }}
-          onClick={() => setShowMobileCart(true)}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ fontSize: 13, fontWeight: 800, color: "var(--color-text-2)" }}>
-              {totalItems} Items
-            </span>
-            <span style={{ color: "var(--color-border)" }}>|</span>
-            <span
-              className="price"
-              style={{ fontSize: 16, fontWeight: 800, color: "var(--color-brand)" }}
-            >
-              {formatIDR(total)}
-            </span>
-          </div>
-
-          <button
-            style={{
-              background: "var(--color-brand)",
-              color: "#ffffff",
-              border: "none",
-              borderRadius: 99,
-              padding: "10px 20px",
-              fontWeight: 800,
-              fontSize: 14,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              boxShadow: "0 4px 14px rgba(234, 88, 12, 0.35)",
-            }}
-          >
-            <span>Bayar</span>
-            <CaretUpIcon size={16} weight="bold" />
-          </button>
-        </div>
-      )}
-
-      {/* Mobile Cart Drawer Sheet */}
-      {showMobileCart && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 100,
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "flex-end",
-          }}
-        >
-          <div
-            className="animate-backdrop"
-            style={{
-              position: "fixed",
-              inset: 0,
-              background: "rgba(0,0,0,0.65)",
-              backdropFilter: "blur(8px)",
-            }}
-            onClick={() => setShowMobileCart(false)}
-          />
-          <div
-            className="animate-drawer"
-            style={{
-              position: "relative",
-              background: "var(--color-surface)",
-              borderTopLeftRadius: "var(--radius-xl)",
-              borderTopRightRadius: "var(--radius-xl)",
-              padding: "24px 20px 32px",
-              maxHeight: "85vh",
-              display: "flex",
-              flexDirection: "column",
-              zIndex: 101,
-              boxShadow: "var(--shadow-lg)",
-              borderTop: "1px solid var(--color-border)",
-            }}
-          >
-            {/* Drawer Header */}
             <div
               style={{
+                width: 36,
+                height: 36,
+                borderRadius: 99,
+                background: "var(--color-brand-light)",
+                color: "var(--color-brand)",
                 display: "flex",
-                justifyContent: "space-between",
                 alignItems: "center",
-                marginBottom: 16,
+                justifyContent: "center",
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <div
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 99,
-                    background: "var(--color-brand-light)",
-                    color: "var(--color-brand)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <ShoppingCartIcon size={20} weight="bold" />
-                </div>
-                <div>
-                  <h3
-                    style={{ fontSize: 17, fontWeight: 800, margin: 0, color: "var(--color-text)" }}
-                  >
-                    Rincian Belanja ({totalItems})
-                  </h3>
-                  <div style={{ fontSize: 12, color: "var(--color-text-3)" }}>
-                    Periksa & atur kuantitas barang
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <button
-                  onClick={() => {
-                    setCart([]);
-                    toast.info("Keranjang dikosongkan");
-                  }}
-                  className="press-tactile"
-                  style={{
-                    background: "var(--color-danger-light)",
-                    border: "none",
-                    color: "var(--color-danger-text)",
-                    fontSize: 12,
-                    fontWeight: 800,
-                    padding: "6px 12px",
-                    borderRadius: 99,
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 4,
-                  }}
-                >
-                  <TrashIcon size={14} weight="bold" />
-                  <span>Hapus Semua</span>
-                </button>
-                <button
-                  onClick={() => setShowMobileCart(false)}
-                  className="press-tactile"
-                  style={{
-                    background: "var(--color-surface-2)",
-                    border: "1px solid var(--color-border)",
-                    padding: 6,
-                    borderRadius: 99,
-                    cursor: "pointer",
-                    color: "var(--color-text-2)",
-                    display: "flex",
-                  }}
-                >
-                  <XIcon size={18} />
-                </button>
+              <ShoppingCartIcon size={20} weight="bold" />
+            </div>
+            <div>
+              <h2
+                style={{
+                  fontSize: 16,
+                  fontWeight: 800,
+                  margin: 0,
+                  color: "var(--color-text)",
+                }}
+              >
+                Pesanan Kasir
+              </h2>
+              <div style={{ fontSize: 11, color: "var(--color-text-3)", marginTop: 2 }}>
+                {totalItems} item barang di keranjang
               </div>
             </div>
+          </div>
 
-            {/* Itemized List Cards */}
-            <div
+          {cart.length > 0 && (
+            <button
+              onClick={() => setCart([])}
+              className="press-tactile"
+              title="Kosongkan keranjang"
               style={{
-                overflowY: "auto",
-                flex: 1,
-                marginBottom: 20,
+                background: "var(--color-danger-subtle)",
+                color: "var(--color-danger)",
+                border: "1px solid var(--color-danger-border)",
+                borderRadius: 99,
+                padding: "6px 12px",
+                fontSize: 11,
+                fontWeight: 700,
+                cursor: "pointer",
                 display: "flex",
-                flexDirection: "column",
-                gap: 10,
+                alignItems: "center",
+                gap: 4,
               }}
             >
-              {cart.map((item) => {
-                const productData = products.find((p) => p._id === item.productId);
-                return (
-                  <div
-                    key={item.productId}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      padding: "12px 14px",
-                      background: "var(--color-surface-2)",
-                      border: "1.5px solid var(--color-border)",
-                      borderRadius: "var(--radius-md)",
-                      gap: 12,
-                    }}
-                  >
-                    {/* Product Image Thumbnail */}
+              <TrashIcon size={12} weight="bold" />
+              <span>Reset</span>
+            </button>
+          )}
+        </div>
+
+        <div
+          style={{
+            flex: 1,
+            overflowY: "auto",
+            padding: "16px 20px",
+            display: "flex",
+            flexDirection: "column",
+            gap: 10,
+          }}
+        >
+          {cart.length === 0 ? (
+            <div
+              style={{
+                flex: 1,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "48px 0",
+                color: "var(--color-text-3)",
+              }}
+            >
+              <ShoppingCartIcon size={48} weight="duotone" style={{ opacity: 0.3, marginBottom: 12 }} />
+              <p style={{ fontSize: 14, fontWeight: 700, margin: 0, color: "var(--color-text-2)" }}>
+                Keranjang Masih Kosong
+              </p>
+              <span style={{ fontSize: 12, marginTop: 4 }}>
+                Klik produk di katalog untuk menambahkan
+              </span>
+            </div>
+          ) : (
+            cart.map((item) => {
+              const productData = products.find((p) => p._id === item.productId);
+              const disc = calculateItemDiscount(item.price, item.discountType, item.discountValue);
+              const lineTotal = disc.unitPrice * item.qty;
+
+              return (
+                <div
+                  key={item.productId}
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    padding: "12px 14px",
+                    background: "var(--color-surface-2)",
+                    border: "1.5px solid var(--color-border)",
+                    borderRadius: "var(--radius-md)",
+                    gap: 8,
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    {/* Thumbnail */}
                     {productData?.imageUrl || productData?.imageId ? (
                       <img
                         src={productData?.imageUrl || productData?.imageId}
                         alt={item.name}
                         style={{
-                          width: 48,
-                          height: 48,
+                          width: 44,
+                          height: 44,
                           borderRadius: "var(--radius-sm)",
                           objectFit: "cover",
                           flexShrink: 0,
@@ -805,8 +878,8 @@ function Kasir() {
                     ) : (
                       <div
                         style={{
-                          width: 48,
-                          height: 48,
+                          width: 44,
+                          height: 44,
                           borderRadius: "var(--radius-sm)",
                           background: "var(--color-surface)",
                           border: "1px solid var(--color-border)",
@@ -817,15 +890,15 @@ function Kasir() {
                           flexShrink: 0,
                         }}
                       >
-                        <PackageIcon size={24} weight="duotone" />
+                        <PackageIcon size={22} weight="duotone" />
                       </div>
                     )}
 
-                    {/* Name & Breakdown */}
+                    {/* Name & Unit Price */}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div
                         style={{
-                          fontSize: 14,
+                          fontSize: 13,
                           fontWeight: 800,
                           color: "var(--color-text)",
                           overflow: "hidden",
@@ -835,362 +908,1181 @@ function Kasir() {
                       >
                         {item.name}
                       </div>
-                      <div style={{ fontSize: 12, color: "var(--color-text-3)", marginTop: 2 }}>
-                        {item.qty} pcs x <span className="price">{formatIDR(item.price)}</span>
+                      <div
+                        style={{
+                          fontSize: 11,
+                          color: "var(--color-text-3)",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 6,
+                          marginTop: 2,
+                        }}
+                      >
+                        <span>
+                          {item.qty} x {formatIDR(disc.unitPrice)}
+                        </span>
+                        {disc.hasDiscount && (
+                          <span
+                            style={{
+                              fontSize: 10,
+                              textDecoration: "line-through",
+                              color: "var(--color-text-3)",
+                            }}
+                          >
+                            {formatIDR(item.price)}
+                          </span>
+                        )}
                       </div>
                     </div>
 
-                    {/* Subtotal & Quantity Steppers */}
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "flex-end",
-                        gap: 6,
-                        flexShrink: 0,
-                      }}
-                    >
+                    {/* Line Total */}
+                    <div style={{ textAlign: "right", flexShrink: 0 }}>
                       <span
                         className="price"
-                        style={{ fontSize: 15, fontWeight: 800, color: "var(--color-brand)" }}
+                        style={{ fontSize: 14, fontWeight: 800, color: "var(--color-brand)" }}
                       >
-                        {formatIDR(item.price * item.qty)}
+                        {formatIDR(lineTotal)}
                       </span>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <button
-                          onClick={() => updateQty(item.productId, -1)}
-                          className="press-tactile"
-                          style={qtyBtnStyle}
-                        >
-                          <MinusIcon size={12} weight="bold" />
-                        </button>
-                        <span
-                          style={{
-                            fontSize: 14,
-                            fontWeight: 800,
-                            minWidth: 18,
-                            textAlign: "center",
-                            color: "var(--color-text)",
-                          }}
-                        >
-                          {item.qty}
-                        </span>
-                        <button
-                          onClick={() => updateQty(item.productId, 1)}
-                          className="press-tactile"
-                          style={{
-                            ...qtyBtnStyle,
-                            background: "var(--color-brand)",
-                            color: "#ffffff",
-                          }}
-                        >
-                          <PlusIcon size={12} weight="bold" />
-                        </button>
-                        <button
-                          onClick={() => removeFromCart(item.productId)}
-                          title="Hapus dari keranjang"
-                          className="press-tactile"
-                          style={{
-                            ...qtyBtnStyle,
-                            background: "rgba(239, 68, 68, 0.1)",
-                            color: "var(--color-danger)",
-                            borderColor: "transparent",
-                            marginLeft: 4,
-                          }}
-                        >
-                          <TrashIcon size={14} />
-                        </button>
-                      </div>
                     </div>
                   </div>
-                );
-              })}
+
+                  {/* Actions Row: Line Discount Tag + Stepper */}
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      paddingTop: 6,
+                      borderTop: "1px dashed var(--color-border)",
+                    }}
+                  >
+                    {/* Item Discount Trigger */}
+                    <button
+                      type="button"
+                      onClick={() => openItemDiscountModal(item)}
+                      className="press-tactile"
+                      style={{
+                        background: disc.hasDiscount
+                          ? "var(--color-brand-light)"
+                          : "var(--color-surface)",
+                        border: `1px solid ${disc.hasDiscount ? "var(--color-brand)" : "var(--color-border)"}`,
+                        color: disc.hasDiscount ? "var(--color-brand)" : "var(--color-text-2)",
+                        padding: "2px 8px",
+                        borderRadius: 99,
+                        fontSize: 10,
+                        fontWeight: 800,
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 4,
+                      }}
+                    >
+                      <TagIcon size={12} weight="bold" />
+                      <span>{disc.hasDiscount ? `Disc ${disc.discountLabel}` : "+ Diskon Item"}</span>
+                      <PencilSimpleIcon size={10} />
+                    </button>
+
+                    {/* Steppers */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <button
+                        onClick={() => updateQty(item.productId, -1)}
+                        className="press-tactile"
+                        style={qtyBtnStyle}
+                      >
+                        <MinusIcon size={11} weight="bold" />
+                      </button>
+                      <span
+                        style={{
+                          fontSize: 13,
+                          fontWeight: 800,
+                          minWidth: 18,
+                          textAlign: "center",
+                          color: "var(--color-text)",
+                        }}
+                      >
+                        {item.qty}
+                      </span>
+                      <button
+                        onClick={() => updateQty(item.productId, 1)}
+                        className="press-tactile"
+                        style={{
+                          ...qtyBtnStyle,
+                          background: "var(--color-brand)",
+                          color: "#ffffff",
+                        }}
+                      >
+                        <PlusIcon size={11} weight="bold" />
+                      </button>
+                      <button
+                        onClick={() => removeFromCart(item.productId)}
+                        title="Hapus dari keranjang"
+                        className="press-tactile"
+                        style={{
+                          ...qtyBtnStyle,
+                          background: "rgba(239, 68, 68, 0.1)",
+                          color: "var(--color-danger)",
+                          borderColor: "transparent",
+                          marginLeft: 2,
+                        }}
+                      >
+                        <TrashIcon size={13} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Bottom Checkout Action */}
+        <div
+          style={{
+            borderTop: "1px solid var(--color-border)",
+            padding: "16px 20px",
+            background: "var(--color-surface)",
+            borderRadius: "0 0 var(--radius-lg) var(--radius-lg)",
+          }}
+        >
+          <div style={{ marginBottom: 12 }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: 4,
+              }}
+            >
+              <span style={{ fontSize: 12, fontWeight: 600, color: "var(--color-text-2)" }}>
+                Subtotal Produk ({totalItems} pcs)
+              </span>
+              <span className="price" style={{ fontSize: 14, fontWeight: 700, color: "var(--color-text)" }}>
+                {formatIDR(subtotal)}
+              </span>
             </div>
 
-            {/* Bottom Checkout Action */}
-            <div style={{ borderTop: "1px solid var(--color-border)", paddingTop: 16 }}>
+            {totalSavings > 0 && (
               <div
                 style={{
                   display: "flex",
                   justifyContent: "space-between",
-                  marginBottom: 16,
                   alignItems: "center",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: "var(--color-brand)",
                 }}
               >
-                <span style={{ fontSize: 14, fontWeight: 700, color: "var(--color-text-2)" }}>
-                  Subtotal ({totalItems} barang)
-                </span>
-                <span
-                  className="price"
-                  style={{ fontSize: 24, fontWeight: 800, color: "var(--color-brand)" }}
-                >
-                  {formatIDR(total)}
-                </span>
+                <span>Total Berhemat</span>
+                <span className="price">-{formatIDR(totalSavings)}</span>
               </div>
-              <button
-                onClick={() => {
-                  setShowMobileCart(false);
-                  setShowPayment(true);
-                }}
-                className="press-tactile"
+            )}
+
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "baseline",
+                marginTop: 6,
+                paddingTop: 6,
+                borderTop: "1px solid var(--color-border-subtle)",
+              }}
+            >
+              <span style={{ fontSize: 13, fontWeight: 800, color: "var(--color-text)" }}>
+                Total Pembayaran
+              </span>
+              <span
+                className="price"
+                style={{ fontSize: 22, fontWeight: 800, color: "var(--color-brand)" }}
+              >
+                {formatIDR(total)}
+              </span>
+            </div>
+          </div>
+
+          <button
+            onClick={() => {
+              setShowMobileCart(false);
+              setShowPayment(true);
+            }}
+            disabled={cart.length === 0}
+            className="press-tactile"
+            style={{
+              ...payBtnStyle,
+              background: cart.length === 0 ? "var(--color-border)" : "var(--color-brand)",
+              color: "#ffffff",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 10,
+              borderRadius: 99,
+              cursor: cart.length === 0 ? "not-allowed" : "pointer",
+              boxShadow: cart.length > 0 ? "0 8px 24px rgba(234, 88, 12, 0.35)" : "none",
+            }}
+          >
+            <MoneyIcon size={20} weight="bold" />
+            <span>Bayar Transaksi</span>
+            <ArrowRightIcon size={16} weight="bold" />
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile Floating Cart Summary Button */}
+      {cart.length > 0 && !showPayment && (
+        <div
+          className="mobile-only"
+          style={{
+            position: "fixed",
+            bottom: 20,
+            left: 16,
+            right: 16,
+            zIndex: 40,
+          }}
+        >
+          <button
+            onClick={() => setShowMobileCart(true)}
+            className="press-tactile"
+            style={{
+              width: "100%",
+              padding: "14px 20px",
+              background: "var(--color-brand)",
+              color: "#ffffff",
+              border: "none",
+              borderRadius: 99,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              boxShadow: "0 8px 28px rgba(234, 88, 12, 0.4)",
+              cursor: "pointer",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div
                 style={{
-                  ...payBtnStyle,
-                  background: "var(--color-brand)",
-                  color: "#ffffff",
+                  width: 28,
+                  height: 28,
+                  borderRadius: 99,
+                  background: "rgba(255, 255, 255, 0.2)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  gap: 10,
-                  borderRadius: 99,
-                  boxShadow: "0 8px 24px rgba(234, 88, 12, 0.35)",
+                  fontSize: 12,
+                  fontWeight: 800,
                 }}
               >
-                <MoneyIcon size={22} weight="bold" />
-                <span>Lanjut Pembayaran</span>
-                <ArrowRightIcon size={18} weight="bold" />
-              </button>
+                {totalItems}
+              </div>
+              <span style={{ fontSize: 14, fontWeight: 800 }}>Lihat Keranjang</span>
             </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span className="price" style={{ fontSize: 16, fontWeight: 800 }}>
+                {formatIDR(total)}
+              </span>
+              <ArrowRightIcon size={16} weight="bold" />
+            </div>
+          </button>
+        </div>
+      )}
+
+      {/* Mobile Cart Drawer Bottom Sheet */}
+      {showMobileCart && (
+        <div
+          className="mobile-only"
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0, 0, 0, 0.6)",
+            backdropFilter: "blur(4px)",
+            zIndex: 60,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "flex-end",
+          }}
+          onClick={() => setShowMobileCart(false)}
+        >
+          <div
+            style={{
+              background: "var(--color-surface)",
+              borderRadius: "24px 24px 0 0",
+              maxHeight: "85vh",
+              display: "flex",
+              flexDirection: "column",
+              overflow: "hidden",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <CartContent
+              cart={cart}
+              products={products}
+              subtotal={subtotal}
+              total={total}
+              totalSavings={totalSavings}
+              updateQty={updateQty}
+              removeFromCart={removeFromCart}
+              setCart={setCart}
+              onEditItemDiscount={openItemDiscountModal}
+              onCheckout={() => {
+                setShowMobileCart(false);
+                setShowPayment(true);
+              }}
+            />
           </div>
         </div>
       )}
 
-      {/* Payment Modal */}
-      {showPayment && (
-        <Modal onClose={() => setShowPayment(false)}>
-          <div style={{ marginBottom: 20 }}>
-            <div className="eyebrow-tag">PEMBAYARAN</div>
+      {/* ITEM DISCOUNT MODAL */}
+      {itemDiscountModal && (
+        <Modal onClose={() => setItemDiscountModal(null)} maxWidth={460}>
+          <div style={{ marginBottom: 18 }}>
+            <div className="eyebrow-tag" style={{ marginBottom: 4 }}>
+              DISKON PRODUK
+            </div>
             <h2
               style={{
-                fontSize: 22,
+                fontSize: 20,
                 fontWeight: 800,
-                margin: "2px 0 0",
+                margin: 0,
+                color: "var(--color-text)",
+                letterSpacing: "-0.02em",
+              }}
+            >
+              Atur Diskon Item
+            </h2>
+            <p style={{ fontSize: 13, color: "var(--color-text-3)", margin: "4px 0 0" }}>
+              Potongan harga khusus untuk produk <strong>{itemDiscountModal.item.name}</strong>
+            </p>
+          </div>
+
+          <div>
+            <div
+              style={{
+                background: "var(--color-surface-2)",
+                border: "1px solid var(--color-border)",
+                borderRadius: "var(--radius-md)",
+                padding: "14px 16px",
+                marginBottom: 16,
+              }}
+            >
+              <div style={{ fontSize: 12, color: "var(--color-text-3)", fontWeight: 700 }}>
+                Harga Normal Produk:
+              </div>
+              <div
+                className="price"
+                style={{ fontSize: 18, fontWeight: 800, color: "var(--color-text)", marginTop: 2 }}
+              >
+                {formatIDR(itemDiscountModal.item.price)}
+              </div>
+            </div>
+
+            {/* Type Switcher */}
+            <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
+              {[
+                { key: "none", label: "Tanpa Diskon" },
+                { key: "percentage", label: "Persen (%)" },
+                { key: "nominal", label: "Nominal (Rp)" },
+              ].map((t) => {
+                const active = itemDiscountModal.discountType === t.key;
+                return (
+                  <button
+                    key={t.key}
+                    type="button"
+                    onClick={() =>
+                      setItemDiscountModal({
+                        ...itemDiscountModal,
+                        discountType: t.key as any,
+                        discountValue:
+                          t.key === itemDiscountModal.discountType
+                            ? itemDiscountModal.discountValue
+                            : "",
+                      })
+                    }
+                    className="press-tactile"
+                    style={{
+                      flex: 1,
+                      padding: "8px 4px",
+                      borderRadius: 99,
+                      border: `1.5px solid ${active ? "var(--color-brand)" : "var(--color-border)"}`,
+                      background: active ? "var(--color-brand-light)" : "var(--color-surface)",
+                      color: active ? "var(--color-brand)" : "var(--color-text-2)",
+                      fontSize: 12,
+                      fontWeight: 800,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {t.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {itemDiscountModal.discountType === "percentage" && (
+              <div style={{ marginBottom: 16 }}>
+                <label style={labelStyle}>Besaran Persentase Diskon</label>
+                <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                  <input
+                    type="number"
+                    min="1"
+                    max="100"
+                    placeholder="Contoh: 10"
+                    value={itemDiscountModal.discountValue}
+                    onChange={(e) =>
+                      setItemDiscountModal({
+                        ...itemDiscountModal,
+                        discountValue: e.target.value,
+                      })
+                    }
+                    style={{
+                      ...inputStyle,
+                      paddingRight: 36,
+                      fontWeight: 800,
+                      fontSize: 16,
+                      borderRadius: 99,
+                    }}
+                    autoFocus
+                  />
+                  <span
+                    style={{
+                      position: "absolute",
+                      right: 16,
+                      fontSize: 16,
+                      fontWeight: 800,
+                      color: "var(--color-brand)",
+                    }}
+                  >
+                    %
+                  </span>
+                </div>
+                <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
+                  {[5, 10, 15, 20, 25, 50].map((pct) => (
+                    <button
+                      key={pct}
+                      type="button"
+                      onClick={() =>
+                        setItemDiscountModal({
+                          ...itemDiscountModal,
+                          discountValue: String(pct),
+                        })
+                      }
+                      className="press-tactile"
+                      style={{
+                        padding: "4px 12px",
+                        borderRadius: 99,
+                        border: "1px solid var(--color-border)",
+                        background:
+                          itemDiscountModal.discountValue === String(pct)
+                            ? "var(--color-brand)"
+                            : "var(--color-surface)",
+                        color:
+                          itemDiscountModal.discountValue === String(pct)
+                            ? "#ffffff"
+                            : "var(--color-text)",
+                        fontSize: 11,
+                        fontWeight: 700,
+                        cursor: "pointer",
+                      }}
+                    >
+                      {pct}%
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {itemDiscountModal.discountType === "nominal" && (
+              <div style={{ marginBottom: 16 }}>
+                <label style={labelStyle}>Potongan Rupiah (IDR)</label>
+                <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                  <span
+                    style={{
+                      position: "absolute",
+                      left: 16,
+                      fontSize: 15,
+                      fontWeight: 800,
+                      color: "var(--color-brand)",
+                    }}
+                  >
+                    Rp
+                  </span>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="Contoh: 5.000"
+                    value={itemDiscountModal.discountValue}
+                    onChange={(e) =>
+                      setItemDiscountModal({
+                        ...itemDiscountModal,
+                        discountValue: formatIDRInput(e.target.value),
+                      })
+                    }
+                    style={{
+                      ...inputStyle,
+                      paddingLeft: 46,
+                      fontWeight: 800,
+                      fontSize: 16,
+                      borderRadius: 99,
+                    }}
+                    autoFocus
+                  />
+                </div>
+                <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
+                  {[2000, 5000, 10000, 20000, 50000].map((nom) => (
+                    <button
+                      key={nom}
+                      type="button"
+                      onClick={() =>
+                        setItemDiscountModal({
+                          ...itemDiscountModal,
+                          discountValue: formatIDRInput(nom),
+                        })
+                      }
+                      className="press-tactile"
+                      style={{
+                        padding: "4px 12px",
+                        borderRadius: 99,
+                        border: "1px solid var(--color-border)",
+                        background:
+                          parseIDRInput(itemDiscountModal.discountValue) === nom
+                            ? "var(--color-brand)"
+                            : "var(--color-surface)",
+                        color:
+                          parseIDRInput(itemDiscountModal.discountValue) === nom
+                            ? "#ffffff"
+                            : "var(--color-text)",
+                        fontSize: 11,
+                        fontWeight: 700,
+                        cursor: "pointer",
+                      }}
+                    >
+                      {nom >= 1000 ? `${nom / 1000}rb` : formatIDR(nom)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Live Discount Calculation Box */}
+            {itemDiscountModal.discountType !== "none" && (
+              <div
+                style={{
+                  padding: "12px 14px",
+                  borderRadius: "var(--radius-md)",
+                  background: "var(--color-brand-light)",
+                  border: "1px solid var(--color-brand)",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: 18,
+                }}
+              >
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "var(--color-text-2)" }}>
+                    Harga Satuan Baru:
+                  </div>
+                  <div
+                    className="price"
+                    style={{ fontSize: 16, fontWeight: 800, color: "var(--color-brand)" }}
+                  >
+                    {formatIDR(
+                      calculateItemDiscount(
+                        itemDiscountModal.item.price,
+                        itemDiscountModal.discountType,
+                        itemDiscountModal.discountType === "percentage"
+                          ? parseInt(itemDiscountModal.discountValue, 10) || 0
+                          : parseIDRInput(itemDiscountModal.discountValue),
+                      ).unitPrice,
+                    )}
+                  </div>
+                </div>
+                <div
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 800,
+                    color: "var(--color-brand)",
+                    background: "var(--color-surface)",
+                    padding: "4px 10px",
+                    borderRadius: 99,
+                  }}
+                >
+                  Hemat{" "}
+                  {formatIDR(
+                    calculateItemDiscount(
+                      itemDiscountModal.item.price,
+                      itemDiscountModal.discountType,
+                      itemDiscountModal.discountType === "percentage"
+                        ? parseInt(itemDiscountModal.discountValue, 10) || 0
+                        : parseIDRInput(itemDiscountModal.discountValue),
+                    ).discountAmount,
+                  )}
+                  /pcs
+                </div>
+              </div>
+            )}
+
+            <div style={{ display: "flex", gap: 10 }}>
+              <button
+                type="button"
+                onClick={() => setItemDiscountModal(null)}
+                className="press-tactile"
+                style={{
+                  background: "var(--color-surface-2)",
+                  border: "1.5px solid var(--color-border)",
+                  color: "var(--color-text)",
+                  flex: 1,
+                  padding: "12px",
+                  justifyContent: "center",
+                  borderRadius: 99,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={saveItemDiscount}
+                className="press-tactile"
+                style={{
+                  flex: 1,
+                  padding: "12px",
+                  borderRadius: 99,
+                  background: "var(--color-brand)",
+                  color: "#ffffff",
+                  fontWeight: 800,
+                  fontSize: 14,
+                  border: "none",
+                  cursor: "pointer",
+                  boxShadow: "0 4px 14px rgba(234, 88, 12, 0.3)",
+                }}
+              >
+                Terapkan Diskon
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Payment Confirmation Modal with Total Basket Discount */}
+      {showPayment && (
+        <Modal onClose={() => setShowPayment(false)} maxWidth={520}>
+          <div style={{ marginBottom: 18 }}>
+            <div className="eyebrow-tag" style={{ marginBottom: 4 }}>
+              PEMBAYARAN
+            </div>
+            <h2
+              style={{
+                fontSize: 20,
+                fontWeight: 800,
+                margin: 0,
                 color: "var(--color-text)",
                 letterSpacing: "-0.02em",
               }}
             >
               Konfirmasi Transaksi
             </h2>
+            <p style={{ fontSize: 13, color: "var(--color-text-3)", margin: "4px 0 0" }}>
+              Tinjau total keranjang, atur diskon transaksi, dan pilih metode bayar
+            </p>
           </div>
-
-          <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
-            {(["cash", "qris"] as PaymentMethod[]).map((m) => {
-              const active = payMethod === m;
-              return (
-                <button
-                  key={m}
-                  onClick={() => setPayMethod(m)}
-                  className="press-tactile"
-                  style={{
-                    flex: 1,
-                    padding: "14px 12px",
-                    borderRadius: 99,
-                    border: `2px solid ${active ? "var(--color-brand)" : "var(--color-border)"}`,
-                    background: active ? "var(--color-brand-light)" : "var(--color-surface)",
-                    fontWeight: 800,
-                    fontSize: 14,
-                    cursor: "pointer",
-                    color: active ? "var(--color-brand)" : "var(--color-text-2)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 8,
-                    boxShadow: active ? "var(--shadow-sm)" : "none",
-                  }}
-                >
-                  {m === "cash" ? (
-                    <MoneyIcon size={20} weight="duotone" />
-                  ) : (
-                    <QrCodeIcon size={20} weight="duotone" />
-                  )}
-                  {m === "cash" ? "Tunai (Cash)" : "QRIS Digital"}
-                </button>
-              );
-            })}
-          </div>
-
-          <div
-            style={{
-              background: "var(--color-surface-2)",
-              border: "1px solid var(--color-border)",
-              borderRadius: "var(--radius-md)",
-              padding: "18px",
-              marginBottom: 20,
-            }}
-          >
-            <div
-              style={{
-                fontSize: 12,
-                color: "var(--color-text-3)",
-                fontWeight: 700,
-                textTransform: "uppercase",
-                letterSpacing: "0.05em",
-              }}
-            >
-              Total Bayar
-            </div>
-            <div
-              className="price"
-              style={{ fontSize: 30, fontWeight: 800, color: "var(--color-brand)", marginTop: 2 }}
-            >
-              {formatIDR(total)}
-            </div>
-          </div>
-
-          {payMethod === "cash" ? (
-            <>
-              <div style={{ marginBottom: 12 }}>
-                <label style={labelStyle}>Uang Diterima (IDR)</label>
-                <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-                  <span
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            {/* Payment Method Switcher */}
+            <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
+              {(["cash", "qris"] as PaymentMethod[]).map((m) => {
+                const active = payMethod === m;
+                return (
+                  <button
+                    key={m}
+                    onClick={() => setPayMethod(m)}
+                    className="press-tactile"
                     style={{
-                      position: "absolute",
-                      left: 16,
-                      fontSize: 16,
+                      flex: 1,
+                      padding: "12px 10px",
+                      borderRadius: 99,
+                      border: `2px solid ${active ? "var(--color-brand)" : "var(--color-border)"}`,
+                      background: active ? "var(--color-brand-light)" : "var(--color-surface)",
                       fontWeight: 800,
-                      color: "var(--color-text-2)",
+                      fontSize: 13,
+                      cursor: "pointer",
+                      color: active ? "var(--color-brand)" : "var(--color-text-2)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 8,
+                      boxShadow: active ? "var(--shadow-sm)" : "none",
                     }}
                   >
-                    Rp
-                  </span>
-                  <input
-                    type="number"
-                    placeholder="0"
-                    value={cashInput}
-                    onChange={(e) => setCashInput(e.target.value)}
-                    style={{
-                      ...inputStyle,
-                      paddingLeft: 46,
-                      fontSize: 18,
-                      fontWeight: 700,
-                      height: 48,
-                      borderRadius: 99,
-                    }}
-                    autoFocus
-                  />
-                </div>
-              </div>
+                    {m === "cash" ? (
+                      <MoneyIcon size={18} weight="duotone" />
+                    ) : (
+                      <QrCodeIcon size={18} weight="duotone" />
+                    )}
+                    {m === "cash" ? "Tunai (Cash)" : "QRIS Digital"}
+                  </button>
+                );
+              })}
+            </div>
 
-              {/* Quick Cash Presets */}
+            {/* BASKET TOTAL DISCOUNT CARD */}
+            <div
+              style={{
+                background: "var(--color-surface-2)",
+                border: "1px solid var(--color-border)",
+                borderRadius: "var(--radius-md)",
+                padding: "12px 14px",
+                marginBottom: 16,
+              }}
+            >
               <div
                 style={{
                   display: "flex",
-                  gap: 8,
-                  marginBottom: 20,
-                  overflowX: "auto",
-                  paddingBottom: 4,
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginBottom: 8,
                 }}
               >
-                {Array.from(new Set([total, 10000, 20000, 50000, 100000]))
-                  .filter((v) => v >= total)
-                  .map((preset, idx) => (
-                    <button
-                      key={`${preset}-${idx}`}
-                      type="button"
-                      onClick={() => setCashInput(String(preset))}
-                      className="press-tactile price"
-                      style={{
-                        padding: "9px 16px",
-                        borderRadius: 99,
-                        border: "1.5px solid var(--color-border)",
-                        background: "var(--color-surface-2)",
-                        fontSize: 13,
-                        fontWeight: 800,
-                        cursor: "pointer",
-                        color: "var(--color-text)",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {preset === total ? "Uang Pas" : formatIDR(preset)}
-                    </button>
-                  ))}
-              </div>
-
-              {cashPaid > 0 && (
                 <div
                   style={{
-                    background:
-                      cashPaid >= total
-                        ? "var(--color-success-light)"
-                        : "var(--color-danger-light)",
-                    border: `1px solid ${cashPaid >= total ? "var(--color-success)" : "var(--color-danger)"}`,
-                    borderRadius: "var(--radius-md)",
-                    padding: "14px 18px",
-                    marginBottom: 20,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    fontSize: 12,
+                    fontWeight: 800,
+                    color: "var(--color-text)",
                   }}
                 >
-                  <span
-                    className="price"
+                  <TagIcon size={15} weight="bold" color="var(--color-brand)" />
+                  <span>Diskon Total Keranjang / Transaksi</span>
+                </div>
+                {basketDiscountType !== "none" && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBasketDiscountType("none");
+                      setBasketDiscountValue("");
+                    }}
                     style={{
-                      fontSize: 15,
-                      color:
-                        cashPaid >= total
-                          ? "var(--color-success-text)"
-                          : "var(--color-danger-text)",
-                      fontWeight: 800,
+                      background: "none",
+                      border: "none",
+                      color: "var(--color-text-3)",
+                      fontSize: 11,
+                      fontWeight: 700,
+                      cursor: "pointer",
                     }}
                   >
-                    {cashPaid >= total
-                      ? `Kembalian: ${formatIDR(change)}`
-                      : `Kurang Bayar: ${formatIDR(total - cashPaid)}`}
-                  </span>
+                    Hapus
+                  </button>
+                )}
+              </div>
+
+              {/* Basket Discount Type Toggle */}
+              <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
+                {[
+                  { key: "none", label: "Tanpa Diskon" },
+                  { key: "percentage", label: "Persen (%)" },
+                  { key: "nominal", label: "Potongan Rp" },
+                ].map((t) => {
+                  const active = basketDiscountType === t.key;
+                  return (
+                    <button
+                      key={t.key}
+                      type="button"
+                      onClick={() => {
+                        setBasketDiscountType(t.key as any);
+                        if (t.key !== basketDiscountType) setBasketDiscountValue("");
+                      }}
+                      className="press-tactile"
+                      style={{
+                        flex: 1,
+                        padding: "6px 2px",
+                        borderRadius: 99,
+                        border: `1.5px solid ${active ? "var(--color-brand)" : "var(--color-border)"}`,
+                        background: active ? "var(--color-brand-light)" : "var(--color-surface)",
+                        color: active ? "var(--color-brand)" : "var(--color-text-2)",
+                        fontSize: 11,
+                        fontWeight: 800,
+                        cursor: "pointer",
+                      }}
+                    >
+                      {t.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {basketDiscountType === "percentage" && (
+                <div>
+                  <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                    <input
+                      type="number"
+                      min="1"
+                      max="100"
+                      placeholder="Besar diskon keranjang (%)"
+                      value={basketDiscountValue}
+                      onChange={(e) => setBasketDiscountValue(e.target.value)}
+                      style={{
+                        ...inputStyle,
+                        paddingRight: 36,
+                        fontWeight: 800,
+                        fontSize: 14,
+                        borderRadius: 99,
+                        height: 40,
+                      }}
+                    />
+                    <span
+                      style={{
+                        position: "absolute",
+                        right: 14,
+                        fontSize: 14,
+                        fontWeight: 800,
+                        color: "var(--color-brand)",
+                      }}
+                    >
+                      %
+                    </span>
+                  </div>
+                  <div style={{ display: "flex", gap: 6, marginTop: 6, flexWrap: "wrap" }}>
+                    {[5, 10, 15, 20, 50].map((pct) => (
+                      <button
+                        key={pct}
+                        type="button"
+                        onClick={() => setBasketDiscountValue(String(pct))}
+                        className="press-tactile"
+                        style={{
+                          padding: "2px 10px",
+                          borderRadius: 99,
+                          border: "1px solid var(--color-border)",
+                          background:
+                            basketDiscountValue === String(pct)
+                              ? "var(--color-brand)"
+                              : "var(--color-surface)",
+                          color:
+                            basketDiscountValue === String(pct)
+                              ? "#ffffff"
+                              : "var(--color-text)",
+                          fontSize: 11,
+                          fontWeight: 700,
+                          cursor: "pointer",
+                        }}
+                      >
+                        {pct}%
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
-              <button
-                onClick={handleConfirmPayment}
-                disabled={cashPaid < total}
-                className="press-tactile"
-                style={{
-                  ...payBtnStyle,
-                  background: cashPaid >= total ? "var(--color-brand)" : "var(--color-border)",
-                  color: "#ffffff",
-                  cursor: cashPaid >= total ? "pointer" : "not-allowed",
-                  borderRadius: 99,
-                  boxShadow: cashPaid >= total ? "0 8px 24px rgba(234, 88, 12, 0.35)" : "none",
-                }}
-              >
-                Selesaikan Pembayaran Tunai
-              </button>
-            </>
-          ) : (
-            <>
+
+              {basketDiscountType === "nominal" && (
+                <div>
+                  <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                    <span
+                      style={{
+                        position: "absolute",
+                        left: 14,
+                        fontSize: 13,
+                        fontWeight: 800,
+                        color: "var(--color-brand)",
+                      }}
+                    >
+                      Rp
+                    </span>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="Potongan total keranjang"
+                      value={basketDiscountValue}
+                      onChange={(e) => setBasketDiscountValue(formatIDRInput(e.target.value))}
+                      style={{
+                        ...inputStyle,
+                        paddingLeft: 42,
+                        fontWeight: 800,
+                        fontSize: 14,
+                        borderRadius: 99,
+                        height: 40,
+                      }}
+                    />
+                  </div>
+                  <div style={{ display: "flex", gap: 6, marginTop: 6, flexWrap: "wrap" }}>
+                    {[5000, 10000, 20000, 50000].map((nom) => (
+                      <button
+                        key={nom}
+                        type="button"
+                        onClick={() => setBasketDiscountValue(formatIDRInput(nom))}
+                        className="press-tactile"
+                        style={{
+                          padding: "2px 10px",
+                          borderRadius: 99,
+                          border: "1px solid var(--color-border)",
+                          background:
+                            parseIDRInput(basketDiscountValue) === nom
+                              ? "var(--color-brand)"
+                              : "var(--color-surface)",
+                          color:
+                            parseIDRInput(basketDiscountValue) === nom
+                              ? "#ffffff"
+                              : "var(--color-text)",
+                          fontSize: 11,
+                          fontWeight: 700,
+                          cursor: "pointer",
+                        }}
+                      >
+                        {nom >= 1000 ? `${nom / 1000}rb` : formatIDR(nom)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Total Bayar & Breakdown Box */}
+            <div
+              style={{
+                background: "var(--color-surface-2)",
+                border: "1px solid var(--color-border)",
+                borderRadius: "var(--radius-md)",
+                padding: "16px 18px",
+                marginBottom: 16,
+              }}
+            >
               <div
                 style={{
-                  textAlign: "center",
-                  padding: "28px 16px",
-                  background: "var(--color-surface-2)",
-                  border: "1px solid var(--color-border)",
-                  borderRadius: "var(--radius-md)",
-                  marginBottom: 20,
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: 4,
+                  fontSize: 12,
+                  color: "var(--color-text-2)",
                 }}
               >
-                <QrCodeIcon
-                  size={88}
-                  weight="duotone"
-                  color="var(--color-brand)"
-                  style={{ marginBottom: 12 }}
-                />
-                <div style={{ fontSize: 14, fontWeight: 800, color: "var(--color-text)" }}>
-                  Scan QRIS Pelanggan
-                </div>
-                <p style={{ fontSize: 12, color: "var(--color-text-3)", margin: "4px 0 0" }}>
-                  Mendukung GoPay, OVO, Dana, ShopeePay & LinkAja
-                </p>
+                <span>Subtotal Barang:</span>
+                <span className="price" style={{ fontWeight: 700 }}>
+                  {formatIDR(subtotal)}
+                </span>
               </div>
-              <button
-                onClick={handleConfirmPayment}
-                className="press-tactile"
+
+              {basketDiscountAmount > 0 && (
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: 4,
+                    fontSize: 12,
+                    color: "var(--color-brand)",
+                    fontWeight: 700,
+                  }}
+                >
+                  <span>Diskon Keranjang:</span>
+                  <span className="price">-{formatIDR(basketDiscountAmount)}</span>
+                </div>
+              )}
+
+              <div
                 style={{
-                  ...payBtnStyle,
-                  background: "var(--color-brand)",
-                  color: "#ffffff",
-                  borderRadius: 99,
-                  boxShadow: "0 8px 24px rgba(234, 88, 12, 0.35)",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "baseline",
+                  paddingTop: 8,
+                  marginTop: 6,
+                  borderTop: "1px solid var(--color-border)",
                 }}
               >
-                Konfirmasi Pembayaran QRIS Lunas
-              </button>
-            </>
-          )}
+                <div>
+                  <div
+                    style={{
+                      fontSize: 11,
+                      color: "var(--color-text-3)",
+                      fontWeight: 700,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.05em",
+                    }}
+                  >
+                    Total Akhir Bayar
+                  </div>
+                  {totalSavings > 0 && (
+                    <span
+                      style={{
+                        fontSize: 10,
+                        fontWeight: 800,
+                        color: "var(--color-brand)",
+                        background: "var(--color-brand-light)",
+                        padding: "1px 6px",
+                        borderRadius: 99,
+                        marginTop: 2,
+                        display: "inline-block",
+                      }}
+                    >
+                      Hemat {formatIDR(totalSavings)}
+                    </span>
+                  )}
+                </div>
+                <div
+                  className="price"
+                  style={{ fontSize: 26, fontWeight: 800, color: "var(--color-brand)" }}
+                >
+                  {formatIDR(total)}
+                </div>
+              </div>
+            </div>
+
+            {payMethod === "cash" ? (
+              <>
+                <div style={{ marginBottom: 12 }}>
+                  <label style={labelStyle}>Uang Tunai Diterima (IDR)</label>
+                  <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                    <span
+                      style={{
+                        position: "absolute",
+                        left: 16,
+                        fontSize: 16,
+                        fontWeight: 800,
+                        color: "var(--color-text-2)",
+                      }}
+                    >
+                      Rp
+                    </span>
+                    <input
+                      type="number"
+                      placeholder="0"
+                      value={cashInput}
+                      onChange={(e) => setCashInput(e.target.value)}
+                      style={{
+                        ...inputStyle,
+                        paddingLeft: 46,
+                        fontSize: 18,
+                        fontWeight: 700,
+                        height: 46,
+                        borderRadius: 99,
+                      }}
+                      autoFocus
+                    />
+                  </div>
+                </div>
+
+                {/* Quick Cash Presets */}
+                <div
+                  style={{
+                    display: "flex",
+                    gap: 8,
+                    marginBottom: 16,
+                    overflowX: "auto",
+                    paddingBottom: 4,
+                  }}
+                >
+                  {Array.from(new Set([total, 10000, 20000, 50000, 100000, 200000]))
+                    .filter((v) => v >= total)
+                    .map((preset, idx) => (
+                      <button
+                        key={`${preset}-${idx}`}
+                        type="button"
+                        onClick={() => setCashInput(String(preset))}
+                        className="press-tactile price"
+                        style={{
+                          padding: "8px 14px",
+                          borderRadius: 99,
+                          border: "1.5px solid var(--color-border)",
+                          background: "var(--color-surface-2)",
+                          fontSize: 12,
+                          fontWeight: 800,
+                          cursor: "pointer",
+                          color: "var(--color-text)",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {preset === total ? "Uang Pas" : formatIDR(preset)}
+                      </button>
+                    ))}
+                </div>
+
+                {cashPaid > 0 && (
+                  <div
+                    style={{
+                      background:
+                        cashPaid >= total
+                          ? "var(--color-success-light)"
+                          : "var(--color-danger-light)",
+                      border: `1px solid ${cashPaid >= total ? "var(--color-success)" : "var(--color-danger)"}`,
+                      borderRadius: "var(--radius-md)",
+                      padding: "12px 16px",
+                      marginBottom: 16,
+                    }}
+                  >
+                    <span
+                      className="price"
+                      style={{
+                        fontSize: 14,
+                        color:
+                          cashPaid >= total
+                            ? "var(--color-success-text)"
+                            : "var(--color-danger-text)",
+                        fontWeight: 800,
+                      }}
+                    >
+                      {cashPaid >= total
+                        ? `Kembalian: ${formatIDR(change)}`
+                        : `Kurang Bayar: ${formatIDR(total - cashPaid)}`}
+                    </span>
+                  </div>
+                )}
+
+                <button
+                  onClick={handleConfirmPayment}
+                  disabled={cashPaid < total}
+                  className="press-tactile"
+                  style={{
+                    ...payBtnStyle,
+                    background: cashPaid >= total ? "var(--color-brand)" : "var(--color-border)",
+                    color: "#ffffff",
+                    cursor: cashPaid >= total ? "pointer" : "not-allowed",
+                    borderRadius: 99,
+                    boxShadow: cashPaid >= total ? "0 8px 24px rgba(234, 88, 12, 0.35)" : "none",
+                  }}
+                >
+                  Selesaikan Pembayaran Tunai
+                </button>
+              </>
+            ) : (
+              <>
+                <div
+                  style={{
+                    textAlign: "center",
+                    padding: "20px 16px",
+                    background: "var(--color-surface-2)",
+                    border: "1px solid var(--color-border)",
+                    borderRadius: "var(--radius-md)",
+                    marginBottom: 16,
+                  }}
+                >
+                  <QrCodeIcon
+                    size={72}
+                    weight="duotone"
+                    color="var(--color-brand)"
+                    style={{ marginBottom: 8 }}
+                  />
+                  <div style={{ fontSize: 14, fontWeight: 800, color: "var(--color-text)" }}>
+                    Scan QRIS Pelanggan
+                  </div>
+                  <p style={{ fontSize: 11, color: "var(--color-text-3)", margin: "2px 0 0" }}>
+                    Mendukung GoPay, OVO, Dana, ShopeePay, BCA & LinkAja
+                  </p>
+                </div>
+                <button
+                  onClick={handleConfirmPayment}
+                  className="press-tactile"
+                  style={{
+                    ...payBtnStyle,
+                    background: "var(--color-brand)",
+                    color: "#ffffff",
+                    borderRadius: 99,
+                    boxShadow: "0 8px 24px rgba(234, 88, 12, 0.35)",
+                  }}
+                >
+                  Konfirmasi Pembayaran QRIS Lunas
+                </button>
+              </>
+            )}
+          </div>
         </Modal>
       )}
 
@@ -1200,7 +2092,7 @@ function Kasir() {
           <div id="toku-receipt-content" className="receipt-print">
             <Receipt tx={lastTx} storeName={store.name} />
           </div>
-          <div className="no-print" style={{ display: "flex", gap: 10, marginTop: 24 }}>
+          <div className="no-print" style={{ display: "flex", gap: 10, marginTop: 20 }}>
             <button
               onClick={() => printReceipt("toku-receipt-content")}
               className="press-tactile"
@@ -1241,12 +2133,21 @@ function Kasir() {
   );
 }
 
-function CartContent({ cart, total, updateQty, removeFromCart, setCart, onCheckout }: any) {
+function CartContent({
+  cart,
+  total,
+  totalSavings,
+  updateQty,
+  removeFromCart,
+  setCart,
+  onEditItemDiscount,
+  onCheckout,
+}: any) {
   return (
     <>
       <div
         style={{
-          padding: "18px 20px",
+          padding: "16px 20px",
           borderBottom: "1px solid var(--color-border)",
           display: "flex",
           alignItems: "center",
@@ -1271,7 +2172,7 @@ function CartContent({ cart, total, updateQty, removeFromCart, setCart, onChecko
         <h2
           style={{ fontSize: 16, fontWeight: 800, margin: 0, color: "var(--color-text)", flex: 1 }}
         >
-          Keranjang {cart.length > 0 && `(${cart.length})`}
+          Keranjang ({cart.length} item)
         </h2>
       </div>
 
@@ -1286,86 +2187,127 @@ function CartContent({ cart, total, updateQty, removeFromCart, setCart, onChecko
             </p>
           </div>
         ) : (
-          cart.map((item: CartItem) => (
-            <div
-              key={item.productId}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                padding: "12px 0",
-                borderBottom: "1px solid var(--color-border)",
-              }}
-            >
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div
-                  style={{
-                    fontSize: 14,
-                    fontWeight: 700,
-                    color: "var(--color-text)",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {item.name}
+          cart.map((item: CartItem) => {
+            const disc = calculateItemDiscount(item.price, item.discountType, item.discountValue);
+            const lineTotal = disc.unitPrice * item.qty;
+
+            return (
+              <div
+                key={item.productId}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  padding: "10px 0",
+                  borderBottom: "1px solid var(--color-border)",
+                  gap: 6,
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <div style={{ flex: 1, minWidth: 0, paddingRight: 8 }}>
+                    <div
+                      style={{
+                        fontSize: 14,
+                        fontWeight: 700,
+                        color: "var(--color-text)",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {item.name}
+                    </div>
+                    <div
+                      className="price"
+                      style={{ fontSize: 12, color: "var(--color-text-3)", marginTop: 2 }}
+                    >
+                      {item.qty} x {formatIDR(disc.unitPrice)}
+                    </div>
+                  </div>
+
+                  <span
+                    className="price"
+                    style={{ fontSize: 14, fontWeight: 800, color: "var(--color-brand)" }}
+                  >
+                    {formatIDR(lineTotal)}
+                  </span>
                 </div>
-                <div
-                  className="price"
-                  style={{ fontSize: 12, color: "var(--color-text-3)", marginTop: 2 }}
-                >
-                  {formatIDR(item.price)}
+
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <button
+                    type="button"
+                    onClick={() => onEditItemDiscount(item)}
+                    className="press-tactile"
+                    style={{
+                      background: disc.hasDiscount
+                        ? "var(--color-brand-light)"
+                        : "var(--color-surface-2)",
+                      border: `1px solid ${disc.hasDiscount ? "var(--color-brand)" : "var(--color-border)"}`,
+                      color: disc.hasDiscount ? "var(--color-brand)" : "var(--color-text-2)",
+                      padding: "2px 8px",
+                      borderRadius: 99,
+                      fontSize: 10,
+                      fontWeight: 800,
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 4,
+                    }}
+                  >
+                    <TagIcon size={11} weight="bold" />
+                    <span>{disc.hasDiscount ? `Disc ${disc.discountLabel}` : "+ Diskon"}</span>
+                  </button>
+
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <button
+                      onClick={() => updateQty(item.productId, -1)}
+                      className="press-tactile"
+                      style={qtyBtnStyle}
+                    >
+                      <MinusIcon size={12} weight="bold" />
+                    </button>
+                    <span
+                      style={{
+                        fontSize: 14,
+                        fontWeight: 800,
+                        minWidth: 20,
+                        textAlign: "center",
+                        color: "var(--color-text)",
+                      }}
+                    >
+                      {item.qty}
+                    </span>
+                    <button
+                      onClick={() => updateQty(item.productId, 1)}
+                      className="press-tactile"
+                      style={{ ...qtyBtnStyle, background: "var(--color-brand)", color: "#ffffff" }}
+                    >
+                      <PlusIcon size={12} weight="bold" />
+                    </button>
+                    <button
+                      onClick={() => removeFromCart(item.productId)}
+                      title="Hapus dari keranjang"
+                      className="press-tactile"
+                      style={{
+                        ...qtyBtnStyle,
+                        background: "transparent",
+                        color: "var(--color-danger)",
+                        borderColor: "transparent",
+                        marginLeft: 2,
+                      }}
+                    >
+                      <TrashIcon size={14} />
+                    </button>
+                  </div>
                 </div>
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <button
-                  onClick={() => updateQty(item.productId, -1)}
-                  className="press-tactile"
-                  style={qtyBtnStyle}
-                >
-                  <MinusIcon size={12} weight="bold" />
-                </button>
-                <span
-                  style={{
-                    fontSize: 14,
-                    fontWeight: 800,
-                    minWidth: 20,
-                    textAlign: "center",
-                    color: "var(--color-text)",
-                  }}
-                >
-                  {item.qty}
-                </span>
-                <button
-                  onClick={() => updateQty(item.productId, 1)}
-                  className="press-tactile"
-                  style={{ ...qtyBtnStyle, background: "var(--color-brand)", color: "#ffffff" }}
-                >
-                  <PlusIcon size={12} weight="bold" />
-                </button>
-                <button
-                  onClick={() => removeFromCart(item.productId)}
-                  title="Hapus dari keranjang"
-                  className="press-tactile"
-                  style={{
-                    ...qtyBtnStyle,
-                    background: "transparent",
-                    color: "var(--color-danger)",
-                    borderColor: "transparent",
-                    marginLeft: 2,
-                  }}
-                >
-                  <TrashIcon size={14} />
-                </button>
-              </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
 
       <div
         style={{
-          padding: "20px",
+          padding: "16px 20px",
           borderTop: "1px solid var(--color-border)",
           background: "var(--color-surface)",
         }}
@@ -1374,16 +2316,23 @@ function CartContent({ cart, total, updateQty, removeFromCart, setCart, onChecko
           style={{
             display: "flex",
             justifyContent: "space-between",
-            marginBottom: 16,
-            alignItems: "center",
+            marginBottom: 14,
+            alignItems: "baseline",
           }}
         >
-          <span style={{ fontSize: 14, fontWeight: 600, color: "var(--color-text-2)" }}>
-            Total Tagihan
-          </span>
+          <div>
+            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text-2)" }}>
+              Total Tagihan
+            </span>
+            {totalSavings > 0 && (
+              <div style={{ fontSize: 11, fontWeight: 700, color: "var(--color-brand)" }}>
+                Hemat {formatIDR(totalSavings)}
+              </div>
+            )}
+          </div>
           <span
             className="price"
-            style={{ fontSize: 24, fontWeight: 800, color: "var(--color-brand)" }}
+            style={{ fontSize: 22, fontWeight: 800, color: "var(--color-brand)" }}
           >
             {formatIDR(total)}
           </span>
@@ -1526,35 +2475,115 @@ function Receipt({ tx, storeName }: { tx: any; storeName: string }) {
           <span>SUBTOTAL</span>
         </div>
 
-        {tx.items.map((item: CartItem, i: number) => (
+        {tx.items.map((item: any, i: number) => {
+          const disc = calculateItemDiscount(item.price, item.discountType, item.discountValue);
+          const itemTotal = item.subtotal ?? disc.unitPrice * item.qty;
+
+          return (
+            <div
+              key={i}
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "flex-start",
+                padding: "6px 0",
+                borderBottom: i === tx.items.length - 1 ? "none" : "1px solid #f5f5f4",
+              }}
+            >
+              <div style={{ flex: 1, minWidth: 0, paddingRight: 12 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "#1c1917" }}>{item.name}</div>
+                <div
+                  style={{
+                    fontSize: 11,
+                    color: "#78716c",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 4,
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <span>
+                    {item.qty} x {formatIDR(item.price)}
+                  </span>
+                  {disc.hasDiscount && (
+                    <span style={{ color: "#ea580c", fontWeight: 700 }}>
+                      (Disc {disc.discountLabel} ➔ {formatIDR(disc.unitPrice)})
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <span
+                  className="price"
+                  style={{ fontSize: 13, fontWeight: 800, color: "#1c1917" }}
+                >
+                  {formatIDR(itemTotal)}
+                </span>
+                {disc.hasDiscount && (
+                  <div
+                    className="price"
+                    style={{
+                      fontSize: 10,
+                      color: "#78716c",
+                      textDecoration: "line-through",
+                    }}
+                  >
+                    {formatIDR(item.price * item.qty)}
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Subtotals & Discounts Breakdown */}
+      <div
+        style={{
+          borderTop: "2px dashed #e5e5e5",
+          paddingTop: 12,
+          marginBottom: 12,
+        }}
+      >
+        {tx.subtotal && tx.subtotal !== tx.total && (
           <div
-            key={i}
             style={{
               display: "flex",
               justifyContent: "space-between",
-              alignItems: "flex-start",
-              padding: "6px 0",
-              borderBottom: i === tx.items.length - 1 ? "none" : "1px solid #f5f5f4",
+              marginBottom: 4,
+              fontSize: 12,
+              color: "#57534e",
             }}
           >
-            <div style={{ flex: 1, minWidth: 0, paddingRight: 12 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "#1c1917" }}>{item.name}</div>
-              <div style={{ fontSize: 11, color: "#78716c" }}>
-                {item.qty} x <span className="price">{formatIDR(item.price)}</span>
-              </div>
-            </div>
-            <span className="price" style={{ fontSize: 13, fontWeight: 800, color: "#1c1917" }}>
-              {formatIDR(item.price * item.qty)}
-            </span>
+            <span>Subtotal Produk</span>
+            <span className="price">{formatIDR(tx.subtotal)}</span>
           </div>
-        ))}
+        )}
+
+        {tx.discountAmount && tx.discountAmount > 0 && (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              marginBottom: 6,
+              fontSize: 12,
+              color: "#ea580c",
+              fontWeight: 700,
+            }}
+          >
+            <span>
+              Diskon Keranjang {tx.discountType === "percentage" ? `(${tx.discountValue}%)` : ""}
+            </span>
+            <span className="price">-{formatIDR(tx.discountAmount)}</span>
+          </div>
+        )}
       </div>
 
       {/* Payment Details */}
       <div
         style={{
-          borderTop: "2px dashed #e5e5e5",
-          paddingTop: 14,
+          borderTop: "1px solid #e5e5e5",
+          paddingTop: 10,
           marginBottom: 16,
         }}
       >

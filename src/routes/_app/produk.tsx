@@ -3,7 +3,13 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { useAppStore } from "#/lib/store-context";
 import { useState } from "react";
-import { formatIDR, formatIDRInput, parseIDRInput, compressImageToBlob } from "#/lib/utils";
+import {
+  formatIDR,
+  formatIDRInput,
+  parseIDRInput,
+  compressImageToBlob,
+  calculateItemDiscount,
+} from "#/lib/utils";
 import { Modal } from "#/components/Modal";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { toast } from "sonner";
@@ -21,6 +27,7 @@ import {
   CaretLeftIcon,
   CaretRightIcon,
   CircleNotchIcon,
+  TagIcon,
 } from "@phosphor-icons/react";
 
 export const Route = createFileRoute("/_app/produk")({ component: Produk });
@@ -32,8 +39,19 @@ type Form = {
   stock: string;
   barcode: string;
   imageId: string;
+  discountType: "none" | "percentage" | "nominal";
+  discountValue: string;
 };
-const emptyForm: Form = { name: "", category: "", price: "", stock: "", barcode: "", imageId: "" };
+const emptyForm: Form = {
+  name: "",
+  category: "",
+  price: "",
+  stock: "",
+  barcode: "",
+  imageId: "",
+  discountType: "none",
+  discountValue: "",
+};
 
 function Produk() {
   const { store } = useAppStore();
@@ -70,6 +88,13 @@ function Produk() {
       stock: String(p.stock),
       barcode: p.barcode ?? "",
       imageId: p.imageId ?? "",
+      discountType: p.discountType ?? "none",
+      discountValue:
+        p.discountType === "percentage"
+          ? String(p.discountValue ?? "")
+          : p.discountType === "nominal"
+            ? formatIDRInput(p.discountValue ?? "")
+            : "",
     });
     setImagePreview(p.imageUrl ?? p.imageId ?? "");
     setShowModal(true);
@@ -119,6 +144,24 @@ function Produk() {
       toast.error("Mohon lengkapi nama, kategori, dan harga yang valid");
       return;
     }
+
+    let discountTypeVal: "percentage" | "nominal" | undefined = undefined;
+    let discountNum: number | undefined = undefined;
+
+    if (form.discountType === "percentage") {
+      const pct = Math.min(100, Math.max(0, parseInt(form.discountValue, 10) || 0));
+      if (pct > 0) {
+        discountTypeVal = "percentage";
+        discountNum = pct;
+      }
+    } else if (form.discountType === "nominal") {
+      const nom = parseIDRInput(form.discountValue);
+      if (nom > 0) {
+        discountTypeVal = "nominal";
+        discountNum = Math.min(priceNum, nom);
+      }
+    }
+
     setSaving(true);
     try {
       if (editId) {
@@ -130,6 +173,8 @@ function Produk() {
           stock: stockNum,
           barcode: form.barcode.trim() || undefined,
           imageId: form.imageId.trim() || undefined,
+          discountType: discountTypeVal,
+          discountValue: discountNum,
         });
         toast.success(`Produk "${form.name}" berhasil diperbarui`);
       } else {
@@ -141,6 +186,8 @@ function Produk() {
           stock: stockNum,
           barcode: form.barcode.trim() || undefined,
           imageId: form.imageId.trim() || undefined,
+          discountType: discountTypeVal,
+          discountValue: discountNum,
         });
         toast.success(`Produk "${form.name}" berhasil ditambahkan`);
       }
@@ -385,12 +432,54 @@ function Produk() {
                         </span>
                       </td>
                       <td style={tdStyle}>
-                        <span
-                          className="price"
-                          style={{ fontWeight: 800, fontSize: 15, color: "var(--color-text)" }}
-                        >
-                          {formatIDR(p.price)}
-                        </span>
+                        {p.discountType && p.discountValue ? (
+                          <div>
+                            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                              <span
+                                className="price"
+                                style={{ fontWeight: 800, fontSize: 15, color: "var(--color-brand)" }}
+                              >
+                                {formatIDR(
+                                  calculateItemDiscount(p.price, p.discountType, p.discountValue)
+                                    .unitPrice,
+                                )}
+                              </span>
+                              <span
+                                style={{
+                                  fontSize: 10,
+                                  fontWeight: 800,
+                                  background: "var(--color-brand-light)",
+                                  color: "var(--color-brand)",
+                                  border: "1px solid var(--color-brand)",
+                                  padding: "1px 6px",
+                                  borderRadius: 99,
+                                }}
+                              >
+                                {p.discountType === "percentage"
+                                  ? `${p.discountValue}% OFF`
+                                  : `-${formatIDR(p.discountValue)}`}
+                              </span>
+                            </div>
+                            <div
+                              className="price"
+                              style={{
+                                fontSize: 11,
+                                color: "var(--color-text-3)",
+                                textDecoration: "line-through",
+                                marginTop: 1,
+                              }}
+                            >
+                              {formatIDR(p.price)}
+                            </div>
+                          </div>
+                        ) : (
+                          <span
+                            className="price"
+                            style={{ fontWeight: 800, fontSize: 15, color: "var(--color-text)" }}
+                          >
+                            {formatIDR(p.price)}
+                          </span>
+                        )}
                       </td>
                       <td style={tdStyle}>
                         <span
@@ -440,136 +529,240 @@ function Produk() {
 
             {/* Mobile Touch Card List View */}
             <div className="mobile-topbar" style={{ flexDirection: "column" }}>
-              {pagedProducts.map((p) => (
-                <div
-                  key={p._id}
-                  style={{
-                    padding: "18px 16px",
-                    borderBottom: "1px solid var(--color-border)",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 12,
-                  }}
-                >
-                  <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
-                    {p.imageId ? (
-                      <img
-                        src={p.imageId}
-                        alt={p.name}
-                        style={{
-                          width: 52,
-                          height: 52,
-                          borderRadius: "var(--radius-md)",
-                          objectFit: "cover",
-                          border: "1px solid var(--color-border)",
-                          flexShrink: 0,
-                        }}
-                      />
-                    ) : (
-                      <div
-                        style={{
-                          width: 52,
-                          height: 52,
-                          borderRadius: "var(--radius-md)",
-                          background: "var(--color-surface-2)",
-                          border: "1px solid var(--color-border)",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          color: "var(--color-text-3)",
-                          flexShrink: 0,
-                        }}
-                      >
-                        <ImageIcon size={24} weight="duotone" />
-                      </div>
-                    )}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div
-                        style={{
-                          fontSize: 15,
-                          fontWeight: 800,
-                          color: "var(--color-text)",
-                          marginBottom: 4,
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {p.name}
-                      </div>
-                      <span
-                        style={{
-                          background: "var(--color-surface-2)",
-                          border: "1px solid var(--color-border)",
-                          borderRadius: 99,
-                          padding: "3px 12px",
-                          fontSize: 11,
-                          color: "var(--color-text-2)",
-                          fontWeight: 700,
-                        }}
-                      >
-                        {p.category}
-                      </span>
-                    </div>
-                    <div
-                      className="price"
-                      style={{
-                        fontSize: 17,
-                        fontWeight: 800,
-                        color: "var(--color-text)",
-                        textAlign: "right",
-                        flexShrink: 0,
-                      }}
-                    >
-                      {formatIDR(p.price)}
-                    </div>
-                  </div>
-
+              {pagedProducts.map((p) => {
+                const disc = calculateItemDiscount(p.price, p.discountType, p.discountValue);
+                return (
                   <div
+                    key={p._id}
                     style={{
+                      padding: "18px 16px",
+                      borderBottom: "1px solid var(--color-border)",
                       display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      paddingTop: 4,
+                      flexDirection: "column",
+                      gap: 12,
                     }}
                   >
+                    <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
+                      {p.imageUrl || p.imageId ? (
+                        <img
+                          src={p.imageUrl || p.imageId}
+                          alt={p.name}
+                          style={{
+                            width: 52,
+                            height: 52,
+                            borderRadius: "var(--radius-md)",
+                            objectFit: "cover",
+                            border: "1px solid var(--color-border)",
+                            flexShrink: 0,
+                          }}
+                        />
+                      ) : (
+                        <div
+                          style={{
+                            width: 52,
+                            height: 52,
+                            borderRadius: "var(--radius-md)",
+                            background: "var(--color-surface-2)",
+                            border: "1px solid var(--color-border)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: "var(--color-text-3)",
+                            flexShrink: 0,
+                          }}
+                        >
+                          <ImageIcon size={24} weight="duotone" />
+                        </div>
+                      )}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div
+                          style={{
+                            fontSize: 15,
+                            fontWeight: 800,
+                            color: "var(--color-text)",
+                            lineHeight: 1.2,
+                          }}
+                        >
+                          {p.name}
+                        </div>
+                        {p.barcode && (
+                          <div
+                            style={{
+                              fontSize: 10,
+                              fontFamily: "monospace",
+                              color: "var(--color-text-3)",
+                              marginTop: 2,
+                            }}
+                          >
+                            #{p.barcode}
+                          </div>
+                        )}
+                        <div
+                          style={{
+                            display: "inline-block",
+                            marginTop: 4,
+                            fontSize: 10,
+                            fontWeight: 700,
+                            color: "var(--color-brand)",
+                            background: "var(--color-surface-2)",
+                            padding: "2px 8px",
+                            borderRadius: 99,
+                          }}
+                        >
+                          {p.category}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Stock & Price Row */}
                     <div
                       style={{
-                        fontSize: 13,
-                        color: p.stock <= 5 ? "var(--color-danger-text)" : "var(--color-text-2)",
-                        fontWeight: 700,
                         display: "flex",
                         alignItems: "center",
-                        gap: 5,
+                        justifyContent: "space-between",
+                        background: "var(--color-surface-2)",
+                        padding: "10px 12px",
+                        borderRadius: "var(--radius-sm)",
                       }}
                     >
-                      {p.stock <= 5 && <WarningIcon size={15} weight="fill" />}
-                      Stok: {p.stock} pcs
+                      <div>
+                        <div
+                          style={{
+                            fontSize: 10,
+                            fontWeight: 700,
+                            color: "var(--color-text-3)",
+                            textTransform: "uppercase",
+                          }}
+                        >
+                          Harga Jual
+                        </div>
+                        {disc.hasDiscount ? (
+                          <div>
+                            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                              <div
+                                className="price"
+                                style={{
+                                  fontWeight: 800,
+                                  fontSize: 15,
+                                  color: "var(--color-brand)",
+                                }}
+                              >
+                                {formatIDR(disc.unitPrice)}
+                              </div>
+                              <span
+                                style={{
+                                  fontSize: 10,
+                                  fontWeight: 800,
+                                  background: "var(--color-brand-light)",
+                                  color: "var(--color-brand)",
+                                  padding: "1px 6px",
+                                  borderRadius: 99,
+                                }}
+                              >
+                                {p.discountType === "percentage"
+                                  ? `${p.discountValue}% OFF`
+                                  : `-${formatIDR(p.discountValue ?? 0)}`}
+                              </span>
+                            </div>
+                            <div
+                              className="price"
+                              style={{
+                                fontSize: 11,
+                                color: "var(--color-text-3)",
+                                textDecoration: "line-through",
+                              }}
+                            >
+                              {formatIDR(p.price)}
+                            </div>
+                          </div>
+                        ) : (
+                          <div
+                            style={{
+                              fontWeight: 800,
+                              fontSize: 15,
+                              color: "var(--color-brand)",
+                              fontFamily: "monospace",
+                            }}
+                          >
+                            {formatIDR(p.price)}
+                          </div>
+                        )}
+                      </div>
+
+                      <div style={{ textAlign: "right" }}>
+                        <div
+                          style={{
+                            fontSize: 10,
+                            fontWeight: 700,
+                            color: "var(--color-text-3)",
+                            textTransform: "uppercase",
+                          }}
+                        >
+                          Stok
+                        </div>
+                        <span
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 4,
+                            fontSize: 12,
+                            fontWeight: 700,
+                            color: p.stock === 0 ? "var(--color-danger)" : "var(--color-text)",
+                          }}
+                        >
+                          {p.stock === 0 && <WarningIcon size={12} weight="fill" />}
+                          {p.stock} pcs
+                        </span>
+                      </div>
                     </div>
-                    <div style={{ display: "flex", gap: 8 }}>
+
+                    {/* Mobile Actions */}
+                    <div style={{ display: "flex", gap: 8, marginTop: 2 }}>
                       <button
                         onClick={() => openEdit(p)}
                         className="press-tactile"
-                        style={ghostPillBtn}
+                        style={{
+                          flex: 1,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 6,
+                          padding: "8px 0",
+                          borderRadius: "var(--radius-sm)",
+                          background: "var(--color-surface)",
+                          border: "1px solid var(--color-border)",
+                          fontSize: 12,
+                          fontWeight: 700,
+                          color: "var(--color-text)",
+                          cursor: "pointer",
+                        }}
                       >
-                        <PencilSimpleIcon size={14} weight="bold" /> Edit
+                        <PencilSimpleIcon size={14} weight="bold" />
+                        <span>Edit</span>
                       </button>
                       <button
                         onClick={() => handleRemove(p)}
                         className="press-tactile"
                         style={{
-                          ...ghostPillBtn,
-                          color: "var(--color-danger)",
-                          borderColor: "var(--color-danger-light)",
+                          padding: "8px 14px",
+                          borderRadius: "var(--radius-sm)",
                           background: "var(--color-danger-light)",
+                          border: "1px solid var(--color-danger-light)",
+                          color: "var(--color-danger)",
+                          fontSize: 12,
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
                         }}
                       >
-                        <TrashIcon size={14} weight="bold" /> Hapus
+                        <TrashIcon size={14} weight="bold" />
                       </button>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </>
         )}
@@ -928,7 +1121,7 @@ function Produk() {
               </div>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 24 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 16 }}>
               {/* Formatted Price Input */}
               <div>
                 <label style={labelStyle}>Harga Jual (IDR)</label>
@@ -973,6 +1166,289 @@ function Produk() {
                   style={{ ...inputStyle, borderRadius: "var(--radius-md)" }}
                 />
               </div>
+            </div>
+
+            {/* PRODUCT DISCOUNT SECTION */}
+            <div
+              style={{
+                background: "var(--color-surface-2)",
+                border: "1px solid var(--color-border)",
+                borderRadius: "var(--radius-md)",
+                padding: "14px 16px",
+                marginBottom: 20,
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginBottom: 10,
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    fontSize: 13,
+                    fontWeight: 800,
+                    color: "var(--color-text)",
+                  }}
+                >
+                  <TagIcon size={16} weight="bold" color="var(--color-brand)" />
+                  <span>Diskon Produk (Opsional)</span>
+                </div>
+                {form.discountType !== "none" && (
+                  <button
+                    type="button"
+                    onClick={() => setForm({ ...form, discountType: "none", discountValue: "" })}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "var(--color-text-3)",
+                      fontSize: 11,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Hapus Diskon
+                  </button>
+                )}
+              </div>
+
+              {/* Type Switcher */}
+              <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
+                {[
+                  { key: "none", label: "Tanpa Diskon" },
+                  { key: "percentage", label: "Persen (%)" },
+                  { key: "nominal", label: "Nominal (Rp)" },
+                ].map((t) => {
+                  const active = form.discountType === t.key;
+                  return (
+                    <button
+                      key={t.key}
+                      type="button"
+                      onClick={() =>
+                        setForm({
+                          ...form,
+                          discountType: t.key as any,
+                          discountValue: t.key === form.discountType ? form.discountValue : "",
+                        })
+                      }
+                      className="press-tactile"
+                      style={{
+                        flex: 1,
+                        padding: "7px 4px",
+                        borderRadius: 99,
+                        border: `1.5px solid ${active ? "var(--color-brand)" : "var(--color-border)"}`,
+                        background: active ? "var(--color-brand-light)" : "var(--color-surface)",
+                        color: active ? "var(--color-brand)" : "var(--color-text-2)",
+                        fontSize: 12,
+                        fontWeight: 800,
+                        cursor: "pointer",
+                        transition: "all 150ms ease",
+                      }}
+                    >
+                      {t.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {form.discountType === "percentage" && (
+                <div>
+                  <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                    <input
+                      type="number"
+                      min="1"
+                      max="100"
+                      placeholder="Contoh: 10"
+                      value={form.discountValue}
+                      onChange={(e) => setForm({ ...form, discountValue: e.target.value })}
+                      style={{
+                        ...inputStyle,
+                        paddingRight: 36,
+                        fontWeight: 800,
+                        fontSize: 15,
+                        borderRadius: "var(--radius-md)",
+                      }}
+                    />
+                    <span
+                      style={{
+                        position: "absolute",
+                        right: 14,
+                        fontSize: 15,
+                        fontWeight: 800,
+                        color: "var(--color-brand)",
+                      }}
+                    >
+                      %
+                    </span>
+                  </div>
+                  {/* Quick percentage pills */}
+                  <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
+                    {[5, 10, 15, 20, 25, 50].map((pct) => (
+                      <button
+                        key={pct}
+                        type="button"
+                        onClick={() => setForm({ ...form, discountValue: String(pct) })}
+                        className="press-tactile"
+                        style={{
+                          padding: "3px 10px",
+                          borderRadius: 99,
+                          border: "1px solid var(--color-border)",
+                          background:
+                            form.discountValue === String(pct)
+                              ? "var(--color-brand)"
+                              : "var(--color-surface)",
+                          color:
+                            form.discountValue === String(pct)
+                              ? "#ffffff"
+                              : "var(--color-text)",
+                          fontSize: 11,
+                          fontWeight: 700,
+                          cursor: "pointer",
+                        }}
+                      >
+                        {pct}%
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {form.discountType === "nominal" && (
+                <div>
+                  <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                    <span
+                      style={{
+                        position: "absolute",
+                        left: 14,
+                        fontSize: 14,
+                        fontWeight: 800,
+                        color: "var(--color-brand)",
+                      }}
+                    >
+                      Rp
+                    </span>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="Contoh: 5.000"
+                      value={form.discountValue}
+                      onChange={(e) =>
+                        setForm({ ...form, discountValue: formatIDRInput(e.target.value) })
+                      }
+                      style={{
+                        ...inputStyle,
+                        paddingLeft: 42,
+                        fontWeight: 800,
+                        fontSize: 15,
+                        borderRadius: "var(--radius-md)",
+                      }}
+                    />
+                  </div>
+                  {/* Quick nominal pills */}
+                  <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
+                    {[2000, 5000, 10000, 20000, 50000].map((nom) => (
+                      <button
+                        key={nom}
+                        type="button"
+                        onClick={() =>
+                          setForm({ ...form, discountValue: formatIDRInput(nom) })
+                        }
+                        className="press-tactile"
+                        style={{
+                          padding: "3px 10px",
+                          borderRadius: 99,
+                          border: "1px solid var(--color-border)",
+                          background:
+                            parseIDRInput(form.discountValue) === nom
+                              ? "var(--color-brand)"
+                              : "var(--color-surface)",
+                          color:
+                            parseIDRInput(form.discountValue) === nom
+                              ? "#ffffff"
+                              : "var(--color-text)",
+                          fontSize: 11,
+                          fontWeight: 700,
+                          cursor: "pointer",
+                        }}
+                      >
+                        {nom >= 1000 ? `${nom / 1000}rb` : formatIDR(nom)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Live Preview Summary */}
+              {form.discountType !== "none" &&
+                (parseIDRInput(form.price) > 0) &&
+                ((form.discountType === "percentage" && parseInt(form.discountValue) > 0) ||
+                  (form.discountType === "nominal" && parseIDRInput(form.discountValue) > 0)) && (
+                  <div
+                    style={{
+                      marginTop: 12,
+                      padding: "10px 12px",
+                      borderRadius: "var(--radius-sm)",
+                      background: "var(--color-brand-light)",
+                      border: "1px solid var(--color-brand)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <div>
+                      <div
+                        style={{
+                          fontSize: 11,
+                          fontWeight: 600,
+                          color: "var(--color-text-2)",
+                        }}
+                      >
+                        Harga setelah diskon:
+                      </div>
+                      <div
+                        className="price"
+                        style={{ fontSize: 16, fontWeight: 800, color: "var(--color-brand)" }}
+                      >
+                        {formatIDR(
+                          calculateItemDiscount(
+                            parseIDRInput(form.price),
+                            form.discountType,
+                            form.discountType === "percentage"
+                              ? parseInt(form.discountValue) || 0
+                              : parseIDRInput(form.discountValue),
+                          ).unitPrice,
+                        )}
+                      </div>
+                    </div>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 800,
+                        color: "var(--color-brand)",
+                        background: "var(--color-surface)",
+                        padding: "4px 10px",
+                        borderRadius: 99,
+                        boxShadow: "var(--shadow-sm)",
+                      }}
+                    >
+                      Hemat{" "}
+                      {formatIDR(
+                        calculateItemDiscount(
+                          parseIDRInput(form.price),
+                          form.discountType,
+                          form.discountType === "percentage"
+                            ? parseInt(form.discountValue) || 0
+                            : parseIDRInput(form.discountValue),
+                        ).discountAmount,
+                      )}
+                    </span>
+                  </div>
+                )}
             </div>
 
             <div style={{ display: "flex", gap: 12 }}>

@@ -28,6 +28,8 @@ export default defineSchema({
     stock: v.number(),
     barcode: v.optional(v.string()),
     imageId: v.optional(v.string()),
+    discountType: v.optional(v.union(v.literal("percentage"), v.literal("nominal"))),
+    discountValue: v.optional(v.number()),
   }).index("by_storeId", ["storeId"]),
 
   transactions: defineTable({
@@ -38,8 +40,15 @@ export default defineSchema({
         name: v.string(),
         price: v.number(),
         qty: v.number(),
+        discountType: v.optional(v.union(v.literal("percentage"), v.literal("nominal"))),
+        discountValue: v.optional(v.number()),
+        subtotal: v.optional(v.number()),
       }),
     ),
+    subtotal: v.optional(v.number()),
+    discountType: v.optional(v.union(v.literal("percentage"), v.literal("nominal"))),
+    discountValue: v.optional(v.number()),
+    discountAmount: v.optional(v.number()),
     total: v.number(),
     paymentMethod: v.union(v.literal("cash"), v.literal("qris")),
     cashPaid: v.optional(v.number()),
@@ -50,3 +59,4 @@ export default defineSchema({
     .index("by_storeId", ["storeId"])
     .index("by_storeId_createdAt", ["storeId", "createdAt"]),
 });
+

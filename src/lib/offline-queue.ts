@@ -8,7 +8,19 @@ const QUEUE_KEY = "toku_offline_queue";
 
 export type OfflineTx = {
   storeId: string;
-  items: Array<{ productId: string; name: string; price: number; qty: number }>;
+  items: Array<{
+    productId: string;
+    name: string;
+    price: number;
+    qty: number;
+    discountType?: "percentage" | "nominal";
+    discountValue?: number;
+    subtotal?: number;
+  }>;
+  subtotal?: number;
+  discountType?: "percentage" | "nominal";
+  discountValue?: number;
+  discountAmount?: number;
   total: number;
   paymentMethod: "cash" | "qris";
   cashPaid?: number;

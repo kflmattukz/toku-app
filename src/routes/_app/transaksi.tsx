@@ -1,7 +1,7 @@
 import { Modal } from "#/components/Modal";
 import { printReceipt } from "#/lib/print";
 import { useAppStore } from "#/lib/store-context";
-import { formatDate, formatIDR } from "#/lib/utils";
+import { formatDate, formatIDR, calculateItemDiscount } from "#/lib/utils";
 import {
   CaretLeftIcon,
   CaretRightIcon,
@@ -211,6 +211,11 @@ function Transaksi() {
                           >
                             {formatIDR(tx.total)}
                           </span>
+                          {tx.discountAmount && tx.discountAmount > 0 ? (
+                            <div style={{ fontSize: 10, fontWeight: 700, color: "var(--color-brand)" }}>
+                              Disc {tx.discountType === "percentage" ? `${tx.discountValue}%` : `-${formatIDR(tx.discountAmount)}`}
+                            </div>
+                          ) : null}
                         </td>
                         <td style={{ ...tdStyle, textAlign: "center" }}>
                           <span
@@ -651,35 +656,115 @@ function Receipt({ tx, storeName }: { tx: any; storeName: string }) {
           <span>SUBTOTAL</span>
         </div>
 
-        {tx.items.map((item: any, i: number) => (
+        {tx.items.map((item: any, i: number) => {
+          const disc = calculateItemDiscount(item.price, item.discountType, item.discountValue);
+          const itemTotal = item.subtotal ?? disc.unitPrice * item.qty;
+
+          return (
+            <div
+              key={i}
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "flex-start",
+                padding: "6px 0",
+                borderBottom: i === tx.items.length - 1 ? "none" : "1px solid #f5f5f4",
+              }}
+            >
+              <div style={{ flex: 1, minWidth: 0, paddingRight: 12 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "#1c1917" }}>{item.name}</div>
+                <div
+                  style={{
+                    fontSize: 11,
+                    color: "#78716c",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 4,
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <span>
+                    {item.qty} x {formatIDR(item.price)}
+                  </span>
+                  {disc.hasDiscount && (
+                    <span style={{ color: "#ea580c", fontWeight: 700 }}>
+                      (Disc {disc.discountLabel} ➔ {formatIDR(disc.unitPrice)})
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <span
+                  className="price"
+                  style={{ fontSize: 13, fontWeight: 800, color: "#1c1917" }}
+                >
+                  {formatIDR(itemTotal)}
+                </span>
+                {disc.hasDiscount && (
+                  <div
+                    className="price"
+                    style={{
+                      fontSize: 10,
+                      color: "#78716c",
+                      textDecoration: "line-through",
+                    }}
+                  >
+                    {formatIDR(item.price * item.qty)}
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Subtotals & Discounts Breakdown */}
+      <div
+        style={{
+          borderTop: "2px dashed #e5e5e5",
+          paddingTop: 12,
+          marginBottom: 12,
+        }}
+      >
+        {tx.subtotal && tx.subtotal !== tx.total && (
           <div
-            key={i}
             style={{
               display: "flex",
               justifyContent: "space-between",
-              alignItems: "flex-start",
-              padding: "6px 0",
-              borderBottom: i === tx.items.length - 1 ? "none" : "1px solid #f5f5f4",
+              marginBottom: 4,
+              fontSize: 12,
+              color: "#57534e",
             }}
           >
-            <div style={{ flex: 1, minWidth: 0, paddingRight: 12 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "#1c1917" }}>{item.name}</div>
-              <div style={{ fontSize: 11, color: "#78716c" }}>
-                {item.qty} x <span className="price">{formatIDR(item.price)}</span>
-              </div>
-            </div>
-            <span className="price" style={{ fontSize: 13, fontWeight: 800, color: "#1c1917" }}>
-              {formatIDR(item.price * item.qty)}
-            </span>
+            <span>Subtotal Produk</span>
+            <span className="price">{formatIDR(tx.subtotal)}</span>
           </div>
-        ))}
+        )}
+
+        {tx.discountAmount && tx.discountAmount > 0 && (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              marginBottom: 6,
+              fontSize: 12,
+              color: "#ea580c",
+              fontWeight: 700,
+            }}
+          >
+            <span>
+              Diskon Keranjang {tx.discountType === "percentage" ? `(${tx.discountValue}%)` : ""}
+            </span>
+            <span className="price">-{formatIDR(tx.discountAmount)}</span>
+          </div>
+        )}
       </div>
 
       {/* Payment Details */}
       <div
         style={{
-          borderTop: "2px dashed #e5e5e5",
-          paddingTop: 14,
+          borderTop: "1px solid #e5e5e5",
+          paddingTop: 10,
           marginBottom: 16,
         }}
       >
