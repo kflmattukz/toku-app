@@ -1,14 +1,41 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 
+export const generateUploadUrl = mutation({
+  handler: async (ctx) => {
+    return await ctx.storage.generateUploadUrl();
+  },
+});
+
 export const list = query({
   args: { storeId: v.id("stores") },
   handler: async (ctx, { storeId }) => {
-    return ctx.db
+    const products = await ctx.db
       .query("products")
       .withIndex("by_storeId", (q) => q.eq("storeId", storeId))
       .order("asc")
       .collect();
+
+    return Promise.all(
+      products.map(async (p) => {
+        let imageUrl: string | null = null;
+        if (p.imageId) {
+          if (p.imageId.startsWith("data:") || p.imageId.startsWith("http")) {
+            imageUrl = p.imageId;
+          } else {
+            try {
+              imageUrl = await ctx.storage.getUrl(p.imageId);
+            } catch {
+              imageUrl = p.imageId;
+            }
+          }
+        }
+        return {
+          ...p,
+          imageUrl: imageUrl ?? p.imageId ?? null,
+        };
+      })
+    );
   },
 });
 
@@ -38,6 +65,21 @@ export const update = mutation({
     imageId: v.optional(v.string()),
   },
   handler: async (ctx, { id, ...patch }) => {
+    if (patch.imageId !== undefined) {
+      const existing = await ctx.db.get(id);
+      if (
+        existing?.imageId &&
+        existing.imageId !== patch.imageId &&
+        !existing.imageId.startsWith("data:") &&
+        !existing.imageId.startsWith("http")
+      ) {
+        try {
+          await ctx.storage.delete(existing.imageId);
+        } catch {
+          // ignore if already deleted or invalid
+        }
+      }
+    }
     await ctx.db.patch(id, patch);
   },
 });
@@ -45,6 +87,18 @@ export const update = mutation({
 export const remove = mutation({
   args: { id: v.id("products") },
   handler: async (ctx, { id }) => {
+    const product = await ctx.db.get(id);
+    if (
+      product?.imageId &&
+      !product.imageId.startsWith("data:") &&
+      !product.imageId.startsWith("http")
+    ) {
+      try {
+        await ctx.storage.delete(product.imageId);
+      } catch {
+        // ignore if already deleted or invalid
+      }
+    }
     await ctx.db.delete(id);
   },
 });

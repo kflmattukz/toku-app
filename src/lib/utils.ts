@@ -100,7 +100,6 @@ export function compressImage(file: File, maxDim = 400, quality = 0.8): Promise<
             width = maxDim;
           } else {
             width = Math.round((width * maxDim) / height);
-            maxDim;
             height = maxDim;
           }
         }
@@ -117,3 +116,44 @@ export function compressImage(file: File, maxDim = 400, quality = 0.8): Promise<
     reader.readAsDataURL(file);
   });
 }
+
+/** Compress uploaded image File into a lightweight JPEG Blob (max 600x600, ~50-100KB) */
+export function compressImageToBlob(file: File, maxDim = 600, quality = 0.85): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onerror = reject;
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return reject(new Error("Canvas context unavailable"));
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => {
+            if (blob) resolve(blob);
+            else reject(new Error("Canvas toBlob failed"));
+          },
+          "image/jpeg",
+          quality,
+        );
+      };
+      img.src = e.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+

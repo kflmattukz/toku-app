@@ -1,20 +1,19 @@
+import { Modal } from "#/components/Modal";
+import { useAppStore } from "#/lib/store-context";
+import { formatIDR } from "#/lib/utils";
+import {
+  CheckCircleIcon,
+  CheckIcon,
+  MinusIcon,
+  PackageIcon,
+  PlusIcon,
+  WarningIcon,
+} from "@phosphor-icons/react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery } from "convex/react";
-import { api } from "../../../convex/_generated/api";
-import { useAppStore } from "#/lib/store-context";
 import { useState } from "react";
-import { formatIDR } from "#/lib/utils";
-import { Modal } from "#/components/Modal";
-import type { Id } from "../../../convex/_generated/dataModel";
 import { toast } from "sonner";
-import {
-  WarningIcon,
-  CheckCircleIcon,
-  PlusIcon,
-  MinusIcon,
-  CheckIcon,
-  PackageIcon,
-} from "@phosphor-icons/react";
+import { api } from "../../../convex/_generated/api";
 
 export const Route = createFileRoute("/_app/stok")({ component: Stok });
 
@@ -409,9 +408,23 @@ function Stok() {
                 }}
               >
                 {/* Product Name & Category */}
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "flex-start",
+                    gap: 10,
+                  }}
+                >
                   <div>
-                    <div style={{ fontSize: 16, fontWeight: 800, color: "var(--color-text)", marginBottom: 4 }}>
+                    <div
+                      style={{
+                        fontSize: 16,
+                        fontWeight: 800,
+                        color: "var(--color-text)",
+                        marginBottom: 4,
+                      }}
+                    >
                       {p.name}
                     </div>
                     <span
@@ -428,15 +441,28 @@ function Stok() {
                       {p.category}
                     </span>
                   </div>
-                  <span className="price" style={{ fontSize: 16, fontWeight: 800, color: "var(--color-brand)" }}>
+                  <span
+                    className="price"
+                    style={{ fontSize: 16, fontWeight: 800, color: "var(--color-brand)" }}
+                  >
                     {formatIDR(p.price)}
                   </span>
                 </div>
 
                 {/* Status & Stock Count */}
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 4, borderTop: "1px solid var(--color-border-subtle)" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    paddingTop: 4,
+                    borderTop: "1px solid var(--color-border-subtle)",
+                  }}
+                >
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <span style={{ fontSize: 13, color: "var(--color-text-3)", fontWeight: 600 }}>Stok:</span>
+                    <span style={{ fontSize: 13, color: "var(--color-text-3)", fontWeight: 600 }}>
+                      Stok:
+                    </span>
                     <span
                       className="price"
                       style={{
@@ -462,17 +488,33 @@ function Stok() {
                       gap: 4,
                     }}
                   >
-                    {isLow ? <WarningIcon size={12} weight="fill" /> : <CheckCircleIcon size={12} weight="fill" />}
+                    {isLow ? (
+                      <WarningIcon size={12} weight="fill" />
+                    ) : (
+                      <CheckCircleIcon size={12} weight="fill" />
+                    )}
                     {isLow ? "Stok Rendah" : "Aman"}
                   </span>
                 </div>
 
                 {/* Inline Restock Action Footer */}
-                <div style={{ paddingTop: 8, borderTop: "1px solid var(--color-border-subtle)", display: "flex", justifyContent: "flex-end" }}>
+                <div
+                  style={{
+                    paddingTop: 8,
+                    borderTop: "1px solid var(--color-border-subtle)",
+                    display: "flex",
+                    justifyContent: "flex-end",
+                  }}
+                >
                   <button
                     onClick={() => openRestock(p)}
                     className="press-tactile"
-                    style={{ ...smallPrimaryBtn, width: "100%", justifyContent: "center", padding: "10px" }}
+                    style={{
+                      ...smallPrimaryBtn,
+                      width: "100%",
+                      justifyContent: "center",
+                      padding: "10px",
+                    }}
                   >
                     <PlusIcon size={16} weight="bold" /> Tambah Stok
                   </button>
@@ -550,7 +592,9 @@ function Stok() {
               </div>
             </div>
 
-            <div style={{ color: "var(--color-text-3)", fontSize: 16, fontWeight: 800, opacity: 0.6 }}>
+            <div
+              style={{ color: "var(--color-text-3)", fontSize: 16, fontWeight: 800, opacity: 0.6 }}
+            >
               ➔
             </div>
 
@@ -627,9 +671,7 @@ function Stok() {
                   alignItems: "center",
                   justifyContent: "center",
                   cursor:
-                    (parseInt(restockAmt, 10) || 0) <= 1 || saving
-                      ? "not-allowed"
-                      : "pointer",
+                    (parseInt(restockAmt, 10) || 0) <= 1 || saving ? "not-allowed" : "pointer",
                   flexShrink: 0,
                 }}
               >
@@ -731,10 +773,7 @@ function Stok() {
                       restockAmt === String(preset)
                         ? "var(--color-brand)"
                         : "var(--color-surface-2)",
-                    color:
-                      restockAmt === String(preset)
-                        ? "#ffffff"
-                        : "var(--color-text)",
+                    color: restockAmt === String(preset) ? "#ffffff" : "var(--color-text)",
                     border:
                       restockAmt === String(preset)
                         ? "1px solid var(--color-brand)"
@@ -786,8 +825,7 @@ function Stok() {
                 color: "#ffffff",
                 fontSize: 14,
                 fontWeight: 800,
-                cursor:
-                  (parseInt(restockAmt, 10) || 0) > 0 && !saving ? "pointer" : "not-allowed",
+                cursor: (parseInt(restockAmt, 10) || 0) > 0 && !saving ? "pointer" : "not-allowed",
                 boxShadow: "0 4px 14px rgba(234, 88, 12, 0.35)",
                 display: "flex",
                 alignItems: "center",

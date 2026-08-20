@@ -9,7 +9,6 @@ import {
   CheckCircleIcon,
   FadersIcon,
   FireIcon,
-  ImageIcon,
   MagnifyingGlassIcon,
   MinusIcon,
   MoneyIcon,
@@ -382,9 +381,9 @@ function Kasir() {
                       justifyContent: "center",
                     }}
                   >
-                    {p.imageId ? (
+                    {p.imageUrl || p.imageId ? (
                       <img
-                        src={p.imageId}
+                        src={p.imageUrl || p.imageId}
                         alt={p.name}
                         className="card-img-zoom"
                         style={{ width: "100%", height: "100%", objectFit: "cover" }}
@@ -409,7 +408,9 @@ function Kasir() {
                           color="var(--color-brand)"
                           style={{ opacity: 0.6 }}
                         />
-                        <span style={{ fontSize: 10, fontWeight: 700, opacity: 0.6 }}>Toku POS</span>
+                        <span style={{ fontSize: 10, fontWeight: 700, opacity: 0.6 }}>
+                          Toku POS
+                        </span>
                       </div>
                     )}
 
@@ -788,9 +789,9 @@ function Kasir() {
                     }}
                   >
                     {/* Product Image Thumbnail */}
-                    {productData?.imageId ? (
+                    {productData?.imageUrl || productData?.imageId ? (
                       <img
-                        src={productData.imageId}
+                        src={productData?.imageUrl || productData?.imageId}
                         alt={item.name}
                         style={{
                           width: 48,

@@ -3,7 +3,7 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { useAppStore } from "#/lib/store-context";
 import { useState } from "react";
-import { formatIDR, formatIDRInput, parseIDRInput, compressImage } from "#/lib/utils";
+import { formatIDR, formatIDRInput, parseIDRInput, compressImageToBlob } from "#/lib/utils";
 import { Modal } from "#/components/Modal";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { toast } from "sonner";
@@ -20,6 +20,7 @@ import {
   ImageIcon,
   CaretLeftIcon,
   CaretRightIcon,
+  CircleNotchIcon,
 } from "@phosphor-icons/react";
 
 export const Route = createFileRoute("/_app/produk")({ component: Produk });
@@ -40,10 +41,13 @@ function Produk() {
   const createProduct = useMutation(api.products.create);
   const updateProduct = useMutation(api.products.update);
   const removeProduct = useMutation(api.products.remove);
+  const generateUploadUrl = useMutation(api.products.generateUploadUrl);
 
   const [showModal, setShowModal] = useState(false);
   const [editId, setEditId] = useState<Id<"products"> | null>(null);
   const [form, setForm] = useState<Form>(emptyForm);
+  const [imagePreview, setImagePreview] = useState<string>("");
+  const [imageUploading, setImageUploading] = useState(false);
   const [search, setSearch] = useState("");
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
@@ -54,6 +58,7 @@ function Produk() {
   const openAdd = () => {
     setEditId(null);
     setForm(emptyForm);
+    setImagePreview("");
     setShowModal(true);
   };
   const openEdit = (p: any) => {
@@ -66,24 +71,48 @@ function Produk() {
       barcode: p.barcode ?? "",
       imageId: p.imageId ?? "",
     });
+    setImagePreview(p.imageUrl ?? p.imageId ?? "");
     setShowModal(true);
   };
 
   const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setImageUploading(true);
     try {
-      const dataUrl = await compressImage(file);
-      setForm((prev) => ({ ...prev, imageId: dataUrl }));
-      toast.success("Foto produk berhasil diupload!");
+      // 1. Compress image to clean JPEG Blob (~50-100KB)
+      const blob = await compressImageToBlob(file);
+      const localPreview = URL.createObjectURL(blob);
+      setImagePreview(localPreview);
+
+      // 2. Request short-lived upload URL from Convex
+      const postUrl = await generateUploadUrl();
+
+      // 3. POST the file directly to Convex Storage
+      const res = await fetch(postUrl, {
+        method: "POST",
+        headers: { "Content-Type": blob.type },
+        body: blob,
+      });
+      if (!res.ok) throw new Error("Upload failed");
+      const { storageId } = await res.json();
+
+      setForm((prev) => ({ ...prev, imageId: storageId }));
+      toast.success("Foto produk berhasil diunggah!");
     } catch {
-      toast.error("Gagal memuat gambar. Silakan coba file lain.");
+      toast.error("Gagal mengunggah foto. Silakan coba lagi.");
+    } finally {
+      setImageUploading(false);
     }
   };
 
   const handleSave = async (e: React.SubmitEvent) => {
     e.preventDefault();
     if (!store) return;
+    if (imageUploading) {
+      toast.error("Mohon tunggu proses upload foto selesai");
+      return;
+    }
     const priceNum = parseIDRInput(form.price);
     const stockNum = parseInt(form.stock) || 0;
     if (!form.name.trim() || !form.category.trim() || priceNum <= 0) {
@@ -293,9 +322,9 @@ function Produk() {
                   {pagedProducts.map((p) => (
                     <tr key={p._id} style={{ borderBottom: "1px solid var(--color-border)" }}>
                       <td style={tdStyle}>
-                        {p.imageId ? (
+                        {(p.imageUrl || p.imageId) ? (
                           <img
-                            src={p.imageId}
+                            src={p.imageUrl || p.imageId}
                             alt={p.name}
                             style={{
                               width: 44,
@@ -698,21 +727,21 @@ function Produk() {
             </p>
           </div>
 
-          <form onSubmit={handleSave}>
+          <form onSubmit={handleSave} style={{ display: "flex", flexDirection: "column" }}>
             {/* 1:1 Box Style Image Upload & Live Preview */}
             <div
               style={{
-                marginBottom: 20,
-                padding: "14px 16px",
-                borderRadius: "var(--radius-lg)",
-                background: "var(--color-surface-2)",
-                border: "1px solid var(--color-border)",
                 display: "flex",
-                alignItems: "center",
                 gap: 16,
+                alignItems: "center",
+                background: "var(--color-surface-2)",
+                padding: 14,
+                borderRadius: "var(--radius-md)",
+                border: "1px solid var(--color-border)",
+                marginBottom: 16,
               }}
             >
-              {/* Square 1:1 Box Preview */}
+              {/* Square Image Box (1:1 Aspect Ratio) */}
               <div
                 style={{
                   position: "relative",
@@ -721,7 +750,7 @@ function Produk() {
                   minWidth: 104,
                   borderRadius: 16,
                   overflow: "hidden",
-                  border: form.imageId
+                  border: (imagePreview || form.imageId)
                     ? "1.5px solid var(--color-border)"
                     : "2px dashed var(--color-border)",
                   background: "var(--color-surface)",
@@ -732,16 +761,32 @@ function Produk() {
                   flexShrink: 0,
                 }}
               >
-                {form.imageId ? (
+                {imageUploading ? (
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      gap: 6,
+                      color: "var(--color-brand)",
+                    }}
+                  >
+                    <CircleNotchIcon size={24} className="animate-spin" />
+                    <span style={{ fontSize: 10, fontWeight: 700 }}>Mengunggah...</span>
+                  </div>
+                ) : (imagePreview || form.imageId) ? (
                   <>
                     <img
-                      src={form.imageId}
+                      src={imagePreview || form.imageId}
                       alt="Preview"
                       style={{ width: "100%", height: "100%", objectFit: "cover" }}
                     />
                     <button
                       type="button"
-                      onClick={() => setForm((prev) => ({ ...prev, imageId: "" }))}
+                      onClick={() => {
+                        setForm((prev) => ({ ...prev, imageId: "" }));
+                        setImagePreview("");
+                      }}
                       className="press-tactile"
                       style={{
                         position: "absolute",
@@ -803,7 +848,7 @@ function Produk() {
                     marginBottom: 10,
                   }}
                 >
-                  Format JPG, PNG atau WebP. Gambar kotak (1:1) akan tampil paling optimal di kasir.
+                  Format JPG, PNG atau WebP. Gambar dikompres dan disimpan di Convex Cloud Storage.
                 </div>
                 <label
                   className="press-tactile"
@@ -818,15 +863,27 @@ function Produk() {
                     color: "var(--color-text)",
                     fontSize: 12,
                     fontWeight: 700,
-                    cursor: "pointer",
+                    cursor: imageUploading ? "not-allowed" : "pointer",
                     boxShadow: "var(--shadow-sm)",
+                    opacity: imageUploading ? 0.6 : 1,
                   }}
                 >
-                  <CameraIcon size={15} weight="bold" color="var(--color-brand)" />
-                  <span>{form.imageId ? "Ganti Foto" : "Pilih Foto"}</span>
+                  {imageUploading ? (
+                    <CircleNotchIcon size={15} className="animate-spin" color="var(--color-brand)" />
+                  ) : (
+                    <CameraIcon size={15} weight="bold" color="var(--color-brand)" />
+                  )}
+                  <span>
+                    {imageUploading
+                      ? "Mengunggah..."
+                      : (imagePreview || form.imageId)
+                        ? "Ganti Foto"
+                        : "Pilih Foto"}
+                  </span>
                   <input
                     type="file"
                     accept="image/*"
+                    disabled={imageUploading}
                     onChange={handleImageFileChange}
                     style={{ display: "none" }}
                   />
