@@ -27,6 +27,7 @@ import {
   WarningIcon,
   TagIcon,
   PencilSimpleIcon,
+  XIcon,
 } from "@phosphor-icons/react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery } from "convex/react";
@@ -348,7 +349,7 @@ function Kasir() {
             </div>
           </div>
 
-          {/* Pill Search Input with filter icon on right */}
+          {/* Pill Search Input with filter icon and clear X button */}
           <div style={{ position: "relative", width: "100%", marginBottom: 16 }}>
             <MagnifyingGlassIcon
               size={18}
@@ -367,8 +368,35 @@ function Kasir() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pill-search-input"
-              style={{ width: "100%", paddingRight: 48 }}
+              style={{ width: "100%", paddingRight: search ? 82 : 48 }}
             />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                aria-label="Hapus pencarian"
+                className="press-tactile"
+                style={{
+                  position: "absolute",
+                  right: 46,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  width: 24,
+                  height: 24,
+                  borderRadius: 99,
+                  background: "var(--color-surface-2)",
+                  border: "1px solid var(--color-border)",
+                  color: "var(--color-text-3)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                  padding: 0,
+                }}
+              >
+                <XIcon size={12} weight="bold" />
+              </button>
+            )}
             <div
               style={{
                 position: "absolute",
