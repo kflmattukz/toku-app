@@ -16,6 +16,8 @@ import {
   SignOutIcon,
   XIcon,
   UserIcon,
+  CaretLeftIcon,
+  CaretRightIcon,
 } from "@phosphor-icons/react";
 
 export const Route = createFileRoute("/_app")({
@@ -40,6 +42,13 @@ const CATEGORY_LABELS: Record<string, string> = {
   lainnya: "Lainnya",
 };
 
+function getInitialSidebarCollapsed(): boolean {
+  if (typeof window === "undefined") return false;
+  const saved = localStorage.getItem("toku_sidebar_collapsed");
+  if (saved !== null) return saved === "true";
+  return window.innerWidth <= 1024 && window.innerWidth > 768;
+}
+
 function AppShell() {
   const { data: session, isPending } = authClient.useSession();
   const store = useQuery(
@@ -49,8 +58,17 @@ function AppShell() {
   const navigate = useNavigate();
   const [isOnline, setIsOnline] = useState(typeof window !== "undefined" ? navigator.onLine : true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState<boolean>(getInitialSidebarCollapsed);
   const routerState = useRouterState();
   const currentPath = routerState.location.pathname;
+
+  const toggleCollapsed = () => {
+    setCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem("toku_sidebar_collapsed", String(next));
+      return next;
+    });
+  };
 
   useEffect(() => {
     const on = () => setIsOnline(true);
@@ -87,7 +105,8 @@ function AppShell() {
       <aside
         className="desktop-only"
         style={{
-          width: 250,
+          width: collapsed ? 76 : 250,
+          transition: "width 260ms cubic-bezier(0.32, 0.72, 0, 1)",
           background: "var(--color-surface)",
           borderRight: "1px solid var(--color-border)",
           flexDirection: "column",
@@ -97,9 +116,16 @@ function AppShell() {
           flexShrink: 0,
           zIndex: 30,
           boxShadow: "var(--shadow-sm)",
+          overflow: collapsed ? "visible" : "hidden",
         }}
       >
-        <SidebarContent currentPath={currentPath} session={session} store={store} />
+        <SidebarContent
+          currentPath={currentPath}
+          session={session}
+          store={store}
+          collapsed={collapsed}
+          onToggleCollapse={toggleCollapsed}
+        />
       </aside>
 
       {/* Mobile Slide-Over Drawer */}
@@ -150,7 +176,7 @@ function AppShell() {
                 <XIcon size={18} />
               </button>
             </div>
-            <SidebarContent currentPath={currentPath} session={session} store={store} />
+            <SidebarContent currentPath={currentPath} session={session} store={store} collapsed={false} />
           </div>
         </div>
       )}
@@ -189,7 +215,7 @@ function AppShell() {
           </div>
         )}
 
-        {/* Mobile Header (Matching topbar style from image) */}
+        {/* Mobile Header */}
         <header
           className="mobile-topbar"
           style={{
@@ -293,7 +319,7 @@ function AppShell() {
           </div>
         </header>
 
-        {/* Main Route Outlet */}
+        {/* Main Route Outlet with Smooth Page Transition */}
         <main
           style={{
             flex: 1,
@@ -302,14 +328,22 @@ function AppShell() {
             width: "100%",
             margin: "0 auto",
             boxSizing: "border-box",
+            display: "flex",
+            flexDirection: "column",
           }}
         >
-          <AppStoreContext.Provider value={{ store, session }}>
-            <Outlet />
-          </AppStoreContext.Provider>
+          <div
+            key={currentPath}
+            className="page-enter-animation"
+            style={{ flex: 1, display: "flex", flexDirection: "column" }}
+          >
+            <AppStoreContext.Provider value={{ store, session }}>
+              <Outlet />
+            </AppStoreContext.Provider>
+          </div>
         </main>
 
-        {/* Mobile Floating Capsule Dock (Exact match to vibrant image dock) */}
+        {/* Mobile Floating Capsule Dock */}
         <nav
           className="mobile-bottom-nav floating-dock"
           style={{
@@ -358,98 +392,191 @@ function SidebarContent({
   currentPath,
   session,
   store,
+  collapsed = false,
+  onToggleCollapse,
 }: {
   currentPath: string;
   session: any;
   store: any;
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
 }) {
   return (
     <>
       {/* Sidebar Header */}
-      <div style={{ padding: "20px 16px 16px", borderBottom: "1px solid var(--color-border)" }}>
-        <div className="eyebrow-tag" style={{ marginBottom: 8 }}>
-          KASIR DIGITAL POS
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <img
-            src="/logo.png"
-            alt="Toku POS"
+      <div
+        style={{
+          padding: collapsed ? "16px 10px 14px" : "18px 16px 14px",
+          borderBottom: "1px solid var(--color-border)",
+          display: "flex",
+          flexDirection: "column",
+          transition: "padding 260ms cubic-bezier(0.32, 0.72, 0, 1)",
+        }}
+      >
+        {!collapsed && (
+          <div
+            className="eyebrow-tag"
             style={{
-              width: 40,
-              height: 40,
-              borderRadius: 8,
-              objectFit: "contain",
-              flexShrink: 0,
+              marginBottom: 8,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
             }}
-          />
-          <div style={{ minWidth: 0, flex: 1 }}>
-            <div
+          >
+            KASIR DIGITAL POS
+          </div>
+        )}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: collapsed ? "center" : "space-between",
+            flexDirection: collapsed ? "column" : "row",
+            gap: collapsed ? 10 : 8,
+            width: "100%",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              minWidth: 0,
+              flex: collapsed ? "none" : 1,
+            }}
+          >
+            <img
+              src="/logo.png"
+              alt="Toku POS"
               style={{
-                fontWeight: 800,
-                fontSize: 16,
-                color: "var(--color-text)",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-                lineHeight: 1.2,
+                width: 38,
+                height: 38,
+                borderRadius: 8,
+                objectFit: "contain",
+                flexShrink: 0,
               }}
-            >
-              {store ? store.name : "Toku POS"}
-            </div>
-            <div style={{ marginTop: 4 }}>
-              {store ? (
-                <span
+            />
+            {!collapsed && (
+              <div style={{ minWidth: 0, flex: 1, overflow: "hidden" }}>
+                <div
                   style={{
-                    background: "var(--color-brand-light)",
-                    border: "1px solid var(--color-border)",
-                    padding: "2px 10px",
-                    borderRadius: 99,
-                    fontWeight: 700,
-                    color: "var(--color-brand)",
-                    fontSize: 10,
-                    display: "inline-block",
+                    fontWeight: 800,
+                    fontSize: 15,
+                    color: "var(--color-text)",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    lineHeight: 1.2,
                   }}
                 >
-                  {CATEGORY_LABELS[store.category] ?? store.category}
-                </span>
-              ) : (
-                <span style={{ fontSize: 11, color: "var(--color-text-3)" }}>Menyiapkan...</span>
-              )}
-            </div>
+                  {store ? store.name : "Toku POS"}
+                </div>
+                <div style={{ marginTop: 4 }}>
+                  {store ? (
+                    <span
+                      style={{
+                        background: "var(--color-brand-light)",
+                        border: "1px solid var(--color-border)",
+                        padding: "2px 8px",
+                        borderRadius: 99,
+                        fontWeight: 700,
+                        color: "var(--color-brand)",
+                        fontSize: 10,
+                        display: "inline-block",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {CATEGORY_LABELS[store.category] ?? store.category}
+                    </span>
+                  ) : (
+                    <span style={{ fontSize: 11, color: "var(--color-text-3)", whiteSpace: "nowrap" }}>
+                      Menyiapkan...
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
+
+          {/* Collapse/Expand Toggle Button */}
+          {onToggleCollapse && (
+            <button
+              onClick={onToggleCollapse}
+              className="press-tactile"
+              title={collapsed ? "Perluas Sidebar" : "Ciutkan Sidebar"}
+              aria-label={collapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+              style={{
+                width: 28,
+                height: 28,
+                borderRadius: 99,
+                border: "1px solid var(--color-border)",
+                background: "var(--color-surface-2)",
+                color: "var(--color-text-2)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                padding: 0,
+                flexShrink: 0,
+              }}
+            >
+              {collapsed ? <CaretRightIcon size={14} weight="bold" /> : <CaretLeftIcon size={14} weight="bold" />}
+            </button>
+          )}
         </div>
       </div>
 
       {/* Navigation Items */}
-      <nav style={{ flex: 1, padding: "16px 10px", overflowY: "auto" }}>
+      <nav
+        style={{
+          flex: 1,
+          padding: collapsed ? "14px 8px" : "16px 10px",
+          overflowY: collapsed ? "visible" : "auto",
+          overflowX: "visible",
+        }}
+      >
         {NAV.map((item) => {
           const Icon = item.icon;
           const active = currentPath.startsWith(item.to);
           return (
-            <Link
-              key={item.to}
-              to={item.to}
-              preload="intent"
-              className="press-tactile"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                padding: "11px 16px",
-                borderRadius: 99,
-                marginBottom: 6,
-                textDecoration: "none",
-                fontWeight: active ? 800 : 600,
-                fontSize: 14,
-                background: active ? "var(--color-brand)" : "transparent",
-                color: active ? "#ffffff" : "var(--color-text-2)",
-                boxShadow: active ? "0 4px 14px rgba(234, 88, 12, 0.3)" : "none",
-                transition: "all 150ms ease",
-              }}
-            >
-              <Icon size={20} weight={active ? "fill" : "regular"} />
-              {item.label}
-            </Link>
+            <div key={item.to} className="nav-item-container" style={{ marginBottom: 6 }}>
+              <Link
+                to={item.to}
+                title={collapsed ? item.label : undefined}
+                preload="intent"
+                className="press-tactile"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: collapsed ? "center" : "flex-start",
+                  gap: 12,
+                  padding: collapsed ? "10px 0" : "11px 16px",
+                  borderRadius: collapsed ? 14 : 99,
+                  textDecoration: "none",
+                  fontWeight: active ? 800 : 600,
+                  fontSize: 14,
+                  background: active ? "var(--color-brand)" : "transparent",
+                  color: active ? "#ffffff" : "var(--color-text-2)",
+                  boxShadow: active ? "0 4px 14px rgba(234, 88, 12, 0.3)" : "none",
+                  transition: "all 180ms cubic-bezier(0.32, 0.72, 0, 1)",
+                  width: "100%",
+                  boxSizing: "border-box",
+                }}
+              >
+                <Icon size={20} weight={active ? "fill" : "regular"} style={{ flexShrink: 0 }} />
+                {!collapsed && (
+                  <span
+                    style={{
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {item.label}
+                  </span>
+                )}
+              </Link>
+              {collapsed && <div className="sidebar-tooltip">{item.label}</div>}
+            </div>
           );
         })}
       </nav>
@@ -457,99 +584,120 @@ function SidebarContent({
       {/* Account Info Footer */}
       <div
         style={{
-          padding: "14px",
+          padding: collapsed ? "12px 8px" : "14px",
           borderTop: "1px solid var(--color-border)",
           background: "var(--color-surface-2)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: collapsed ? "center" : "stretch",
+          transition: "padding 260ms cubic-bezier(0.32, 0.72, 0, 1)",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: collapsed ? "center" : "flex-start",
+            gap: 10,
+            marginBottom: 10,
+            width: "100%",
+          }}
+          title={collapsed ? `${session.user.name} (${session.user.email})` : undefined}
+        >
           {session.user.image ? (
             <img
               src={session.user.image}
               style={{
-                width: 36,
-                height: 36,
+                width: 34,
+                height: 34,
                 borderRadius: 99,
                 border: "2px solid var(--color-brand)",
                 objectFit: "cover",
+                flexShrink: 0,
               }}
               alt="user"
             />
           ) : (
             <div
               style={{
-                width: 36,
-                height: 36,
+                width: 34,
+                height: 34,
                 borderRadius: 99,
                 background: "var(--color-brand)",
                 color: "#ffffff",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
+                flexShrink: 0,
               }}
             >
               <UserIcon size={18} color="#ffffff" />
             </div>
           )}
-          <div style={{ minWidth: 0, flex: 1 }}>
-            <div
-              style={{
-                fontSize: 13,
-                fontWeight: 700,
-                color: "var(--color-text)",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {session.user.name}
+          {!collapsed && (
+            <div style={{ minWidth: 0, flex: 1, overflow: "hidden" }}>
+              <div
+                style={{
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: "var(--color-text)",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {session.user.name}
+              </div>
+              <div
+                style={{
+                  fontSize: 11,
+                  color: "var(--color-text-3)",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {session.user.email}
+              </div>
             </div>
-            <div
-              style={{
-                fontSize: 11,
-                color: "var(--color-text-3)",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {session.user.email}
-            </div>
-          </div>
+          )}
         </div>
 
-        <button
-          onClick={() =>
-            authClient.signOut({
-              fetchOptions: {
-                onSuccess: () => {
-                  window.location.href = "/";
+        <div className="nav-item-container" style={{ width: "100%" }}>
+          <button
+            onClick={() =>
+              authClient.signOut({
+                fetchOptions: {
+                  onSuccess: () => {
+                    window.location.href = "/";
+                  },
                 },
-              },
-            })
-          }
-          className="press-tactile"
-          style={{
-            width: "100%",
-            padding: "9px 12px",
-            borderRadius: 99,
-            border: "1px solid var(--color-border)",
-            background: "var(--color-surface)",
-            color: "var(--color-danger)",
-            fontSize: 13,
-            fontWeight: 700,
-            cursor: "pointer",
-            textAlign: "center",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 8,
-            boxShadow: "var(--shadow-sm)",
-          }}
-        >
-          <SignOutIcon size={16} weight="bold" />
-          Keluar
-        </button>
+              })
+            }
+            className="press-tactile"
+            style={{
+              width: "100%",
+              padding: collapsed ? "8px 0" : "9px 12px",
+              borderRadius: collapsed ? 12 : 99,
+              border: "1px solid var(--color-border)",
+              background: "var(--color-surface)",
+              color: "var(--color-danger)",
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: "pointer",
+              textAlign: "center",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+              boxShadow: "var(--shadow-sm)",
+            }}
+          >
+            <SignOutIcon size={16} weight="bold" style={{ flexShrink: 0 }} />
+            {!collapsed && <span>Keluar</span>}
+          </button>
+          {collapsed && <div className="sidebar-tooltip">Keluar</div>}
+        </div>
       </div>
     </>
   );
