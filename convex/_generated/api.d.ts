@@ -8,8 +8,11 @@
  * @module
  */
 
+import type * as cashiers from "../cashiers.js";
 import type * as products from "../products.js";
+import type * as shifts from "../shifts.js";
 import type * as stores from "../stores.js";
+import type * as subscriptions from "../subscriptions.js";
 import type * as todos from "../todos.js";
 import type * as transactions from "../transactions.js";
 
@@ -20,8 +23,11 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  cashiers: typeof cashiers;
   products: typeof products;
+  shifts: typeof shifts;
   stores: typeof stores;
+  subscriptions: typeof subscriptions;
   todos: typeof todos;
   transactions: typeof transactions;
 }>;

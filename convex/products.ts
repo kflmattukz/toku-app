@@ -50,8 +50,24 @@ export const create = mutation({
     imageId: v.optional(v.string()),
     discountType: v.optional(v.union(v.literal("percentage"), v.literal("nominal"))),
     discountValue: v.optional(v.number()),
+    minStockAlert: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const store = await ctx.db.get(args.storeId);
+    if (!store) throw new Error("Store not found");
+
+    const isPro = store.tier === "pro" && (!store.proExpiresAt || store.proExpiresAt > Date.now());
+    if (!isPro) {
+      const existingProducts = await ctx.db
+        .query("products")
+        .withIndex("by_storeId", (q) => q.eq("storeId", args.storeId))
+        .collect();
+
+      if (existingProducts.length >= 100) {
+        throw new Error("Batas 100 produk tercapai untuk akun Free. Upgrade ke Pro untuk produk tanpa batas.");
+      }
+    }
+
     return ctx.db.insert("products", args);
   },
 });
@@ -67,6 +83,7 @@ export const update = mutation({
     imageId: v.optional(v.string()),
     discountType: v.optional(v.union(v.literal("percentage"), v.literal("nominal"))),
     discountValue: v.optional(v.number()),
+    minStockAlert: v.optional(v.number()),
   },
   handler: async (ctx, { id, ...patch }) => {
     if (patch.imageId !== undefined) {

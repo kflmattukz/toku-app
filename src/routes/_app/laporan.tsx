@@ -419,7 +419,7 @@ function TrendChart({
   txs,
   range,
   totalRevenue,
-  totalTransactions,
+  totalTransactions: _totalTransactions,
 }: {
   txs: Array<{ createdAt: number; total: number; items: Array<any> }>;
   range: Range;

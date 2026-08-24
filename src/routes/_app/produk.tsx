@@ -54,7 +54,7 @@ const emptyForm: Form = {
 };
 
 function Produk() {
-  const { store } = useAppStore();
+  const { store, isPro, openUpgradeModal } = useAppStore();
   const products = useQuery(api.products.list, store ? { storeId: store._id } : "skip");
   const createProduct = useMutation(api.products.create);
   const updateProduct = useMutation(api.products.update);
@@ -74,6 +74,13 @@ function Produk() {
   const [page, setPage] = useState<number>(1);
 
   const openAdd = () => {
+    if (!isPro && products && products.length >= 100) {
+      toast.error("Batas 100 produk tercapai pada Free Tier", {
+        description: "Upgrade ke Toku Pro untuk input produk tanpa batas.",
+      });
+      openUpgradeModal("yearly");
+      return;
+    }
     setEditId(null);
     setForm(emptyForm);
     setImagePreview("");
@@ -262,8 +269,22 @@ function Produk() {
           >
             Produk Toko
           </h1>
-          <p style={{ margin: "4px 0 0", fontSize: 13, color: "var(--color-text-2)" }}>
-            {(products ?? []).length} jenis barang terdaftar dalam sistem
+          <p style={{ margin: "4px 0 0", fontSize: 13, color: "var(--color-text-2)", display: "flex", alignItems: "center", gap: 8 }}>
+            <span>{(products ?? []).length} / {isPro ? "∞" : "100"} produk terdaftar</span>
+            {!isPro && (
+              <span
+                onClick={() => openUpgradeModal("yearly")}
+                style={{
+                  color: "var(--color-brand)",
+                  fontWeight: 800,
+                  fontSize: 12,
+                  cursor: "pointer",
+                  textDecoration: "underline",
+                }}
+              >
+                (Upgrade Pro untuk Unlimited)
+              </span>
+            )}
           </p>
         </div>
         <button onClick={openAdd} className="press-tactile" style={darkPillBtn}>

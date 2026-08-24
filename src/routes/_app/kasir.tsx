@@ -50,8 +50,9 @@ type CartItem = {
 type PaymentMethod = "cash" | "qris";
 
 function Kasir() {
-  const { store } = useAppStore();
+  const { store, currentCashier } = useAppStore();
   const products = useQuery(api.products.list, store ? { storeId: store._id } : "skip");
+  const activeShift = useQuery(api.shifts.getActive, store ? { storeId: store._id } : "skip");
   const createTx = useMutation(api.transactions.create);
 
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -261,6 +262,9 @@ function Kasir() {
       paymentMethod: payMethod,
       cashPaid: payMethod === "cash" ? cashPaid : undefined,
       change: payMethod === "cash" ? change : undefined,
+      cashierId: currentCashier?.id,
+      cashierName: currentCashier?.name || "Kasir",
+      shiftId: activeShift?._id,
       createdAt: Date.now(),
     };
     if (!isOnline) {

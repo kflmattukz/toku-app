@@ -17,19 +17,18 @@ import { api } from "../../../convex/_generated/api";
 
 export const Route = createFileRoute("/_app/stok")({ component: Stok });
 
-const LOW_STOCK = 5;
-
 function Stok() {
   const { store } = useAppStore();
   const products = useQuery(api.products.list, store ? { storeId: store._id } : "skip");
   const adjustStock = useMutation(api.products.adjustStock);
 
+  const threshold = store?.lowStockThreshold ?? 5;
   const [activeRestockProduct, setActiveRestockProduct] = useState<any | null>(null);
   const [restockAmt, setRestockAmt] = useState("10");
   const [saving, setSaving] = useState(false);
 
-  const lowStock = (products ?? []).filter((p) => p.stock <= LOW_STOCK);
-  const okStock = (products ?? []).filter((p) => p.stock > LOW_STOCK);
+  const lowStock = (products ?? []).filter((p) => p.stock <= (p.minStockAlert ?? threshold));
+  const okStock = (products ?? []).filter((p) => p.stock > (p.minStockAlert ?? threshold));
 
   const openRestock = (p: any) => {
     setActiveRestockProduct(p);
@@ -313,7 +312,7 @@ function Stok() {
               </thead>
               <tbody>
                 {products.map((p) => {
-                  const isLow = p.stock <= LOW_STOCK;
+                  const isLow = p.stock <= (p.minStockAlert ?? threshold);
                   return (
                     <tr key={p._id} style={{ borderBottom: "1px solid var(--color-border)" }}>
                       <td style={tdStyle}>
@@ -392,7 +391,7 @@ function Stok() {
         {/* Mobile Touch Card List View */}
         <div className="mobile-topbar" style={{ flexDirection: "column", gap: 12 }}>
           {products.map((p) => {
-            const isLow = p.stock <= LOW_STOCK;
+            const isLow = p.stock <= (p.minStockAlert ?? threshold);
             return (
               <div
                 key={p._id}
@@ -582,7 +581,8 @@ function Stok() {
                   fontSize: 22,
                   fontWeight: 800,
                   color:
-                    activeRestockProduct.stock <= LOW_STOCK
+                    activeRestockProduct.stock <=
+                    (activeRestockProduct.minStockAlert ?? threshold)
                       ? "var(--color-danger)"
                       : "var(--color-text)",
                   marginTop: 2,
