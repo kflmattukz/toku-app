@@ -140,7 +140,8 @@ function Transaksi() {
             Riwayat Transaksi
           </h1>
           <p style={{ margin: "4px 0 0", fontSize: 13, color: "var(--color-text-2)" }}>
-            {transactions.length} total transaksi tercatat ({completedCount} selesai, {cancelledCount} dibatalkan)
+            {transactions.length} total transaksi tercatat ({completedCount} selesai,{" "}
+            {cancelledCount} dibatalkan)
           </p>
         </div>
 
@@ -207,12 +208,17 @@ function Transaksi() {
       {filteredTransactions.length === 0 ? (
         <div
           style={{
+            gridColumn: "1/-1",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
             textAlign: "center",
-            padding: "64px 20px",
+            padding: "64px 16px",
             color: "var(--color-text-3)",
             background: "var(--color-surface)",
             border: "1px solid var(--color-border)",
-            borderRadius: "var(--radius-xl)",
+            borderRadius: "var(--radius-lg)",
           }}
         >
           <ReceiptIcon size={52} style={{ opacity: 0.3, marginBottom: 12 }} />
@@ -622,7 +628,14 @@ function Transaksi() {
                   <span>Sebelumnya</span>
                 </button>
 
-                <span style={{ fontSize: 13, fontWeight: 700, color: "var(--color-text)", padding: "0 4px" }}>
+                <span
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: "var(--color-text)",
+                    padding: "0 4px",
+                  }}
+                >
                   {currentPage} / {totalPages}
                 </span>
 
@@ -663,7 +676,10 @@ function Transaksi() {
             <Receipt tx={selected} storeName={store.name} />
           </div>
 
-          <div className="no-print" style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 24 }}>
+          <div
+            className="no-print"
+            style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 24 }}
+          >
             <div style={{ display: "flex", gap: 10 }}>
               <button
                 onClick={() => printReceipt("toku-receipt-content-tx")}
@@ -759,13 +775,34 @@ function Transaksi() {
               Batalkan Transaksi & Retur Stok?
             </h3>
 
-            <p style={{ fontSize: 13, color: "var(--color-text-2)", textAlign: "center", margin: "0 0 20px" }}>
-              Transaksi senilai <strong style={{ color: "var(--color-text)" }}>{formatIDR(cancelTarget.total)}</strong> akan ditandai sebagai batal. Seluruh stok ({cancelTarget.items.reduce((s: number, i: any) => s + i.qty, 0)} item) akan otomatis dikembalikan ke inventaris.
+            <p
+              style={{
+                fontSize: 13,
+                color: "var(--color-text-2)",
+                textAlign: "center",
+                margin: "0 0 20px",
+              }}
+            >
+              Transaksi senilai{" "}
+              <strong style={{ color: "var(--color-text)" }}>
+                {formatIDR(cancelTarget.total)}
+              </strong>{" "}
+              akan ditandai sebagai batal. Seluruh stok (
+              {cancelTarget.items.reduce((s: number, i: any) => s + i.qty, 0)} item) akan otomatis
+              dikembalikan ke inventaris.
             </p>
 
             {/* Select Reason */}
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--color-text)", marginBottom: 8 }}>
+              <label
+                style={{
+                  display: "block",
+                  fontSize: 12,
+                  fontWeight: 700,
+                  color: "var(--color-text)",
+                  marginBottom: 8,
+                }}
+              >
                 Pilih Alasan Pembatalan:
               </label>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -782,7 +819,9 @@ function Transaksi() {
                         border: selected
                           ? "1.5px solid var(--color-brand)"
                           : "1px solid var(--color-border)",
-                        background: selected ? "var(--color-brand-light)" : "var(--color-surface-2)",
+                        background: selected
+                          ? "var(--color-brand-light)"
+                          : "var(--color-surface-2)",
                         cursor: "pointer",
                         fontSize: 13,
                         fontWeight: selected ? 800 : 600,
@@ -814,7 +853,15 @@ function Transaksi() {
 
             {/* Optional note */}
             <div style={{ marginBottom: 20 }}>
-              <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "var(--color-text)", marginBottom: 6 }}>
+              <label
+                style={{
+                  display: "block",
+                  fontSize: 12,
+                  fontWeight: 700,
+                  color: "var(--color-text)",
+                  marginBottom: 6,
+                }}
+              >
                 Catatan Tambahan (Opsional):
               </label>
               <input
