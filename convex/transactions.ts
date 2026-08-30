@@ -42,8 +42,11 @@ export const create = mutation({
     syncedFromOffline: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    // Insert transaction
-    const txId = await ctx.db.insert("transactions", args);
+    // Insert transaction with status completed by default
+    const txId = await ctx.db.insert("transactions", {
+      ...args,
+      status: "completed",
+    });
     // Deduct stock for each item
     for (const item of args.items) {
       try {
@@ -64,6 +67,46 @@ export const create = mutation({
   },
 });
 
+export const cancel = mutation({
+  args: {
+    id: v.id("transactions"),
+    reason: v.string(),
+    cancelledBy: v.optional(v.string()),
+  },
+  handler: async (ctx, { id, reason, cancelledBy }) => {
+    const tx = await ctx.db.get(id);
+    if (!tx) throw new Error("Transaksi tidak ditemukan");
+    if (tx.status === "cancelled") throw new Error("Transaksi ini sudah dibatalkan sebelumnya");
+
+    // 1. Mark transaction as cancelled
+    await ctx.db.patch(id, {
+      status: "cancelled",
+      cancelledAt: Date.now(),
+      cancelReason: reason,
+      cancelledBy: cancelledBy || "Kasir",
+    });
+
+    // 2. Return stock to products
+    for (const item of tx.items) {
+      try {
+        const productId = ctx.db.normalizeId("products", item.productId);
+        if (productId) {
+          const product = await ctx.db.get(productId);
+          if (product) {
+            await ctx.db.patch(productId, {
+              stock: product.stock + item.qty,
+            });
+          }
+        }
+      } catch {
+        // Skip stock restoration if product was permanently deleted
+      }
+    }
+
+    return true;
+  },
+});
+
 export const dailySummary = query({
   args: { storeId: v.id("stores"), startOfDay: v.number(), endOfDay: v.number() },
   handler: async (ctx, { storeId, startOfDay, endOfDay }) => {
@@ -73,7 +116,21 @@ export const dailySummary = query({
         q.eq("storeId", storeId).gte("createdAt", startOfDay).lte("createdAt", endOfDay),
       )
       .collect();
-    const total = txs.reduce((sum, t) => sum + t.total, 0);
-    return { total, count: txs.length, transactions: txs };
+
+    const validTxs = txs.filter((t) => t.status !== "cancelled");
+    const cancelledTxs = txs.filter((t) => t.status === "cancelled");
+
+    const total = validTxs.reduce((sum, t) => sum + t.total, 0);
+    const cancelledTotal = cancelledTxs.reduce((sum, t) => sum + t.total, 0);
+
+    return {
+      total,
+      count: validTxs.length,
+      transactions: validTxs,
+      allTransactions: txs,
+      cancelledTotal,
+      cancelledCount: cancelledTxs.length,
+      cancelledTransactions: cancelledTxs,
+    };
   },
 });

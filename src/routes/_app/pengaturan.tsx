@@ -3,9 +3,11 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { authClient } from "#/lib/auth-client";
 import { useAppStore } from "#/lib/store-context";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { isDarkMode, toggleTheme } from "#/lib/utils";
 import { toast } from "sonner";
+import { Modal } from "#/components/Modal";
+import { CashierLockModal } from "#/components/CashierLockModal";
 import {
   MoonIcon,
   SunIcon,
@@ -14,38 +16,444 @@ import {
   CheckIcon,
   StorefrontIcon,
   PaletteIcon,
-  CrownIcon,
   UsersIcon,
   BuildingsIcon,
   PlusIcon,
   TrashIcon,
+  PencilSimpleIcon,
   LockKeyIcon,
+  CrownIcon,
   BellRingingIcon,
+  CaretDownIcon,
+  MagnifyingGlassIcon,
+  CheckCircleIcon,
+  WrenchIcon,
+  ForkKnifeIcon,
+  CoffeeIcon,
+  ShoppingCartIcon,
+  DropIcon,
+  ScissorsIcon,
+  TShirtIcon,
+  DeviceMobileIcon,
+  PillIcon,
+  HammerIcon,
+  PawPrintIcon,
+  PrinterIcon,
+  TagIcon,
 } from "@phosphor-icons/react";
 import type { Id } from "../../../convex/_generated/dataModel";
 
 export const Route = createFileRoute("/_app/pengaturan")({ component: Pengaturan });
 
-const CATEGORY_LABELS: Record<string, string> = {
-  sembako: "Warung Sembako",
-  warung_kopi: "Warung Kopi",
-  apotek: "Apotek",
-  konter_pulsa: "Konter Pulsa",
-  kelontong: "Toko Kelontong",
-  lainnya: "Lainnya",
-};
+export const UMKM_CATEGORIES = [
+  {
+    value: "bengkel",
+    label: "Bengkel Motor & Mobil / Otomotif",
+    desc: "Bengkel servis, suku cadang & ganti oli",
+    icon: WrenchIcon,
+  },
+  {
+    value: "kuliner_resto",
+    label: "Kuliner & Restoran",
+    desc: "Rumah makan, resto, kedai & kuliner",
+    icon: ForkKnifeIcon,
+  },
+  {
+    value: "warung_kopi",
+    label: "Warung Kopi / Cafe",
+    desc: "Kopi, minuman kekinian & nongkrong",
+    icon: CoffeeIcon,
+  },
+  {
+    value: "sembako",
+    label: "Warung Sembako",
+    desc: "Beras, minyak, bumbu & kebutuhan dapur",
+    icon: ShoppingCartIcon,
+  },
+  {
+    value: "kelontong",
+    label: "Toko Kelontong",
+    desc: "Kebutuhan rumah tangga & sembako harian",
+    icon: StorefrontIcon,
+  },
+  {
+    value: "laundry",
+    label: "Laundry Kiloan & Satuan",
+    desc: "Cuci kiloan, satuan, setrika & dry clean",
+    icon: DropIcon,
+  },
+  {
+    value: "barbershop_salon",
+    label: "Barbershop, Pangkas Rambut & Salon",
+    desc: "Pangkas rambut, potong rambut & grooming",
+    icon: ScissorsIcon,
+  },
+  {
+    value: "fashion_butik",
+    label: "Pakaian, Fashion & Butik",
+    desc: "Pakaian, hijab, sepatu & aksesoris mode",
+    icon: TShirtIcon,
+  },
+  {
+    value: "konter_pulsa",
+    label: "Konter Pulsa & HP",
+    desc: "Pulsa, paket data, voucher & aksesoris",
+    icon: DeviceMobileIcon,
+  },
+  {
+    value: "apotek",
+    label: "Apotek & Toko Obat",
+    desc: "Obat-obatan, resep & alat kesehatan",
+    icon: PillIcon,
+  },
+  {
+    value: "toko_bangunan",
+    label: "Toko Bangunan & Material",
+    desc: "Material bangunan, cat, semen & perkakas",
+    icon: HammerIcon,
+  },
+  {
+    value: "petshop",
+    label: "Petshop & Klinik Hewan",
+    desc: "Pakan hewan, vitamin, grooming & aksesoris",
+    icon: PawPrintIcon,
+  },
+  {
+    value: "atk_fotokopi",
+    label: "ATK & Fotokopi / Percetakan",
+    desc: "Alat tulis, fotokopi, print & percetakan",
+    icon: PrinterIcon,
+  },
+  {
+    value: "lainnya",
+    label: "Usaha Lainnya",
+    desc: "Kategori bisnis & usaha UMKM lainnya",
+    icon: TagIcon,
+  },
+];
 
-type SettingTab = "store" | "subscription" | "cashiers" | "branches";
+export const CATEGORY_LABELS: Record<string, string> = Object.fromEntries(
+  UMKM_CATEGORIES.map((c) => [c.value, c.label]),
+);
+
+function CategorySelectPicker({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const activeCategory =
+    UMKM_CATEGORIES.find((c) => c.value === value) || UMKM_CATEGORIES[0];
+  const ActiveIcon = activeCategory.icon;
+
+  const filtered = UMKM_CATEGORIES.filter((c) => {
+    const q = search.toLowerCase();
+    return c.label.toLowerCase().includes(q) || c.desc.toLowerCase().includes(q);
+  });
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsOpen(false);
+    };
+
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("keydown", handleKeyDown);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen]);
+
+  return (
+    <div ref={containerRef} style={{ position: "relative", width: "100%" }}>
+      {/* Trigger Button */}
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="press-tactile"
+        style={{
+          width: "100%",
+          padding: "10px 14px",
+          borderRadius: "var(--radius-sm)",
+          border: isOpen ? "1.5px solid var(--color-brand)" : "1.5px solid var(--color-border)",
+          background: "var(--color-surface)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 12,
+          cursor: "pointer",
+          textAlign: "left",
+          boxShadow: isOpen ? "0 0 0 3px rgba(234, 88, 12, 0.15)" : "none",
+          transition: "all 180ms ease",
+          boxSizing: "border-box",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
+          <div
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 10,
+              background: "var(--color-brand-light)",
+              color: "var(--color-brand)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+            }}
+          >
+            <ActiveIcon size={20} weight="bold" />
+          </div>
+          <div style={{ minWidth: 0 }}>
+            <div
+              style={{
+                fontSize: 14,
+                fontWeight: 800,
+                color: "var(--color-text)",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {activeCategory.label}
+            </div>
+            <div
+              style={{
+                fontSize: 12,
+                color: "var(--color-text-3)",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {activeCategory.desc}
+            </div>
+          </div>
+        </div>
+
+        <div
+          style={{
+            transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
+            transition: "transform 200ms ease",
+            color: "var(--color-text-3)",
+            display: "flex",
+            alignItems: "center",
+            flexShrink: 0,
+          }}
+        >
+          <CaretDownIcon size={18} weight="bold" />
+        </div>
+      </button>
+
+      {/* Floating Popover Options Menu */}
+      {isOpen && (
+        <div
+          style={{
+            position: "absolute",
+            top: "calc(100% + 8px)",
+            left: 0,
+            right: 0,
+            zIndex: 100,
+            background: "var(--color-surface)",
+            border: "1px solid var(--color-border)",
+            borderRadius: "var(--radius-md)",
+            boxShadow: "0 16px 40px rgba(0, 0, 0, 0.16)",
+            padding: 10,
+            maxHeight: 380,
+            display: "flex",
+            flexDirection: "column",
+            animation: "fadeIn 150ms ease",
+          }}
+        >
+          {/* Search filter */}
+          <div
+            style={{
+              position: "relative",
+              marginBottom: 8,
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
+            <MagnifyingGlassIcon
+              size={16}
+              weight="bold"
+              style={{
+                position: "absolute",
+                left: 12,
+                color: "var(--color-text-3)",
+                pointerEvents: "none",
+              }}
+            />
+            <input
+              type="text"
+              autoFocus
+              placeholder="Cari kategori UMKM (bengkel, sembako, laundry...)"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "9px 12px 9px 36px",
+                borderRadius: 8,
+                border: "1px solid var(--color-border)",
+                background: "var(--color-surface-2)",
+                fontSize: 13,
+                color: "var(--color-text)",
+                outline: "none",
+                boxSizing: "border-box",
+              }}
+            />
+          </div>
+
+          {/* Options Grid / List */}
+          <div
+            style={{
+              overflowY: "auto",
+              maxHeight: 290,
+              display: "flex",
+              flexDirection: "column",
+              gap: 4,
+              paddingRight: 4,
+            }}
+          >
+            {filtered.length > 0 ? (
+              filtered.map((cat) => {
+                const Icon = cat.icon;
+                const isSelected = cat.value === value;
+                return (
+                  <div
+                    key={cat.value}
+                    onClick={() => {
+                      onChange(cat.value);
+                      setIsOpen(false);
+                    }}
+                    className="press-tactile"
+                    style={{
+                      padding: "10px 12px",
+                      borderRadius: 10,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: 12,
+                      cursor: "pointer",
+                      background: isSelected
+                        ? "var(--color-brand-light)"
+                        : "transparent",
+                      border: isSelected
+                        ? "1px solid var(--color-brand)"
+                        : "1px solid transparent",
+                      transition: "all 120ms ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isSelected) {
+                        e.currentTarget.style.background = "var(--color-surface-2)";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isSelected) {
+                        e.currentTarget.style.background = "transparent";
+                      }
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+                      <div
+                        style={{
+                          width: 32,
+                          height: 32,
+                          borderRadius: 8,
+                          background: isSelected
+                            ? "var(--color-brand)"
+                            : "var(--color-surface-2)",
+                          color: isSelected ? "#ffffff" : "var(--color-text)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                        }}
+                      >
+                        <Icon size={18} weight={isSelected ? "bold" : "regular"} />
+                      </div>
+                      <div style={{ minWidth: 0 }}>
+                        <div
+                          style={{
+                            fontSize: 13,
+                            fontWeight: isSelected ? 800 : 700,
+                            color: isSelected ? "var(--color-brand)" : "var(--color-text)",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {cat.label}
+                        </div>
+                        <div
+                          style={{
+                            fontSize: 11,
+                            color: "var(--color-text-3)",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {cat.desc}
+                        </div>
+                      </div>
+                    </div>
+
+                    {isSelected && (
+                      <CheckCircleIcon
+                        size={20}
+                        weight="fill"
+                        color="var(--color-brand)"
+                        style={{ flexShrink: 0 }}
+                      />
+                    )}
+                  </div>
+                );
+              })
+            ) : (
+              <div
+                style={{
+                  padding: "20px",
+                  textAlign: "center",
+                  fontSize: 13,
+                  color: "var(--color-text-3)",
+                }}
+              >
+                Kategori tidak ditemukan.
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+type SettingTab = "store" | "cashiers" | "branches";
 
 function Pengaturan() {
-  const { store, session, isPro, openUpgradeModal, setSelectedStoreId } = useAppStore();
+  const { store, session, setSelectedStoreId, currentCashier } = useAppStore();
   const updateStore = useMutation(api.stores.update);
   const createCashier = useMutation(api.cashiers.create);
+  const updateCashier = useMutation(api.cashiers.update);
   const deleteCashier = useMutation(api.cashiers.remove);
   const createBranch = useMutation(api.stores.createBranch);
 
   const [activeTab, setActiveTab] = useState<SettingTab>("store");
   const [name, setName] = useState("");
+  const [category, setCategory] = useState<string>("sembako");
   const [address, setAddress] = useState("");
   const [branchName, setBranchName] = useState("");
   const [lowStockThreshold, setLowStockThreshold] = useState<number>(5);
@@ -53,11 +461,22 @@ function Pengaturan() {
   const [saved, setSaved] = useState(false);
   const [dark, setDark] = useState(isDarkMode);
 
+  // Owner security gate state
+  const [isOwnerUnlocked, setIsOwnerUnlocked] = useState(false);
+  const [showOwnerAuthModal, setShowOwnerAuthModal] = useState(false);
+
   // Cashier form state
   const [newCashierName, setNewCashierName] = useState("");
   const [newCashierPin, setNewCashierPin] = useState("");
   const [newCashierRole, setNewCashierRole] = useState<"owner" | "manager" | "cashier">("cashier");
   const [isAddingCashier, setIsAddingCashier] = useState(false);
+
+  // Edit Cashier modal state
+  const [editingCashier, setEditingCashier] = useState<any | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editPin, setEditPin] = useState("");
+  const [editRole, setEditRole] = useState<"owner" | "manager" | "cashier">("cashier");
+  const [isUpdatingCashier, setIsUpdatingCashier] = useState(false);
 
   // Branch form state
   const [newBranchName, setNewBranchName] = useState("");
@@ -69,6 +488,9 @@ function Pengaturan() {
     store ? { storeId: store._id } : "skip",
   );
 
+  const isOwner = !currentCashier || currentCashier.role === "owner" || isOwnerUnlocked;
+  const activeOwners = (cashiers ?? []).filter((c) => c.role === "owner" && c.active !== false);
+
   const userStores = useQuery(
     api.stores.listUserStores,
     session ? { userId: session.user.id, userEmail: session.user.email } : "skip",
@@ -77,6 +499,7 @@ function Pengaturan() {
   useEffect(() => {
     if (store) {
       setName(store.name);
+      setCategory(store.category ?? "sembako");
       setAddress(store.address ?? "");
       setBranchName(store.branchName ?? "Pusat");
       setLowStockThreshold(store.lowStockThreshold ?? 5);
@@ -103,6 +526,7 @@ function Pengaturan() {
       await updateStore({
         id: store._id,
         name,
+        category: (category as any) || undefined,
         address: address || undefined,
         branchName: branchName || undefined,
         lowStockThreshold: Number(lowStockThreshold) || 5,
@@ -125,6 +549,17 @@ function Pengaturan() {
       return;
     }
 
+    // Check duplicate PIN locally first for immediate feedback
+    const duplicate = (cashiers ?? []).find(
+      (c) => c.pin === newCashierPin && c.active !== false,
+    );
+    if (duplicate) {
+      toast.error(
+        `PIN ${newCashierPin} sudah digunakan oleh staf "${duplicate.name}". Harap gunakan 4 digit PIN yang berbeda.`,
+      );
+      return;
+    }
+
     try {
       setIsAddingCashier(true);
       await createCashier({
@@ -138,11 +573,51 @@ function Pengaturan() {
       setNewCashierPin("");
       setIsAddingCashier(false);
     } catch (err: any) {
-      if (err.message.includes("Free tier")) {
-        openUpgradeModal("yearly");
-      }
       toast.error(err.message || "Gagal menambah kasir");
       setIsAddingCashier(false);
+    }
+  };
+
+  const handleOpenEditCashier = (c: any) => {
+    setEditingCashier(c);
+    setEditName(c.name);
+    setEditPin(c.pin || "");
+    setEditRole(c.role || "cashier");
+  };
+
+  const handleUpdateCashier = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingCashier) return;
+    if (editPin.length !== 4 || !/^\d+$/.test(editPin)) {
+      toast.error("PIN harus berupa 4 digit angka");
+      return;
+    }
+
+    // Check duplicate PIN with other cashiers
+    const duplicate = (cashiers ?? []).find(
+      (c) => c._id !== editingCashier._id && c.pin === editPin && c.active !== false,
+    );
+    if (duplicate) {
+      toast.error(
+        `PIN ${editPin} sudah digunakan oleh staf "${duplicate.name}". Harap gunakan PIN berbeda.`,
+      );
+      return;
+    }
+
+    try {
+      setIsUpdatingCashier(true);
+      await updateCashier({
+        id: editingCashier._id,
+        name: editName,
+        pin: editPin,
+        role: editRole,
+      });
+      toast.success(`Data staf "${editName}" berhasil diperbarui!`);
+      setEditingCashier(null);
+    } catch (err: any) {
+      toast.error(err.message || "Gagal memperbarui staf");
+    } finally {
+      setIsUpdatingCashier(false);
     }
   };
 
@@ -173,9 +648,6 @@ function Pengaturan() {
       setNewBranchAddress("");
       setIsAddingBranch(false);
     } catch (err: any) {
-      if (err.message.includes("Free tier")) {
-        openUpgradeModal("yearly");
-      }
       toast.error(err.message || "Gagal menambah cabang");
       setIsAddingBranch(false);
     }
@@ -212,51 +684,9 @@ function Pengaturan() {
             Pengaturan & Kelola Toko
           </h1>
           <p style={{ fontSize: 13, color: "var(--color-text-3)", margin: "4px 0 0" }}>
-            Konfigurasi profil usaha, paket langganan, staf kasir, dan multi-cabang
+            Konfigurasi profil usaha, staf kasir, dan multi-cabang
           </p>
         </div>
-
-        {isPro ? (
-          <div
-            style={{
-              background: "linear-gradient(135deg, rgba(234,88,12,0.15), rgba(245,158,11,0.25))",
-              color: "var(--color-brand)",
-              border: "1px solid rgba(234,88,12,0.4)",
-              padding: "6px 14px",
-              borderRadius: 99,
-              fontSize: 12,
-              fontWeight: 900,
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-            }}
-          >
-            <CrownIcon size={16} weight="fill" />
-            AKUN TOKU PRO AKTIF
-          </div>
-        ) : (
-          <button
-            onClick={() => openUpgradeModal("yearly")}
-            className="press-tactile"
-            style={{
-              background: "var(--color-brand)",
-              color: "#ffffff",
-              border: "none",
-              padding: "8px 16px",
-              borderRadius: 99,
-              fontSize: 13,
-              fontWeight: 800,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              boxShadow: "0 4px 14px rgba(234,88,12,0.3)",
-            }}
-          >
-            <CrownIcon size={16} weight="bold" />
-            Upgrade ke PRO
-          </button>
-        )}
       </div>
 
       {/* Tabs */}
@@ -272,7 +702,6 @@ function Pengaturan() {
       >
         {[
           { id: "store", label: "Profil Toko", icon: StorefrontIcon },
-          { id: "subscription", label: "Langganan & Billing", icon: CrownIcon },
           { id: "cashiers", label: "Staf & Kasir PIN", icon: UsersIcon },
           { id: "branches", label: "Cabang / Outlet", icon: BuildingsIcon },
         ].map((tab) => {
@@ -340,19 +769,10 @@ function Pengaturan() {
 
               <div style={{ marginBottom: 16 }}>
                 <label style={labelStyle}>Kategori Usaha</label>
-                <div
-                  style={{
-                    padding: "12px 14px",
-                    background: "var(--color-surface-2)",
-                    border: "1px solid var(--color-border)",
-                    borderRadius: "var(--radius-sm)",
-                    fontSize: 14,
-                    color: "var(--color-text)",
-                    fontWeight: 600,
-                  }}
-                >
-                  {CATEGORY_LABELS[store.category] ?? store.category}
-                </div>
+                <CategorySelectPicker value={category} onChange={setCategory} />
+                <span style={{ fontSize: 11, color: "var(--color-text-3)", marginTop: 6, display: "block" }}>
+                  Kategori menentukan klasifikasi profil bisnis UMKM Anda.
+                </span>
               </div>
 
               <div style={{ marginBottom: 16 }}>
@@ -367,9 +787,16 @@ function Pengaturan() {
               </div>
 
               <div style={{ marginBottom: 20 }}>
-                <label style={labelStyle}>
-                  <BellRingingIcon size={15} style={{ verticalAlign: "middle", marginRight: 4 }} />
-                  Batas Peringatan Stok Menipis (Auto Restock Alert)
+                <label
+                  style={{
+                    ...labelStyle,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                  }}
+                >
+                  <BellRingingIcon size={16} weight="bold" color="var(--color-brand)" />
+                  <span>Batas Peringatan Stok Menipis (Auto Restock Alert)</span>
                 </label>
                 <input
                   type="number"
@@ -553,266 +980,375 @@ function Pengaturan() {
         </>
       )}
 
-      {/* TAB 2: LANGGANAN & BILLING */}
-      {activeTab === "subscription" && (
+      {/* TAB 2: STAF & KASIR PIN */}
+      {activeTab === "cashiers" && (
         <div>
-          {/* Status Box */}
-          <section
-            style={{
-              ...sectionStyle,
-              background: isPro
-                ? "linear-gradient(135deg, rgba(234,88,12,0.1), rgba(245,158,11,0.15))"
-                : "var(--color-surface)",
-              border: isPro ? "1.5px solid rgba(234,88,12,0.4)" : "1px solid var(--color-border)",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16 }}>
-              <div>
+          {!isOwner ? (
+            <section
+              style={{
+                ...sectionStyle,
+                background: "linear-gradient(180deg, var(--color-surface) 0%, var(--color-surface-2) 100%)",
+                border: "1.5px dashed var(--color-border)",
+                borderRadius: "var(--radius-xl)",
+                padding: "56px 24px",
+              }}
+            >
+              <div
+                style={{
+                  textAlign: "center",
+                  maxWidth: 440,
+                  margin: "0 auto",
+                }}
+              >
                 <div
                   style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 6,
-                    padding: "4px 10px",
+                    width: 68,
+                    height: 68,
                     borderRadius: 99,
-                    background: isPro ? "var(--color-brand)" : "var(--color-surface-2)",
-                    color: isPro ? "#ffffff" : "var(--color-text-2)",
+                    background: "rgba(234, 88, 12, 0.12)",
+                    color: "var(--color-brand)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    margin: "0 auto 18px",
+                    boxShadow: "0 8px 20px rgba(234, 88, 12, 0.18)",
+                    border: "1px solid rgba(234, 88, 12, 0.25)",
+                  }}
+                >
+                  <LockKeyIcon size={34} weight="bold" />
+                </div>
+
+                <div
+                  style={{
+                    display: "inline-block",
                     fontSize: 11,
                     fontWeight: 800,
+                    color: "var(--color-brand)",
+                    background: "var(--color-brand-light)",
+                    padding: "3px 10px",
+                    borderRadius: 99,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.08em",
                     marginBottom: 10,
                   }}
                 >
-                  <CrownIcon size={14} weight="fill" />
-                  {isPro ? "PAKET PRO AKTIF" : "PAKET FREE"}
+                  FITUR TERPROTEKSI
                 </div>
-                <h3 style={{ fontSize: 18, fontWeight: 900, margin: "0 0 6px", color: "var(--color-text)" }}>
-                  {isPro ? "Fitur Premium Lengkap Terbuka" : "Akun Toku POS Starter (Free)"}
-                </h3>
-                <p style={{ fontSize: 13, color: "var(--color-text-2)", margin: 0 }}>
-                  {isPro
-                    ? store?.proExpiresAt
-                      ? `Masa aktif berlaku hingga ${new Date(store.proExpiresAt).toLocaleDateString("id-ID", { dateStyle: "long" })}`
-                      : "Masa aktif berlangganan Pro aktif."
-                    : "Anda berada pada paket gratis dengan kuota terbatas (1 Cabang, 1 Kasir, 100 Produk)."}
-                </p>
-              </div>
 
-              {!isPro && (
-                <button
-                  onClick={() => openUpgradeModal("yearly")}
-                  className="press-tactile"
+                <h2
                   style={{
-                    padding: "10px 18px",
-                    background: "var(--color-brand)",
-                    color: "#ffffff",
-                    border: "none",
-                    borderRadius: 12,
-                    fontWeight: 800,
-                    fontSize: 13,
-                    cursor: "pointer",
-                    whiteSpace: "nowrap",
+                    fontSize: 22,
+                    fontWeight: 900,
+                    margin: "0 0 10px",
+                    color: "var(--color-text)",
+                    letterSpacing: "-0.02em",
                   }}
                 >
-                  Upgrade Sekarang
-                </button>
-              )}
-            </div>
-          </section>
-
-          {/* Pricing Plans Card */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 24 }}>
-            {/* Monthly */}
-            <div
-              style={{
-                background: "var(--color-surface)",
-                border: "1px solid var(--color-border)",
-                borderRadius: 20,
-                padding: 20,
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "space-between",
-              }}
-            >
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--color-text-3)", marginBottom: 4 }}>
-                  Pro Bulanan
-                </div>
-                <div style={{ fontSize: 24, fontWeight: 900, color: "var(--color-text)" }}>
-                  Rp 35.000
-                  <span style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text-3)" }}> /bln</span>
-                </div>
-                <ul style={{ paddingLeft: 18, fontSize: 12, color: "var(--color-text-2)", marginTop: 14, lineHeight: 1.8 }}>
-                  <li>Unlimited Cabang & Outlet</li>
-                  <li>Multi-Kasir PIN & Role</li>
-                  <li>Shift & Rekap Kas Drawer</li>
-                  <li>Auto Restock & Alert</li>
-                  <li>Unlimited Input Produk</li>
-                </ul>
-              </div>
-
-              <button
-                onClick={() => openUpgradeModal("monthly")}
-                className="press-tactile"
-                style={{
-                  marginTop: 16,
-                  padding: "10px",
-                  borderRadius: 12,
-                  border: "1px solid var(--color-brand)",
-                  background: "transparent",
-                  color: "var(--color-brand)",
-                  fontWeight: 800,
-                  fontSize: 13,
-                  cursor: "pointer",
-                }}
-              >
-                Pilih Bulanan (Rp 35rb)
-              </button>
-            </div>
-
-            {/* Yearly */}
-            <div
-              style={{
-                background: "var(--color-surface)",
-                border: "2px solid var(--color-brand)",
-                borderRadius: 20,
-                padding: 20,
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "space-between",
-                position: "relative",
-              }}
-            >
-              <div
-                style={{
-                  position: "absolute",
-                  top: -12,
-                  right: 16,
-                  background: "var(--color-brand)",
-                  color: "#ffffff",
-                  fontSize: 10,
-                  fontWeight: 900,
-                  padding: "3px 10px",
-                  borderRadius: 99,
-                }}
-              >
-                PALING POPULER
-              </div>
-
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "var(--color-brand)", marginBottom: 4 }}>
-                  Pro Tahunan (Hemat Rp 120rb)
-                </div>
-                <div style={{ fontSize: 24, fontWeight: 900, color: "var(--color-text)" }}>
-                  Rp 300.000
-                  <span style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text-3)" }}> /thn</span>
-                </div>
-                <ul style={{ paddingLeft: 18, fontSize: 12, color: "var(--color-text-2)", marginTop: 14, lineHeight: 1.8 }}>
-                  <li>Semua Fitur Pro Lengkap</li>
-                  <li>Setara Rp 25.000 /bulan</li>
-                  <li>Prioritas Layanan Support</li>
-                  <li>Ekspor Laporan Excel Lengkap</li>
-                  <li>Akses Fitur Baru Lebih Dulu</li>
-                </ul>
-              </div>
-
-              <button
-                onClick={() => openUpgradeModal("yearly")}
-                className="press-tactile"
-                style={{
-                  marginTop: 16,
-                  padding: "10px",
-                  borderRadius: 12,
-                  border: "none",
-                  background: "var(--color-brand)",
-                  color: "#ffffff",
-                  fontWeight: 800,
-                  fontSize: 13,
-                  cursor: "pointer",
-                  boxShadow: "0 4px 12px rgba(234,88,12,0.3)",
-                }}
-              >
-                Langganan Tahunan (Rp 300rb)
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* TAB 3: STAF & KASIR PIN */}
-      {activeTab === "cashiers" && (
-        <div>
-          {/* Add Cashier Form */}
-          <section style={sectionStyle}>
-            <h2 style={sectionTitleStyle}>
-              <UsersIcon size={20} weight="bold" color="var(--color-brand)" />
-              Tambah Staf / Kasir Baru
-            </h2>
-
-            {!isPro && cashiers && cashiers.length >= 1 ? (
-              <div
-                style={{
-                  background: "var(--color-surface-2)",
-                  border: "1px dashed var(--color-brand)",
-                  borderRadius: 14,
-                  padding: 16,
-                  textAlign: "center",
-                }}
-              >
-                <LockKeyIcon size={28} color="var(--color-brand)" weight="bold" style={{ marginBottom: 6 }} />
-                <div style={{ fontSize: 14, fontWeight: 800, color: "var(--color-text)" }}>
-                  Batas 1 Kasir Tercapai untuk Free Tier
-                </div>
-                <p style={{ fontSize: 12, color: "var(--color-text-2)", margin: "4px 0 12px" }}>
-                  Upgrade ke Toku Pro untuk menambahkan kasir & staf dengan hak akses role tanpa batas.
+                  Akses Khusus Pemilik Toko
+                </h2>
+                <p
+                  style={{
+                    fontSize: 13,
+                    color: "var(--color-text-2)",
+                    margin: "0 0 24px",
+                    lineHeight: 1.6,
+                  }}
+                >
+                  Halaman penambahan, pengubahan peran, dan pengelolaan staf kasir diproteksi demi
+                  keamanan operasional toko Anda. Masukkan PIN Owner untuk membuka hak akses.
                 </p>
+
                 <button
-                  onClick={() => openUpgradeModal("yearly")}
+                  type="button"
+                  onClick={() => setShowOwnerAuthModal(true)}
                   className="press-tactile"
                   style={{
-                    padding: "8px 16px",
+                    padding: "14px 28px",
                     borderRadius: 99,
                     background: "var(--color-brand)",
                     color: "#ffffff",
                     border: "none",
-                    fontSize: 12,
+                    fontSize: 14,
                     fontWeight: 800,
                     cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 8,
+                    boxShadow: "0 8px 24px rgba(234, 88, 12, 0.35)",
+                    transition: "all 150ms ease",
                   }}
                 >
-                  Upgrade ke PRO
+                  <CrownIcon size={18} weight="bold" />
+                  <span>Buka Kunci Akses Owner</span>
                 </button>
               </div>
-            ) : (
-              <form onSubmit={handleCreateCashier}>
-                <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gap: 12, marginBottom: 16 }}>
-                  <div>
+            </section>
+          ) : (
+            <>
+              {/* Add Cashier Form */}
+              <section style={sectionStyle}>
+                <h2 style={sectionTitleStyle}>
+                  <UsersIcon size={20} weight="bold" color="var(--color-brand)" />
+                  Tambah Staf / Kasir Baru
+                </h2>
+
+                <form onSubmit={handleCreateCashier}>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "2fr 1fr 1fr",
+                      gap: 12,
+                      marginBottom: 16,
+                    }}
+                  >
+                    <div>
+                      <label style={labelStyle}>Nama Staf / Kasir</label>
+                      <input
+                        type="text"
+                        value={newCashierName}
+                        onChange={(e) => setNewCashierName(e.target.value)}
+                        placeholder="Contoh: Siti Rahma"
+                        required
+                        style={inputStyle}
+                      />
+                    </div>
+                    <div>
+                      <label style={labelStyle}>PIN Masuk (4 Digit)</label>
+                      <input
+                        type="password"
+                        maxLength={4}
+                        value={newCashierPin}
+                        onChange={(e) => setNewCashierPin(e.target.value)}
+                        placeholder="Contoh: 1234"
+                        required
+                        style={inputStyle}
+                      />
+                    </div>
+                    <div>
+                      <label style={labelStyle}>Peran (Role)</label>
+                      <select
+                        value={newCashierRole}
+                        onChange={(e) => setNewCashierRole(e.target.value as any)}
+                        style={inputStyle}
+                      >
+                        <option value="cashier">Kasir</option>
+                        <option value="manager">Manager</option>
+                        <option value="owner">Owner</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isAddingCashier}
+                    className="press-tactile"
+                    style={{
+                      padding: "10px 18px",
+                      background: "var(--color-brand)",
+                      color: "#ffffff",
+                      border: "none",
+                      borderRadius: "var(--radius-sm)",
+                      fontWeight: 800,
+                      fontSize: 13,
+                      cursor: isAddingCashier ? "not-allowed" : "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                    }}
+                  >
+                    <PlusIcon size={16} weight="bold" />
+                    {isAddingCashier ? "Menyimpan..." : "Tambahkan Staf"}
+                  </button>
+                </form>
+              </section>
+
+              {/* Cashiers List */}
+              <section style={sectionStyle}>
+                <h2 style={sectionTitleStyle}>
+                  <UsersIcon size={20} weight="bold" color="var(--color-brand)" />
+                  Daftar Staf Kasir ({cashiers?.length ?? 0})
+                </h2>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {cashiers && cashiers.length > 0 ? (
+                    cashiers.map((c) => {
+                      const isLastOwner = c.role === "owner" && activeOwners.length <= 1;
+                      return (
+                        <div
+                          key={c._id}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            padding: "12px 16px",
+                            background: "var(--color-surface-2)",
+                            borderRadius: 14,
+                            border: "1px solid var(--color-border)",
+                          }}
+                        >
+                          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                            <div
+                              style={{
+                                width: 36,
+                                height: 36,
+                                borderRadius: 99,
+                                background: "var(--color-brand-light)",
+                                color: "var(--color-brand)",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                fontWeight: 800,
+                              }}
+                            >
+                              {c.name.charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                              <div
+                                style={{
+                                  fontSize: 14,
+                                  fontWeight: 800,
+                                  color: "var(--color-text)",
+                                }}
+                              >
+                                {c.name}
+                              </div>
+                              <div
+                                style={{
+                                  fontSize: 12,
+                                  color: "var(--color-text-3)",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 8,
+                                }}
+                              >
+                                <span>
+                                  Role:{" "}
+                                  <strong style={{ textTransform: "capitalize" }}>{c.role}</strong>
+                                </span>
+                                <span>•</span>
+                                <span>PIN: ••••</span>
+                                {isLastOwner && (
+                                  <span
+                                    style={{
+                                      fontSize: 10,
+                                      fontWeight: 800,
+                                      color: "var(--color-brand)",
+                                      background: "var(--color-brand-light)",
+                                      padding: "1px 6px",
+                                      borderRadius: 6,
+                                    }}
+                                  >
+                                    Owner Utama
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <button
+                              onClick={() => handleOpenEditCashier(c)}
+                              className="press-tactile"
+                              title="Edit Staf / Ubah PIN"
+                              style={{
+                                background: "var(--color-surface)",
+                                border: "1px solid var(--color-border)",
+                                borderRadius: 8,
+                                color: "var(--color-text)",
+                                cursor: "pointer",
+                                padding: "6px 10px",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 4,
+                                fontSize: 12,
+                                fontWeight: 700,
+                              }}
+                            >
+                              <PencilSimpleIcon size={14} />
+                              <span>Edit</span>
+                            </button>
+
+                            <button
+                              disabled={isLastOwner}
+                              onClick={() => handleDeleteCashier(c._id)}
+                              className="press-tactile"
+                              title={
+                                isLastOwner
+                                  ? "Tidak dapat menghapus satu-satunya akun Owner toko"
+                                  : "Hapus Kasir"
+                              }
+                              style={{
+                                background: "transparent",
+                                border: "none",
+                                color: isLastOwner ? "var(--color-text-3)" : "var(--color-danger)",
+                                cursor: isLastOwner ? "not-allowed" : "pointer",
+                                opacity: isLastOwner ? 0.4 : 1,
+                                padding: 6,
+                              }}
+                            >
+                              <TrashIcon size={18} />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div
+                      style={{
+                        textAlign: "center",
+                        padding: "20px 0",
+                        color: "var(--color-text-3)",
+                        fontSize: 13,
+                      }}
+                    >
+                      Belum ada kasir tersimpan. Kasir utama default: PIN 1234 (Pemilik).
+                    </div>
+                  )}
+                </div>
+              </section>
+            </>
+          )}
+
+          {/* Edit Cashier Modal */}
+          {editingCashier && (
+            <Modal onClose={() => !isUpdatingCashier && setEditingCashier(null)}>
+              <div style={{ maxWidth: 400 }}>
+                <h3 style={{ fontSize: 18, fontWeight: 800, margin: "0 0 16px", color: "var(--color-text)" }}>
+                  Ubah Data Staf / Kasir
+                </h3>
+
+                <form onSubmit={handleUpdateCashier}>
+                  <div style={{ marginBottom: 14 }}>
                     <label style={labelStyle}>Nama Staf / Kasir</label>
                     <input
                       type="text"
-                      value={newCashierName}
-                      onChange={(e) => setNewCashierName(e.target.value)}
-                      placeholder="Contoh: Siti Rahma"
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
                       required
                       style={inputStyle}
                     />
                   </div>
-                  <div>
-                    <label style={labelStyle}>PIN Masuk (4 Digit)</label>
+
+                  <div style={{ marginBottom: 14 }}>
+                    <label style={labelStyle}>PIN Masuk (4 Digit Angka Unik)</label>
                     <input
                       type="password"
                       maxLength={4}
-                      value={newCashierPin}
-                      onChange={(e) => setNewCashierPin(e.target.value)}
-                      placeholder="Contoh: 1234"
+                      value={editPin}
+                      onChange={(e) => setEditPin(e.target.value)}
                       required
                       style={inputStyle}
                     />
+                    <span style={{ fontSize: 11, color: "var(--color-text-3)", marginTop: 4, display: "block" }}>
+                      Pastikan PIN tidak sama dengan staf lain agar akun tidak tertukar.
+                    </span>
                   </div>
-                  <div>
+
+                  <div style={{ marginBottom: 20 }}>
                     <label style={labelStyle}>Peran (Role)</label>
                     <select
-                      value={newCashierRole}
-                      onChange={(e) => setNewCashierRole(e.target.value as any)}
+                      value={editRole}
+                      onChange={(e) => setEditRole(e.target.value as any)}
                       style={inputStyle}
                     >
                       <option value="cashier">Kasir</option>
@@ -820,110 +1356,54 @@ function Pengaturan() {
                       <option value="owner">Owner</option>
                     </select>
                   </div>
-                </div>
 
-                <button
-                  type="submit"
-                  disabled={isAddingCashier}
-                  className="press-tactile"
-                  style={{
-                    padding: "10px 18px",
-                    background: "var(--color-brand)",
-                    color: "#ffffff",
-                    border: "none",
-                    borderRadius: "var(--radius-sm)",
-                    fontWeight: 800,
-                    fontSize: 13,
-                    cursor: isAddingCashier ? "not-allowed" : "pointer",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 6,
-                  }}
-                >
-                  <PlusIcon size={16} weight="bold" />
-                  {isAddingCashier ? "Menyimpan..." : "Tambahkan Staf"}
-                </button>
-              </form>
-            )}
-          </section>
-
-          {/* Cashiers List */}
-          <section style={sectionStyle}>
-            <h2 style={sectionTitleStyle}>
-              <UsersIcon size={20} weight="bold" color="var(--color-brand)" />
-              Daftar Staf Kasir ({cashiers?.length ?? 0})
-            </h2>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {cashiers && cashiers.length > 0 ? (
-                cashiers.map((c) => (
-                  <div
-                    key={c._id}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      padding: "12px 16px",
-                      background: "var(--color-surface-2)",
-                      borderRadius: 14,
-                      border: "1px solid var(--color-border)",
-                    }}
-                  >
-                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                      <div
-                        style={{
-                          width: 36,
-                          height: 36,
-                          borderRadius: 99,
-                          background: "var(--color-brand-light)",
-                          color: "var(--color-brand)",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontWeight: 800,
-                        }}
-                      >
-                        {c.name.charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <div style={{ fontSize: 14, fontWeight: 800, color: "var(--color-text)" }}>
-                          {c.name}
-                        </div>
-                        <div style={{ fontSize: 12, color: "var(--color-text-3)", display: "flex", gap: 8 }}>
-                          <span>Role: <strong style={{ textTransform: "capitalize" }}>{c.role}</strong></span>
-                          <span>•</span>
-                          <span>PIN: ••••</span>
-                        </div>
-                      </div>
-                    </div>
-
+                  <div style={{ display: "flex", gap: 10 }}>
                     <button
-                      onClick={() => handleDeleteCashier(c._id)}
+                      type="button"
+                      onClick={() => setEditingCashier(null)}
+                      disabled={isUpdatingCashier}
                       className="press-tactile"
-                      title="Hapus Kasir"
                       style={{
-                        background: "transparent",
-                        border: "none",
-                        color: "var(--color-danger)",
+                        flex: 1,
+                        padding: "12px",
+                        borderRadius: "var(--radius-sm)",
+                        border: "1px solid var(--color-border)",
+                        background: "var(--color-surface-2)",
+                        color: "var(--color-text)",
+                        fontSize: 13,
+                        fontWeight: 800,
                         cursor: "pointer",
-                        padding: 6,
                       }}
                     >
-                      <TrashIcon size={18} />
+                      Batal
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isUpdatingCashier}
+                      className="press-tactile"
+                      style={{
+                        flex: 1.5,
+                        padding: "12px",
+                        borderRadius: "var(--radius-sm)",
+                        border: "none",
+                        background: "var(--color-brand)",
+                        color: "#ffffff",
+                        fontSize: 13,
+                        fontWeight: 800,
+                        cursor: isUpdatingCashier ? "not-allowed" : "pointer",
+                      }}
+                    >
+                      {isUpdatingCashier ? "Menyimpan..." : "Simpan Perubahan"}
                     </button>
                   </div>
-                ))
-              ) : (
-                <div style={{ textAlign: "center", padding: "20px 0", color: "var(--color-text-3)", fontSize: 13 }}>
-                  Belum ada kasir tersimpan. Kasir utama default: PIN 1234 (Pemilik).
-                </div>
-              )}
-            </div>
-          </section>
+                </form>
+              </div>
+            </Modal>
+          )}
         </div>
       )}
 
-      {/* TAB 4: CABANG / OUTLET */}
+      {/* TAB 3: CABANG / OUTLET */}
       {activeTab === "branches" && (
         <div>
           {/* Add Branch Form */}
@@ -933,89 +1413,53 @@ function Pengaturan() {
               Tambah Cabang Baru
             </h2>
 
-            {!isPro && userStores && userStores.length >= 1 ? (
-              <div
+            <form onSubmit={handleCreateBranch}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
+                <div>
+                  <label style={labelStyle}>Nama Cabang</label>
+                  <input
+                    type="text"
+                    value={newBranchName}
+                    onChange={(e) => setNewBranchName(e.target.value)}
+                    placeholder="Contoh: Cabang Boulevard"
+                    required
+                    style={inputStyle}
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle}>Alamat Cabang (Opsional)</label>
+                  <input
+                    type="text"
+                    value={newBranchAddress}
+                    onChange={(e) => setNewBranchAddress(e.target.value)}
+                    placeholder="Jl. Boulevard Barat Blok A"
+                    style={inputStyle}
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isAddingBranch}
+                className="press-tactile"
                 style={{
-                  background: "var(--color-surface-2)",
-                  border: "1px dashed var(--color-brand)",
-                  borderRadius: 14,
-                  padding: 16,
-                  textAlign: "center",
+                  padding: "10px 18px",
+                  background: "var(--color-brand)",
+                  color: "#ffffff",
+                  border: "none",
+                  borderRadius: "var(--radius-sm)",
+                  fontWeight: 800,
+                  fontSize: 13,
+                  cursor: isAddingBranch ? "not-allowed" : "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
                 }}
               >
-                <BuildingsIcon size={28} color="var(--color-brand)" weight="bold" style={{ marginBottom: 6 }} />
-                <div style={{ fontSize: 14, fontWeight: 800, color: "var(--color-text)" }}>
-                  Fitur Multi-Cabang Eksklusif untuk Toku PRO
-                </div>
-                <p style={{ fontSize: 12, color: "var(--color-text-2)", margin: "4px 0 12px" }}>
-                  Buka cabang kedua, ketiga, dan seterusnya dengan laporan terintegrasi pada paket PRO.
-                </p>
-                <button
-                  onClick={() => openUpgradeModal("yearly")}
-                  className="press-tactile"
-                  style={{
-                    padding: "8px 16px",
-                    borderRadius: 99,
-                    background: "var(--color-brand)",
-                    color: "#ffffff",
-                    border: "none",
-                    fontSize: 12,
-                    fontWeight: 800,
-                    cursor: "pointer",
-                  }}
-                >
-                  Upgrade ke PRO
-                </button>
-              </div>
-            ) : (
-              <form onSubmit={handleCreateBranch}>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
-                  <div>
-                    <label style={labelStyle}>Nama Cabang</label>
-                    <input
-                      type="text"
-                      value={newBranchName}
-                      onChange={(e) => setNewBranchName(e.target.value)}
-                      placeholder="Contoh: Cabang Boulevard"
-                      required
-                      style={inputStyle}
-                    />
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Alamat Cabang (Opsional)</label>
-                    <input
-                      type="text"
-                      value={newBranchAddress}
-                      onChange={(e) => setNewBranchAddress(e.target.value)}
-                      placeholder="Jl. Boulevard Barat Blok A"
-                      style={inputStyle}
-                    />
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isAddingBranch}
-                  className="press-tactile"
-                  style={{
-                    padding: "10px 18px",
-                    background: "var(--color-brand)",
-                    color: "#ffffff",
-                    border: "none",
-                    borderRadius: "var(--radius-sm)",
-                    fontWeight: 800,
-                    fontSize: 13,
-                    cursor: isAddingBranch ? "not-allowed" : "pointer",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 6,
-                  }}
-                >
-                  <PlusIcon size={16} weight="bold" />
-                  {isAddingBranch ? "Menyimpan Cabang..." : "Buat Cabang Baru"}
-                </button>
-              </form>
-            )}
+                <PlusIcon size={16} weight="bold" />
+                {isAddingBranch ? "Menyimpan Cabang..." : "Buat Cabang Baru"}
+              </button>
+            </form>
           </section>
 
           {/* Branches List */}
@@ -1109,6 +1553,22 @@ function Pengaturan() {
             </div>
           </section>
         </div>
+      )}
+
+      {/* Owner Access Unlock PIN Modal */}
+      {showOwnerAuthModal && store && (
+        <CashierLockModal
+          isOpen={showOwnerAuthModal}
+          onClose={() => setShowOwnerAuthModal(false)}
+          storeId={store._id}
+          requiredRole="owner"
+          title="Buka Kunci Akses Pemilik (Owner)"
+          onSuccess={() => {
+            setIsOwnerUnlocked(true);
+            setShowOwnerAuthModal(false);
+            toast.success("Akses Pemilik Toko (Owner) berhasil dibuka!");
+          }}
+        />
       )}
     </div>
   );

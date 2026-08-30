@@ -20,14 +20,12 @@ import {
   CaretRightIcon,
   SunIcon,
   MoonIcon,
-  CrownIcon,
   LockKeyIcon,
   ClockCounterClockwiseIcon,
   CaretDownIcon,
   BuildingsIcon,
 } from "@phosphor-icons/react";
 import { isDarkMode, toggleTheme } from "#/lib/utils";
-import { UpgradeProModal } from "#/components/UpgradeProModal";
 import { CashierLockModal } from "#/components/CashierLockModal";
 import { ShiftModal } from "#/components/ShiftModal";
 import type { Id } from "../../convex/_generated/dataModel";
@@ -45,13 +43,21 @@ const NAV = [
   { to: "/pengaturan", icon: GearIcon, label: "Pengaturan" },
 ];
 
-const CATEGORY_LABELS: Record<string, string> = {
+export const CATEGORY_LABELS: Record<string, string> = {
+  bengkel: "Bengkel Motor & Mobil / Otomotif",
+  laundry: "Laundry Kiloan & Satuan",
+  barbershop_salon: "Barbershop, Pangkas Rambut & Salon",
+  kuliner_resto: "Rumah Makan / Restoran / Kuliner",
+  fashion_butik: "Pakaian, Fashion & Butik",
+  toko_bangunan: "Toko Bangunan & Material",
+  petshop: "Petshop & Klinik Hewan",
+  atk_fotokopi: "ATK & Fotokopi / Percetakan",
   sembako: "Warung Sembako",
-  warung_kopi: "Warung Kopi",
-  apotek: "Apotek",
-  konter_pulsa: "Konter Pulsa",
+  warung_kopi: "Warung Kopi / Cafe",
+  apotek: "Apotek & Toko Obat",
+  konter_pulsa: "Konter Pulsa & HP",
   kelontong: "Toko Kelontong",
-  lainnya: "Lainnya",
+  lainnya: "Usaha Lainnya",
 };
 
 function getInitialSidebarCollapsed(): boolean {
@@ -94,10 +100,8 @@ function AppShell() {
   );
 
   const [currentCashier, setCurrentCashierState] = useState<ActiveCashier>(getInitialCashier);
-  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [cashierModalOpen, setCashierModalOpen] = useState(false);
   const [shiftModalOpen, setShiftModalOpen] = useState(false);
-  const [upgradePlan, setUpgradePlan] = useState<"monthly" | "yearly">("yearly");
 
   const navigate = useNavigate();
   const [isOnline, setIsOnline] = useState(typeof window !== "undefined" ? navigator.onLine : true);
@@ -106,9 +110,7 @@ function AppShell() {
   const routerState = useRouterState();
   const currentPath = routerState.location.pathname;
 
-  const isPro = Boolean(
-    store?.tier === "pro" && (!store?.proExpiresAt || store?.proExpiresAt > Date.now()),
-  );
+  const isPro = true;
 
   const activeShift = useQuery(
     api.shifts.getActive,
@@ -130,10 +132,7 @@ function AppShell() {
     }
   };
 
-  const openUpgradeModal = (defaultPlan: "monthly" | "yearly" = "yearly") => {
-    setUpgradePlan(defaultPlan);
-    setUpgradeModalOpen(true);
-  };
+  const openUpgradeModal = () => {};
 
   const toggleCollapsed = () => {
     setCollapsed((prev) => {
@@ -201,8 +200,6 @@ function AppShell() {
           currentCashier={currentCashier}
           onOpenCashierModal={() => setCashierModalOpen(true)}
           onOpenShiftModal={() => setShiftModalOpen(true)}
-          onOpenUpgrade={() => openUpgradeModal("yearly")}
-          isPro={isPro}
           activeShift={activeShift}
           collapsed={collapsed}
           onToggleCollapse={toggleCollapsed}
@@ -266,8 +263,6 @@ function AppShell() {
               currentCashier={currentCashier}
               onOpenCashierModal={() => setCashierModalOpen(true)}
               onOpenShiftModal={() => setShiftModalOpen(true)}
-              onOpenUpgrade={() => openUpgradeModal("yearly")}
-              isPro={isPro}
               activeShift={activeShift}
               collapsed={false}
             />
@@ -382,47 +377,6 @@ function AppShell() {
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-            {isPro ? (
-              <span
-                style={{
-                  background: "linear-gradient(135deg, rgba(234,88,12,0.2), rgba(245,158,11,0.2))",
-                  color: "var(--color-brand)",
-                  border: "1px solid rgba(234,88,12,0.4)",
-                  padding: "3px 8px",
-                  borderRadius: 99,
-                  fontSize: 10,
-                  fontWeight: 900,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 4,
-                }}
-              >
-                <CrownIcon size={12} weight="fill" />
-                PRO
-              </span>
-            ) : (
-              <button
-                onClick={() => openUpgradeModal("yearly")}
-                className="press-tactile"
-                style={{
-                  background: "var(--color-brand)",
-                  color: "#ffffff",
-                  border: "none",
-                  padding: "4px 10px",
-                  borderRadius: 99,
-                  fontSize: 11,
-                  fontWeight: 800,
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 4,
-                }}
-              >
-                <CrownIcon size={12} weight="fill" />
-                Upgrade
-              </button>
-            )}
-
             <button
               onClick={() => setCashierModalOpen(true)}
               className="press-tactile"
@@ -524,17 +478,6 @@ function AppShell() {
         </nav>
       </div>
 
-      {/* Upgrade Pro Modal */}
-      {store && session && (
-        <UpgradeProModal
-          isOpen={upgradeModalOpen}
-          onClose={() => setUpgradeModalOpen(false)}
-          storeId={store._id}
-          userId={session.user.id}
-          defaultPlan={upgradePlan}
-        />
-      )}
-
       {/* Cashier Lock / Switch PIN Modal */}
       {store && (
         <CashierLockModal
@@ -568,8 +511,6 @@ function SidebarContent({
   currentCashier,
   onOpenCashierModal,
   onOpenShiftModal,
-  onOpenUpgrade,
-  isPro,
   activeShift,
   collapsed = false,
   onToggleCollapse,
@@ -582,8 +523,6 @@ function SidebarContent({
   currentCashier: ActiveCashier;
   onOpenCashierModal: () => void;
   onOpenShiftModal: () => void;
-  onOpenUpgrade: () => void;
-  isPro: boolean;
   activeShift: any;
   collapsed?: boolean;
   onToggleCollapse?: () => void;
@@ -610,55 +549,8 @@ function SidebarContent({
         }}
       >
         {!collapsed && (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: 8,
-            }}
-          >
-            <div className="eyebrow-tag">TOKU POS</div>
-            {isPro ? (
-              <span
-                style={{
-                  background: "linear-gradient(135deg, rgba(234,88,12,0.15), rgba(245,158,11,0.25))",
-                  color: "var(--color-brand)",
-                  border: "1px solid rgba(234,88,12,0.4)",
-                  padding: "2px 8px",
-                  borderRadius: 99,
-                  fontSize: 10,
-                  fontWeight: 900,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 4,
-                }}
-              >
-                <CrownIcon size={12} weight="fill" />
-                PRO
-              </span>
-            ) : (
-              <button
-                onClick={onOpenUpgrade}
-                className="press-tactile"
-                style={{
-                  background: "var(--color-brand-light)",
-                  color: "var(--color-brand)",
-                  border: "1px solid var(--color-brand)",
-                  padding: "2px 8px",
-                  borderRadius: 99,
-                  fontSize: 10,
-                  fontWeight: 800,
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 4,
-                }}
-              >
-                <CrownIcon size={12} weight="bold" />
-                Upgrade Pro
-              </button>
-            )}
+          <div className="eyebrow-tag" style={{ marginBottom: 8 }}>
+            TOKU POS
           </div>
         )}
 
@@ -948,32 +840,6 @@ function SidebarContent({
         })}
       </nav>
 
-      {/* Pro Upgrade Sidebar Banner (if not pro) */}
-      {!collapsed && !isPro && (
-        <div style={{ padding: "0 10px 10px" }}>
-          <div
-            onClick={onOpenUpgrade}
-            className="press-tactile"
-            style={{
-              background: "linear-gradient(135deg, rgba(234,88,12,0.12), rgba(245,158,11,0.18))",
-              border: "1px solid rgba(234,88,12,0.3)",
-              borderRadius: 14,
-              padding: "10px 12px",
-              cursor: "pointer",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-              <CrownIcon size={16} weight="fill" color="var(--color-brand)" />
-              <span style={{ fontSize: 12, fontWeight: 800, color: "var(--color-brand)" }}>
-                Upgrade Toku PRO
-              </span>
-            </div>
-            <p style={{ fontSize: 11, color: "var(--color-text-2)", margin: 0, lineHeight: 1.3 }}>
-              Multi-outlet, staf PIN, auto restock & unlimited produk.
-            </p>
-          </div>
-        </div>
-      )}
 
       {/* Account Info Footer */}
       <div

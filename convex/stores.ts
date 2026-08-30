@@ -62,19 +62,29 @@ export const listUserStores = query({
   },
 });
 
+const CategoryValidator = v.union(
+  v.literal("bengkel"),
+  v.literal("laundry"),
+  v.literal("barbershop_salon"),
+  v.literal("kuliner_resto"),
+  v.literal("fashion_butik"),
+  v.literal("toko_bangunan"),
+  v.literal("petshop"),
+  v.literal("atk_fotokopi"),
+  v.literal("sembako"),
+  v.literal("warung_kopi"),
+  v.literal("apotek"),
+  v.literal("konter_pulsa"),
+  v.literal("kelontong"),
+  v.literal("lainnya"),
+);
+
 export const create = mutation({
   args: {
     userId: v.string(),
     userEmail: v.optional(v.string()),
     name: v.string(),
-    category: v.union(
-      v.literal("sembako"),
-      v.literal("warung_kopi"),
-      v.literal("apotek"),
-      v.literal("konter_pulsa"),
-      v.literal("kelontong"),
-      v.literal("lainnya"),
-    ),
+    category: CategoryValidator,
     address: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -146,29 +156,14 @@ export const createBranch = mutation({
     userEmail: v.optional(v.string()),
     name: v.string(),
     branchName: v.string(),
-    category: v.union(
-      v.literal("sembako"),
-      v.literal("warung_kopi"),
-      v.literal("apotek"),
-      v.literal("konter_pulsa"),
-      v.literal("kelontong"),
-      v.literal("lainnya"),
-    ),
+    category: CategoryValidator,
     address: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    // Check existing stores
     const existingStores = await ctx.db
       .query("stores")
       .withIndex("by_userId", (q) => q.eq("userId", args.userId))
       .collect();
-
-    const mainStore = existingStores.find((s) => s.tier === "pro" || s.isMainBranch) || existingStores[0];
-    const isPro = mainStore && mainStore.tier === "pro" && (!mainStore.proExpiresAt || mainStore.proExpiresAt > Date.now());
-
-    if (existingStores.length >= 1 && !isPro) {
-      throw new Error("Free tier hanya dapat memiliki 1 cabang/outlet. Upgrade ke Pro untuk menambah cabang.");
-    }
 
     return ctx.db.insert("stores", {
       userId: args.userId,
@@ -178,8 +173,7 @@ export const createBranch = mutation({
       address: args.address,
       branchName: args.branchName,
       isMainBranch: existingStores.length === 0,
-      tier: isPro ? "pro" : "free",
-      proExpiresAt: mainStore?.proExpiresAt,
+      tier: "free",
       lowStockThreshold: 5,
       createdAt: Date.now(),
     });
@@ -192,16 +186,7 @@ export const update = mutation({
     name: v.optional(v.string()),
     branchName: v.optional(v.string()),
     lowStockThreshold: v.optional(v.number()),
-    category: v.optional(
-      v.union(
-        v.literal("sembako"),
-        v.literal("warung_kopi"),
-        v.literal("apotek"),
-        v.literal("konter_pulsa"),
-        v.literal("kelontong"),
-        v.literal("lainnya"),
-      ),
-    ),
+    category: v.optional(CategoryValidator),
     address: v.optional(v.string()),
   },
   handler: async (ctx, { id, ...patch }) => {

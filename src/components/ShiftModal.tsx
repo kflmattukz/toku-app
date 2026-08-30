@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import {
@@ -24,6 +25,7 @@ export function ShiftModal({
   storeId,
   currentCashier,
 }: ShiftModalProps) {
+  const [mounted, setMounted] = useState(false);
   const activeShift = useQuery(api.shifts.getActive, storeId ? { storeId } : "skip");
   const startShift = useMutation(api.shifts.startShift);
   const endShift = useMutation(api.shifts.endShift);
@@ -34,7 +36,21 @@ export function ShiftModal({
   const [isLoading, setIsLoading] = useState(false);
   const [summaryResult, setSummaryResult] = useState<any>(null);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      const prevOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = prevOverflow;
+      };
+    }
+  }, [isOpen]);
+
+  if (!isOpen || !mounted || typeof document === "undefined") return null;
 
   const handleStartShift = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,41 +92,39 @@ export function ShiftModal({
     }
   };
 
-  return (
+  return createPortal(
     <div
+      className="animate-backdrop"
       style={{
         position: "fixed",
         inset: 0,
-        zIndex: 999,
+        width: "100vw",
+        height: "100vh",
+        background: "rgba(15, 23, 42, 0.7)",
+        backdropFilter: "blur(10px)",
+        WebkitBackdropFilter: "blur(10px)",
+        zIndex: 99999,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        padding: 16,
+        padding: "16px",
+        boxSizing: "border-box",
       }}
+      onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div
-        className="animate-backdrop"
-        style={{
-          position: "fixed",
-          inset: 0,
-          background: "rgba(0,0,0,0.7)",
-          backdropFilter: "blur(6px)",
-        }}
-        onClick={onClose}
-      />
-
       <div
         className="animate-scale-up"
         style={{
           position: "relative",
           background: "var(--color-surface)",
           borderRadius: 24,
-          border: "1px solid var(--color-border)",
+          border: "1.5px solid var(--color-border)",
           width: "100%",
           maxWidth: 460,
           padding: 24,
-          boxShadow: "var(--shadow-xl)",
-          zIndex: 1000,
+          boxShadow: "0 25px 60px -12px rgba(0, 0, 0, 0.4), 0 0 0 1px var(--color-border)",
+          zIndex: 100000,
+          boxSizing: "border-box",
         }}
       >
         <button
@@ -457,6 +471,7 @@ export function ShiftModal({
           </form>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

@@ -15,6 +15,7 @@ import {
   ClockIcon,
   TrendUpIcon,
   ReceiptIcon,
+  ArrowCounterClockwiseIcon,
 } from "@phosphor-icons/react";
 
 export const Route = createFileRoute("/_app/laporan")({ component: Laporan });
@@ -154,6 +155,19 @@ function Laporan() {
           subtext="Total unit barang keluar dari toko"
           accentColor="#d97706"
           bgColor="#fffbeb"
+        />
+        <StatCard
+          icon={<ArrowCounterClockwiseIcon size={24} weight="duotone" color="var(--color-danger)" />}
+          badgeText="RETUR / BATAL"
+          label="Transaksi Dibatalkan"
+          value={`${summary.cancelledCount ?? 0} Transaksi`}
+          subtext={
+            summary.cancelledTotal && summary.cancelledTotal > 0
+              ? `Total Retur: ${formatIDR(summary.cancelledTotal)}`
+              : "Tidak ada transaksi retur"
+          }
+          accentColor="var(--color-danger)"
+          bgColor="rgba(239, 68, 68, 0.08)"
         />
       </div>
 

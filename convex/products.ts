@@ -53,21 +53,6 @@ export const create = mutation({
     minStockAlert: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const store = await ctx.db.get(args.storeId);
-    if (!store) throw new Error("Store not found");
-
-    const isPro = store.tier === "pro" && (!store.proExpiresAt || store.proExpiresAt > Date.now());
-    if (!isPro) {
-      const existingProducts = await ctx.db
-        .query("products")
-        .withIndex("by_storeId", (q) => q.eq("storeId", args.storeId))
-        .collect();
-
-      if (existingProducts.length >= 100) {
-        throw new Error("Batas 100 produk tercapai untuk akun Free. Upgrade ke Pro untuk produk tanpa batas.");
-      }
-    }
-
     return ctx.db.insert("products", args);
   },
 });

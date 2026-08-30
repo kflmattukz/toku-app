@@ -7,6 +7,14 @@ export default defineSchema({
     userEmail: v.optional(v.string()), // Permanent Google user email
     name: v.string(),
     category: v.union(
+      v.literal("bengkel"),
+      v.literal("laundry"),
+      v.literal("barbershop_salon"),
+      v.literal("kuliner_resto"),
+      v.literal("fashion_butik"),
+      v.literal("toko_bangunan"),
+      v.literal("petshop"),
+      v.literal("atk_fotokopi"),
       v.literal("sembako"),
       v.literal("warung_kopi"),
       v.literal("apotek"),
@@ -108,6 +116,10 @@ export default defineSchema({
     cashierId: v.optional(v.string()),
     cashierName: v.optional(v.string()),
     shiftId: v.optional(v.string()),
+    status: v.optional(v.union(v.literal("completed"), v.literal("cancelled"))),
+    cancelledAt: v.optional(v.number()),
+    cancelReason: v.optional(v.string()),
+    cancelledBy: v.optional(v.string()),
     createdAt: v.number(),
     syncedFromOffline: v.optional(v.boolean()),
   })
