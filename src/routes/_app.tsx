@@ -78,10 +78,18 @@ function getInitialCashier(): ActiveCashier {
 
 function AppShell() {
   const { data: session, isPending } = authClient.useSession();
-  const [selectedStoreId, setSelectedStoreId] = useState<Id<"stores"> | null>(() => {
-    if (typeof window === "undefined") return null;
-    return (localStorage.getItem("toku_active_store_id") as Id<"stores">) || null;
-  });
+  const [selectedStoreId, setSelectedStoreId] = useState<Id<"stores"> | null>(null);
+
+  // Sync selectedStoreId with current user's session from localStorage
+  useEffect(() => {
+    if (session?.user) {
+      const userKey = `toku_active_store_id_${session.user.email || session.user.id}`;
+      const saved = (localStorage.getItem(userKey) as Id<"stores">) || null;
+      setSelectedStoreId(saved);
+    } else {
+      setSelectedStoreId(null);
+    }
+  }, [session?.user?.id, session?.user?.email]);
 
   const store = useQuery(
     api.stores.getByUserId,
@@ -125,11 +133,32 @@ function AppShell() {
 
   const handleSelectStore = (id: Id<"stores"> | null) => {
     setSelectedStoreId(id);
-    if (id) {
-      localStorage.setItem("toku_active_store_id", id);
-    } else {
-      localStorage.removeItem("toku_active_store_id");
+    if (session?.user) {
+      const userKey = `toku_active_store_id_${session.user.email || session.user.id}`;
+      if (id) {
+        localStorage.setItem(userKey, id);
+        localStorage.setItem("toku_active_store_id", id);
+      } else {
+        localStorage.removeItem(userKey);
+        localStorage.removeItem("toku_active_store_id");
+      }
     }
+  };
+
+  const handleSignOut = () => {
+    if (session?.user) {
+      const userKey = `toku_active_store_id_${session.user.email || session.user.id}`;
+      localStorage.removeItem(userKey);
+    }
+    localStorage.removeItem("toku_active_store_id");
+    localStorage.removeItem("toku_active_cashier");
+    authClient.signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          window.location.href = "/";
+        },
+      },
+    });
   };
 
   const openUpgradeModal = () => {};
@@ -165,10 +194,14 @@ function AppShell() {
     if (store && store._id) {
       if (selectedStoreId !== store._id) {
         setSelectedStoreId(store._id);
-        localStorage.setItem("toku_active_store_id", store._id);
+        if (session?.user) {
+          const userKey = `toku_active_store_id_${session.user.email || session.user.id}`;
+          localStorage.setItem(userKey, store._id);
+          localStorage.setItem("toku_active_store_id", store._id);
+        }
       }
     }
-  }, [store, selectedStoreId]);
+  }, [store, selectedStoreId, session?.user]);
 
   useEffect(() => {
     if (!isPending && session && store === null && currentPath !== "/onboarding") {
@@ -218,6 +251,7 @@ function AppShell() {
           activeShift={activeShift}
           collapsed={collapsed}
           onToggleCollapse={toggleCollapsed}
+          onSignOut={handleSignOut}
         />
       </aside>
 
@@ -280,6 +314,7 @@ function AppShell() {
               onOpenShiftModal={() => setShiftModalOpen(true)}
               activeShift={activeShift}
               collapsed={false}
+              onSignOut={handleSignOut}
             />
           </div>
         </div>
@@ -529,6 +564,7 @@ function SidebarContent({
   activeShift,
   collapsed = false,
   onToggleCollapse,
+  onSignOut,
 }: {
   currentPath: string;
   session: any;
@@ -541,6 +577,7 @@ function SidebarContent({
   activeShift: any;
   collapsed?: boolean;
   onToggleCollapse?: () => void;
+  onSignOut?: () => void;
 }) {
   const [dark, setDark] = useState(isDarkMode);
   const [showStoreDropdown, setShowStoreDropdown] = useState(false);
@@ -988,15 +1025,19 @@ function SidebarContent({
 
         <div className="nav-item-container" style={{ width: "100%" }}>
           <button
-            onClick={() =>
-              authClient.signOut({
-                fetchOptions: {
-                  onSuccess: () => {
-                    window.location.href = "/";
+            onClick={() => {
+              if (onSignOut) {
+                onSignOut();
+              } else {
+                authClient.signOut({
+                  fetchOptions: {
+                    onSuccess: () => {
+                      window.location.href = "/";
+                    },
                   },
-                },
-              })
-            }
+                });
+              }
+            }}
             className="press-tactile"
             style={{
               width: "100%",

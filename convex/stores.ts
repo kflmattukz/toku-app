@@ -8,21 +8,18 @@ export const getByUserId = query({
     storeId: v.optional(v.id("stores")),
   },
   handler: async (ctx, { userId, userEmail, storeId }) => {
-    // If specific storeId requested, fetch it
+    // If specific storeId requested, fetch and verify ownership
     if (storeId) {
       const store = await ctx.db.get(storeId);
-      if (store) return store;
+      if (
+        store &&
+        (store.userId === userId || (userEmail && store.userEmail === userEmail))
+      ) {
+        return store;
+      }
     }
 
-    // 1. Try finding by current userId
-    const storeByUserId = await ctx.db
-      .query("stores")
-      .withIndex("by_userId", (q) => q.eq("userId", userId))
-      .first();
-
-    if (storeByUserId) return storeByUserId;
-
-    // 2. Try finding by userEmail if provided
+    // 1. Try finding by userEmail if provided (canonical Google identity)
     if (userEmail) {
       const storeByEmail = await ctx.db
         .query("stores")
@@ -31,6 +28,14 @@ export const getByUserId = query({
 
       if (storeByEmail) return storeByEmail;
     }
+
+    // 2. Try finding by current userId
+    const storeByUserId = await ctx.db
+      .query("stores")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .first();
+
+    if (storeByUserId) return storeByUserId;
 
     return null;
   },
@@ -42,19 +47,27 @@ export const listUserStores = query({
     userEmail: v.optional(v.string()),
   },
   handler: async (ctx, { userId, userEmail }) => {
-    let stores = await ctx.db
-      .query("stores")
-      .withIndex("by_userId", (q) => q.eq("userId", userId))
-      .collect();
+    const storeMap = new Map();
 
-    if (stores.length === 0 && userEmail) {
-      stores = await ctx.db
+    if (userEmail) {
+      const byEmail = await ctx.db
         .query("stores")
         .withIndex("by_userEmail", (q) => q.eq("userEmail", userEmail))
         .collect();
+      for (const s of byEmail) {
+        storeMap.set(s._id, s);
+      }
     }
 
-    return stores;
+    const byId = await ctx.db
+      .query("stores")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .collect();
+    for (const s of byId) {
+      storeMap.set(s._id, s);
+    }
+
+    return Array.from(storeMap.values());
   },
 });
 

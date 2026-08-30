@@ -136,6 +136,8 @@ function Onboarding() {
         category,
       });
       if (newStoreId) {
+        const userKey = `toku_active_store_id_${session.user.email || session.user.id}`;
+        localStorage.setItem(userKey, newStoreId as string);
         localStorage.setItem("toku_active_store_id", newStoreId as string);
       }
       toast.success(`Toko "${name.trim()}" berhasil dibuat!`, {

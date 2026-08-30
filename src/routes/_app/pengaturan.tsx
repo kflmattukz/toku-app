@@ -655,6 +655,12 @@ function Pengaturan() {
 
   const handleLogout = () => {
     toast.info("Keluar dari Toku POS...");
+    if (session?.user) {
+      const userKey = `toku_active_store_id_${session.user.email || session.user.id}`;
+      localStorage.removeItem(userKey);
+    }
+    localStorage.removeItem("toku_active_store_id");
+    localStorage.removeItem("toku_active_cashier");
     authClient.signOut({
       fetchOptions: {
         onSuccess: () => {
