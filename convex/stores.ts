@@ -32,10 +32,6 @@ export const getByUserId = query({
       if (storeByEmail) return storeByEmail;
     }
 
-    // 3. Fallback for single store environments: if a store exists in Convex, reclaim it
-    const anyStore = await ctx.db.query("stores").first();
-    if (anyStore) return anyStore;
-
     return null;
   },
 });
@@ -120,19 +116,6 @@ export const create = mutation({
         address: args.address,
       });
       return existingById._id;
-    }
-
-    // Fallback: check if there's any orphaned store document to update
-    const orphanStore = await ctx.db.query("stores").first();
-    if (orphanStore) {
-      await ctx.db.patch(orphanStore._id, {
-        userId: args.userId,
-        userEmail: args.userEmail,
-        name: args.name,
-        category: args.category,
-        address: args.address,
-      });
-      return orphanStore._id;
     }
 
     return ctx.db.insert("stores", {

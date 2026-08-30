@@ -129,12 +129,15 @@ function Onboarding() {
     setSaving(true);
     setError("");
     try {
-      await createStore({
+      const newStoreId = await createStore({
         userId: session.user.id,
         userEmail: session.user.email,
         name: name.trim(),
         category,
       });
+      if (newStoreId) {
+        localStorage.setItem("toku_active_store_id", newStoreId as string);
+      }
       toast.success(`Toko "${name.trim()}" berhasil dibuat!`, {
         description: "Selamat datang di Toku POS",
       });

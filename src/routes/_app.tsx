@@ -161,6 +161,21 @@ function AppShell() {
     if (!isPending && !session) navigate({ to: "/" });
   }, [session, isPending, navigate]);
 
+  useEffect(() => {
+    if (store && store._id) {
+      if (selectedStoreId !== store._id) {
+        setSelectedStoreId(store._id);
+        localStorage.setItem("toku_active_store_id", store._id);
+      }
+    }
+  }, [store, selectedStoreId]);
+
+  useEffect(() => {
+    if (!isPending && session && store === null && currentPath !== "/onboarding") {
+      navigate({ to: "/onboarding" });
+    }
+  }, [store, session, isPending, currentPath, navigate]);
+
   if (isPending) return <Loader />;
   if (!session) return null;
 

@@ -329,7 +329,17 @@ function Produk() {
         }}
       >
         {filtered.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "64px 20px", color: "var(--color-text-3)" }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              textAlign: "center",
+              padding: "64px 20px",
+              color: "var(--color-text-3)",
+            }}
+          >
             <PackageIcon size={52} style={{ opacity: 0.3, marginBottom: 12 }} />
             <p style={{ margin: 0, fontSize: 15, fontWeight: 600 }}>Belum ada produk terdaftar</p>
           </div>

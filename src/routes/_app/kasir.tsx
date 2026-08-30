@@ -488,6 +488,10 @@ function Kasir() {
             <div
               style={{
                 gridColumn: "1/-1",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
                 textAlign: "center",
                 padding: "64px 16px",
                 color: "var(--color-text-3)",
