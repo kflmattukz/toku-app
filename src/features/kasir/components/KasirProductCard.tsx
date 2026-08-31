@@ -35,10 +35,10 @@ export function KasirProductCard({
       }}
     >
       {/* 1:1 Box Style Image Container */}
-      <div className="relative w-full aspect-square rounded-xl overflow-hidden mb-2.5 bg-[var(--color-surface-2)] border border-[var(--color-border)] flex items-center justify-center">
-        {product.imageId ? (
+      <div className="relative w-full aspect-square rounded-[12px] overflow-hidden mb-2.5 bg-[var(--color-surface-2)] border border-[var(--color-border)] flex items-center justify-center">
+        {product.imageUrl || product.imageId ? (
           <img
-            src={product.imageId}
+            src={product.imageUrl || product.imageId}
             alt={product.name}
             className="card-img-zoom w-full h-full object-cover"
           />

@@ -27,6 +27,7 @@ export type Product = {
   stock: number;
   barcode?: string;
   imageId?: string;
+  imageUrl?: string | null;
   discountType?: "percentage" | "nominal";
   discountValue?: number;
 };

@@ -70,14 +70,14 @@ export function CartDrawer({
             >
               <div className="flex items-center gap-3">
                 {/* Thumbnail */}
-                {productData?.imageId ? (
+                {productData?.imageUrl || productData?.imageId ? (
                   <img
-                    src={productData.imageId}
+                    src={productData?.imageUrl || productData?.imageId}
                     alt={item.name}
-                    className="w-11 h-11 rounded-xl object-cover shrink-0 border border-[var(--color-border)]"
+                    className="w-11 h-11 rounded-[10px] object-cover shrink-0 border border-[var(--color-border)]"
                   />
                 ) : (
-                  <div className="w-11 h-11 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-3)] shrink-0">
+                  <div className="w-11 h-11 rounded-[10px] bg-[var(--color-surface)] border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-3)] shrink-0">
                     <PackageIcon size={22} weight="duotone" />
                   </div>
                 )}
