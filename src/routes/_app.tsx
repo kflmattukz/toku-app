@@ -467,7 +467,7 @@ function AppShell() {
           <div
             key={currentPath}
             className="page-enter-animation"
-            style={{ flex: 1, display: "flex", flexDirection: "column" }}
+            style={{ flex: 1, display: "flex", flexDirection: "column", width: "100%", minWidth: 0 }}
           >
             <AppStoreContext.Provider
               value={{

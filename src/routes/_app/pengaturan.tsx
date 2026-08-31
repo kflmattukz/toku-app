@@ -40,6 +40,10 @@ import {
   PawPrintIcon,
   PrinterIcon,
   TagIcon,
+  EyeIcon,
+  EyeSlashIcon,
+  ShieldCheckIcon,
+  WarningCircleIcon,
 } from "@phosphor-icons/react";
 import type { Id } from "../../../convex/_generated/dataModel";
 
@@ -145,20 +149,31 @@ function CategorySelectPicker({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [isMobile, setIsMobile] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   const activeCategory =
     UMKM_CATEGORIES.find((c) => c.value === value) || UMKM_CATEGORIES[0];
   const ActiveIcon = activeCategory.icon;
 
   const filtered = UMKM_CATEGORIES.filter((c) => {
-    const q = search.toLowerCase();
+    const q = search.toLowerCase().trim();
+    if (!q) return true;
     return c.label.toLowerCase().includes(q) || c.desc.toLowerCase().includes(q);
   });
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      if (!isMobile && containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setIsOpen(false);
       }
     };
@@ -174,7 +189,112 @@ function CategorySelectPicker({
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isOpen]);
+  }, [isOpen, isMobile]);
+
+  const renderCategoryList = () => (
+    <div className="flex flex-col gap-1.5 max-h-[320px] overflow-y-auto pr-1">
+      {filtered.length > 0 ? (
+        filtered.map((cat) => {
+          const Icon = cat.icon;
+          const isSelected = cat.value === value;
+          return (
+            <button
+              key={cat.value}
+              type="button"
+              onClick={() => {
+                onChange(cat.value);
+                setIsOpen(false);
+                setSearch("");
+              }}
+              className="press-tactile w-full text-left"
+              style={{
+                padding: "10px 12px",
+                borderRadius: 12,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 12,
+                cursor: "pointer",
+                background: isSelected
+                  ? "var(--color-brand-light)"
+                  : "transparent",
+                border: isSelected
+                  ? "1.5px solid var(--color-brand)"
+                  : "1.5px solid transparent",
+                transition: "all 120ms ease",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
+                <div
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 10,
+                    background: isSelected
+                      ? "var(--color-brand)"
+                      : "var(--color-surface-2)",
+                    color: isSelected ? "#ffffff" : "var(--color-text-2)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                  }}
+                >
+                  <Icon size={20} weight={isSelected ? "bold" : "regular"} />
+                </div>
+                <div style={{ minWidth: 0 }}>
+                  <div
+                    style={{
+                      fontSize: 13,
+                      fontWeight: isSelected ? 800 : 700,
+                      color: isSelected ? "var(--color-brand)" : "var(--color-text)",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {cat.label}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 11,
+                      color: "var(--color-text-3)",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                      marginTop: 2,
+                    }}
+                  >
+                    {cat.desc}
+                  </div>
+                </div>
+              </div>
+
+              {isSelected && (
+                <CheckCircleIcon
+                  size={20}
+                  weight="fill"
+                  color="var(--color-brand)"
+                  style={{ flexShrink: 0 }}
+                />
+              )}
+            </button>
+          );
+        })
+      ) : (
+        <div
+          style={{
+            padding: "24px 16px",
+            textAlign: "center",
+            fontSize: 13,
+            color: "var(--color-text-3)",
+          }}
+        >
+          Kategori tidak ditemukan.
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <div ref={containerRef} style={{ position: "relative", width: "100%" }}>
@@ -257,8 +377,8 @@ function CategorySelectPicker({
         </div>
       </button>
 
-      {/* Floating Popover Options Menu */}
-      {isOpen && (
+      {/* Floating Popover on Desktop / Tablet */}
+      {isOpen && !isMobile && (
         <div
           style={{
             position: "absolute",
@@ -267,10 +387,10 @@ function CategorySelectPicker({
             right: 0,
             zIndex: 100,
             background: "var(--color-surface)",
-            border: "1px solid var(--color-border)",
+            border: "1.5px solid var(--color-border)",
             borderRadius: "var(--radius-md)",
             boxShadow: "0 16px 40px rgba(0, 0, 0, 0.16)",
-            padding: 10,
+            padding: 12,
             maxHeight: 380,
             display: "flex",
             flexDirection: "column",
@@ -316,126 +436,50 @@ function CategorySelectPicker({
             />
           </div>
 
-          {/* Options Grid / List */}
-          <div
-            style={{
-              overflowY: "auto",
-              maxHeight: 290,
-              display: "flex",
-              flexDirection: "column",
-              gap: 4,
-              paddingRight: 4,
-            }}
-          >
-            {filtered.length > 0 ? (
-              filtered.map((cat) => {
-                const Icon = cat.icon;
-                const isSelected = cat.value === value;
-                return (
-                  <div
-                    key={cat.value}
-                    onClick={() => {
-                      onChange(cat.value);
-                      setIsOpen(false);
-                    }}
-                    className="press-tactile"
-                    style={{
-                      padding: "10px 12px",
-                      borderRadius: 10,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      gap: 12,
-                      cursor: "pointer",
-                      background: isSelected
-                        ? "var(--color-brand-light)"
-                        : "transparent",
-                      border: isSelected
-                        ? "1px solid var(--color-brand)"
-                        : "1px solid transparent",
-                      transition: "all 120ms ease",
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isSelected) {
-                        e.currentTarget.style.background = "var(--color-surface-2)";
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isSelected) {
-                        e.currentTarget.style.background = "transparent";
-                      }
-                    }}
-                  >
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
-                      <div
-                        style={{
-                          width: 32,
-                          height: 32,
-                          borderRadius: 8,
-                          background: isSelected
-                            ? "var(--color-brand)"
-                            : "var(--color-surface-2)",
-                          color: isSelected ? "#ffffff" : "var(--color-text)",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
-                        }}
-                      >
-                        <Icon size={18} weight={isSelected ? "bold" : "regular"} />
-                      </div>
-                      <div style={{ minWidth: 0 }}>
-                        <div
-                          style={{
-                            fontSize: 13,
-                            fontWeight: isSelected ? 800 : 700,
-                            color: isSelected ? "var(--color-brand)" : "var(--color-text)",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          {cat.label}
-                        </div>
-                        <div
-                          style={{
-                            fontSize: 11,
-                            color: "var(--color-text-3)",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          {cat.desc}
-                        </div>
-                      </div>
-                    </div>
-
-                    {isSelected && (
-                      <CheckCircleIcon
-                        size={20}
-                        weight="fill"
-                        color="var(--color-brand)"
-                        style={{ flexShrink: 0 }}
-                      />
-                    )}
-                  </div>
-                );
-              })
-            ) : (
-              <div
-                style={{
-                  padding: "20px",
-                  textAlign: "center",
-                  fontSize: 13,
-                  color: "var(--color-text-3)",
-                }}
-              >
-                Kategori tidak ditemukan.
-              </div>
-            )}
-          </div>
+          {renderCategoryList()}
         </div>
+      )}
+
+      {/* Responsive Modal on Mobile */}
+      {isOpen && isMobile && (
+        <Modal onClose={() => setIsOpen(false)} maxWidth={440}>
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <StorefrontIcon size={22} weight="bold" color="var(--color-brand)" />
+              <h3 className="text-base font-extrabold text-[var(--color-text)] m-0">
+                Pilih Kategori Usaha UMKM
+              </h3>
+            </div>
+
+            <div className="relative mb-3 flex items-center">
+              <MagnifyingGlassIcon
+                size={16}
+                weight="bold"
+                className="absolute left-3 text-[var(--color-text-3)] pointer-events-none"
+              />
+              <input
+                type="text"
+                autoFocus
+                placeholder="Cari jenis usaha..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "10px 12px 10px 38px",
+                  borderRadius: 10,
+                  border: "1.5px solid var(--color-border)",
+                  background: "var(--color-surface-2)",
+                  fontSize: 13,
+                  color: "var(--color-text)",
+                  outline: "none",
+                  boxSizing: "border-box",
+                }}
+              />
+            </div>
+
+            {renderCategoryList()}
+          </div>
+        </Modal>
       )}
     </div>
   );
@@ -468,6 +512,7 @@ function Pengaturan() {
   // Cashier form state
   const [newCashierName, setNewCashierName] = useState("");
   const [newCashierPin, setNewCashierPin] = useState("");
+  const [showNewCashierPin, setShowNewCashierPin] = useState(false);
   const [newCashierRole, setNewCashierRole] = useState<"owner" | "manager" | "cashier">("cashier");
   const [isAddingCashier, setIsAddingCashier] = useState(false);
 
@@ -475,8 +520,13 @@ function Pengaturan() {
   const [editingCashier, setEditingCashier] = useState<any | null>(null);
   const [editName, setEditName] = useState("");
   const [editPin, setEditPin] = useState("");
+  const [showEditPin, setShowEditPin] = useState(false);
   const [editRole, setEditRole] = useState<"owner" | "manager" | "cashier">("cashier");
   const [isUpdatingCashier, setIsUpdatingCashier] = useState(false);
+
+  // Delete Cashier confirmation modal state
+  const [deletingCashier, setDeletingCashier] = useState<{ id: Id<"cashiers">; name: string } | null>(null);
+  const [isDeletingCashier, setIsDeletingCashier] = useState(false);
 
   // Branch form state
   const [newBranchName, setNewBranchName] = useState("");
@@ -582,6 +632,7 @@ function Pengaturan() {
     setEditingCashier(c);
     setEditName(c.name);
     setEditPin(c.pin || "");
+    setShowEditPin(false);
     setEditRole(c.role || "cashier");
   };
 
@@ -621,12 +672,17 @@ function Pengaturan() {
     }
   };
 
-  const handleDeleteCashier = async (id: Id<"cashiers">) => {
+  const handleConfirmDeleteCashier = async () => {
+    if (!deletingCashier) return;
     try {
-      await deleteCashier({ id });
-      toast.success("Kasir berhasil dihapus");
+      setIsDeletingCashier(true);
+      await deleteCashier({ id: deletingCashier.id });
+      toast.success(`Staf "${deletingCashier.name}" berhasil dihapus.`);
+      setDeletingCashier(null);
     } catch {
       toast.error("Gagal menghapus kasir");
+    } finally {
+      setIsDeletingCashier(false);
     }
   };
 
@@ -670,15 +726,44 @@ function Pengaturan() {
     });
   };
 
+  const getRoleBadge = (role: string) => {
+    switch (role) {
+      case "owner":
+        return {
+          bg: "rgba(234, 88, 12, 0.12)",
+          color: "var(--color-brand)",
+          border: "1px solid rgba(234, 88, 12, 0.25)",
+          icon: CrownIcon,
+          label: "Owner",
+        };
+      case "manager":
+        return {
+          bg: "rgba(99, 102, 241, 0.12)",
+          color: "#6366f1",
+          border: "1px solid rgba(99, 102, 241, 0.25)",
+          icon: ShieldCheckIcon,
+          label: "Manager",
+        };
+      default:
+        return {
+          bg: "rgba(16, 185, 129, 0.12)",
+          color: "var(--color-success)",
+          border: "1px solid rgba(16, 185, 129, 0.25)",
+          icon: UserIcon,
+          label: "Kasir",
+        };
+    }
+  };
+
   if (!store) return <Loader />;
 
   return (
-    <div style={{ maxWidth: 800 }}>
-      {/* Header & Title */}
+    <div style={{ width: "100%", maxWidth: "100%", minWidth: 0, paddingBottom: 40, boxSizing: "border-box" }}>
+      {/* Header & Title with Eyebrow Tag */}
       <div
         style={{
           display: "flex",
-          alignItems: "center",
+          alignItems: "flex-start",
           justifyContent: "space-between",
           marginBottom: 20,
           flexWrap: "wrap",
@@ -686,24 +771,32 @@ function Pengaturan() {
         }}
       >
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, margin: 0, color: "var(--color-text)" }}>
+          <div className="eyebrow-tag" style={{ marginBottom: 6 }}>
+            PENGATURAN TOKU POS
+          </div>
+          <h1 style={{ fontSize: 24, fontWeight: 900, margin: 0, color: "var(--color-text)", letterSpacing: "-0.02em" }}>
             Pengaturan & Kelola Toko
           </h1>
           <p style={{ fontSize: 13, color: "var(--color-text-3)", margin: "4px 0 0" }}>
-            Konfigurasi profil usaha, staf kasir, dan multi-cabang
+            Konfigurasi profil usaha, staf kasir PIN, dan multi-cabang outlet
           </p>
         </div>
       </div>
 
-      {/* Tabs */}
+      {/* Responsive Horizontal Tabs */}
       <div
+        className="no-scrollbar"
         style={{
           display: "flex",
           gap: 8,
           marginBottom: 24,
-          borderBottom: "1px solid var(--color-border)",
+          borderBottom: "1.5px solid var(--color-border)",
           paddingBottom: 8,
           overflowX: "auto",
+          width: "100%",
+          maxWidth: "100%",
+          boxSizing: "border-box",
+          WebkitOverflowScrolling: "touch",
         }}
       >
         {[
@@ -716,22 +809,25 @@ function Pengaturan() {
           return (
             <button
               key={tab.id}
+              type="button"
               onClick={() => setActiveTab(tab.id as SettingTab)}
               className="press-tactile"
               style={{
-                display: "flex",
+                display: "inline-flex",
                 alignItems: "center",
                 gap: 8,
-                padding: "8px 16px",
+                padding: "8px 18px",
                 borderRadius: 99,
-                border: "none",
-                background: active ? "var(--color-brand)" : "transparent",
+                border: active ? "1.5px solid var(--color-brand)" : "1.5px solid transparent",
+                background: active ? "var(--color-brand)" : "var(--color-surface)",
                 color: active ? "#ffffff" : "var(--color-text-2)",
                 fontSize: 13,
-                fontWeight: active ? 800 : 600,
+                fontWeight: active ? 800 : 700,
                 cursor: "pointer",
                 whiteSpace: "nowrap",
+                boxShadow: active ? "0 4px 12px rgba(234, 88, 12, 0.25)" : "none",
                 transition: "all 180ms ease",
+                flexShrink: 0,
               }}
             >
               <Icon size={16} weight={active ? "fill" : "bold"} />
@@ -743,14 +839,14 @@ function Pengaturan() {
 
       {/* TAB 1: PROFIL TOKO & TAMPILAN */}
       {activeTab === "store" && (
-        <>
+        <div className="flex flex-col gap-5">
           <section style={sectionStyle}>
             <h2 style={sectionTitleStyle}>
               <StorefrontIcon size={20} weight="bold" color="var(--color-brand)" />
               Informasi Usaha
             </h2>
             <form onSubmit={handleSaveStore}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                 <div>
                   <label style={labelStyle}>Nama Toko / Bisnis</label>
                   <input
@@ -774,10 +870,10 @@ function Pengaturan() {
               </div>
 
               <div style={{ marginBottom: 16 }}>
-                <label style={labelStyle}>Kategori Usaha</label>
+                <label style={labelStyle}>Kategori Usaha UMKM</label>
                 <CategorySelectPicker value={category} onChange={setCategory} />
                 <span style={{ fontSize: 11, color: "var(--color-text-3)", marginTop: 6, display: "block" }}>
-                  Kategori menentukan klasifikasi profil bisnis UMKM Anda.
+                  Kategori menentukan klasifikasi profil bisnis dan rekomendasi fitur untuk toko Anda.
                 </span>
               </div>
 
@@ -792,7 +888,7 @@ function Pengaturan() {
                 />
               </div>
 
-              <div style={{ marginBottom: 20 }}>
+              <div style={{ marginBottom: 24 }}>
                 <label
                   style={{
                     ...labelStyle,
@@ -804,35 +900,42 @@ function Pengaturan() {
                   <BellRingingIcon size={16} weight="bold" color="var(--color-brand)" />
                   <span>Batas Peringatan Stok Menipis (Auto Restock Alert)</span>
                 </label>
-                <input
-                  type="number"
-                  min="1"
-                  max="1000"
-                  value={lowStockThreshold}
-                  onChange={(e) => setLowStockThreshold(Number(e.target.value))}
-                  style={inputStyle}
-                />
-                <span style={{ fontSize: 11, color: "var(--color-text-3)", marginTop: 4, display: "block" }}>
-                  Sistem akan otomatis memberi tanda merah jika stok barang kurang dari jumlah ini.
+                <div className="flex items-center gap-3">
+                  <input
+                    type="number"
+                    min="1"
+                    max="1000"
+                    value={lowStockThreshold}
+                    onChange={(e) => setLowStockThreshold(Number(e.target.value))}
+                    style={{ ...inputStyle, maxWidth: 160 }}
+                  />
+                  <span className="text-xs text-[var(--color-text-2)] font-semibold">
+                    Unit / Pcs
+                  </span>
+                </div>
+                <span style={{ fontSize: 11, color: "var(--color-text-3)", marginTop: 6, display: "block" }}>
+                  Sistem kasir otomatis menandai produk berstatus merah jika sisa stok di bawah angka ini.
                 </span>
               </div>
 
               <button
                 type="submit"
                 disabled={saving}
-                className="press-tactile"
+                className="press-tactile w-full sm:w-auto"
                 style={{
-                  padding: "12px 24px",
+                  padding: "12px 28px",
                   background: saved ? "var(--color-success)" : "var(--color-brand)",
                   color: "#ffffff",
                   border: "none",
                   borderRadius: "var(--radius-sm)",
                   fontWeight: 800,
-                  cursor: "pointer",
+                  cursor: saving ? "not-allowed" : "pointer",
                   fontSize: 14,
                   display: "inline-flex",
                   alignItems: "center",
-                  gap: 6,
+                  justifyContent: "center",
+                  gap: 8,
+                  boxShadow: "0 4px 14px rgba(234, 88, 12, 0.25)",
                 }}
               >
                 {saved ? (
@@ -842,7 +945,7 @@ function Pengaturan() {
                 ) : saving ? (
                   "Menyimpan..."
                 ) : (
-                  "Simpan Perubahan"
+                  "Simpan Perubahan Toko"
                 )}
               </button>
             </form>
@@ -860,18 +963,21 @@ function Pengaturan() {
                 alignItems: "center",
                 justifyContent: "space-between",
                 gap: 16,
+                flexWrap: "wrap",
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
                 <div
                   style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 99,
+                    width: 42,
+                    height: 42,
+                    borderRadius: 12,
                     background: "var(--color-surface-2)",
+                    border: "1px solid var(--color-border)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
+                    flexShrink: 0,
                   }}
                 >
                   {dark ? (
@@ -880,12 +986,12 @@ function Pengaturan() {
                     <SunIcon size={22} weight="duotone" color="var(--color-warning)" />
                   )}
                 </div>
-                <div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: "var(--color-text)" }}>
-                    Mode Gelap (Dark Mode)
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 15, fontWeight: 800, color: "var(--color-text)" }}>
+                    Mode Tampilan Gelap (Dark Mode)
                   </div>
                   <div style={{ fontSize: 12, color: "var(--color-text-2)", marginTop: 2 }}>
-                    Mengubah warna aplikasi ke nuansa gelap yang nyaman di mata
+                    Nuansa OLED gelap kontras tinggi, nyaman di mata saat shift malam
                   </div>
                 </div>
               </div>
@@ -893,29 +999,31 @@ function Pengaturan() {
                 onClick={handleToggleDark}
                 type="button"
                 aria-label="Toggle dark mode"
+                className="press-tactile"
                 style={{
-                  width: 54,
-                  height: 30,
+                  width: 56,
+                  height: 32,
                   borderRadius: 99,
                   background: dark ? "var(--color-brand)" : "var(--color-border)",
                   border: "none",
                   cursor: "pointer",
                   position: "relative",
-                  transition: "background 200ms",
+                  transition: "background 200ms ease",
                   flexShrink: 0,
+                  boxShadow: dark ? "0 0 12px rgba(234, 88, 12, 0.35)" : "none",
                 }}
               >
                 <div
                   style={{
-                    width: 24,
-                    height: 24,
+                    width: 26,
+                    height: 26,
                     borderRadius: 99,
                     background: "#ffffff",
                     position: "absolute",
                     top: 3,
-                    transition: "left 200ms",
+                    transition: "left 200ms ease",
                     left: dark ? 27 : 3,
-                    boxShadow: "0 1px 3px rgba(0,0,0,.3)",
+                    boxShadow: "0 2px 4px rgba(0,0,0,0.25)",
                   }}
                 />
               </button>
@@ -926,69 +1034,93 @@ function Pengaturan() {
           <section style={sectionStyle}>
             <h2 style={sectionTitleStyle}>
               <UserIcon size={20} weight="bold" color="var(--color-brand)" />
-              Akun Pengguna
+              Akun Pengguna & Sesi
             </h2>
-            <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 20 }}>
-              {session?.user.image ? (
-                <img
-                  src={session.user.image}
-                  style={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 99,
-                    border: "2px solid var(--color-border)",
-                    objectFit: "cover",
-                  }}
-                  alt="avatar"
-                />
-              ) : (
-                <div
-                  style={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 99,
-                    background: "var(--color-brand-light)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <UserIcon size={24} weight="duotone" color="var(--color-brand)" />
-                </div>
-              )}
-              <div>
-                <div style={{ fontSize: 15, fontWeight: 700, color: "var(--color-text)" }}>
-                  {session?.user.name}
-                </div>
-                <div style={{ fontSize: 13, color: "var(--color-text-2)" }}>{session?.user.email}</div>
-              </div>
-            </div>
-            <button
-              onClick={handleLogout}
-              className="press-tactile"
+            <div
               style={{
-                padding: "10px 18px",
-                border: "1px solid var(--color-danger)",
-                background: "none",
-                color: "var(--color-danger)",
-                borderRadius: "var(--radius-sm)",
-                fontWeight: 700,
-                cursor: "pointer",
-                fontSize: 13,
-                display: "inline-flex",
+                display: "flex",
                 alignItems: "center",
-                gap: 8,
+                justifyContent: "space-between",
+                gap: 16,
+                flexWrap: "wrap",
               }}
             >
-              <SignOutIcon size={16} /> Keluar dari Akun
-            </button>
+              <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
+                {session?.user.image ? (
+                  <img
+                    src={session.user.image}
+                    style={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 14,
+                      border: "2px solid var(--color-border)",
+                      objectFit: "cover",
+                      flexShrink: 0,
+                    }}
+                    alt="avatar"
+                  />
+                ) : (
+                  <div
+                    style={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 14,
+                      background: "var(--color-brand-light)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <UserIcon size={24} weight="duotone" color="var(--color-brand)" />
+                  </div>
+                )}
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 15, fontWeight: 800, color: "var(--color-text)" }}>
+                    {session?.user.name || "Pemilik Toko"}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 13,
+                      color: "var(--color-text-2)",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {session?.user.email}
+                  </div>
+                </div>
+              </div>
+
+              <button
+                onClick={handleLogout}
+                type="button"
+                className="press-tactile"
+                style={{
+                  padding: "10px 18px",
+                  border: "1.5px solid var(--color-danger)",
+                  background: "var(--color-danger-light)",
+                  color: "var(--color-danger-text)",
+                  borderRadius: "var(--radius-sm)",
+                  fontWeight: 800,
+                  cursor: "pointer",
+                  fontSize: 13,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
+                }}
+              >
+                <SignOutIcon size={16} weight="bold" /> Keluar dari Akun
+              </button>
+            </div>
           </section>
-        </>
+        </div>
       )}
 
       {/* TAB 2: STAF & KASIR PIN */}
       {activeTab === "cashiers" && (
-        <div>
+        <div className="flex flex-col gap-5">
           {!isOwner ? (
             <section
               style={{
@@ -996,7 +1128,7 @@ function Pengaturan() {
                 background: "linear-gradient(180deg, var(--color-surface) 0%, var(--color-surface-2) 100%)",
                 border: "1.5px dashed var(--color-border)",
                 borderRadius: "var(--radius-xl)",
-                padding: "56px 24px",
+                padding: "48px 24px",
               }}
             >
               <div
@@ -1099,14 +1231,7 @@ function Pengaturan() {
                 </h2>
 
                 <form onSubmit={handleCreateCashier}>
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "2fr 1fr 1fr",
-                      gap: 12,
-                      marginBottom: 16,
-                    }}
-                  >
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
                     <div>
                       <label style={labelStyle}>Nama Staf / Kasir</label>
                       <input
@@ -1120,15 +1245,29 @@ function Pengaturan() {
                     </div>
                     <div>
                       <label style={labelStyle}>PIN Masuk (4 Digit)</label>
-                      <input
-                        type="password"
-                        maxLength={4}
-                        value={newCashierPin}
-                        onChange={(e) => setNewCashierPin(e.target.value)}
-                        placeholder="Contoh: 1234"
-                        required
-                        style={inputStyle}
-                      />
+                      <div className="relative flex items-center">
+                        <input
+                          type={showNewCashierPin ? "text" : "password"}
+                          maxLength={4}
+                          value={newCashierPin}
+                          onChange={(e) => setNewCashierPin(e.target.value.replace(/\D/g, ""))}
+                          placeholder="••••"
+                          required
+                          style={{
+                            ...inputStyle,
+                            paddingRight: 40,
+                            letterSpacing: showNewCashierPin ? "normal" : "0.2em",
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowNewCashierPin(!showNewCashierPin)}
+                          className="absolute right-3 text-[var(--color-text-3)] hover:text-[var(--color-text)] cursor-pointer"
+                          aria-label={showNewCashierPin ? "Sembunyikan PIN" : "Tampilkan PIN"}
+                        >
+                          {showNewCashierPin ? <EyeSlashIcon size={18} weight="bold" /> : <EyeIcon size={18} weight="bold" />}
+                        </button>
+                      </div>
                     </div>
                     <div>
                       <label style={labelStyle}>Peran (Role)</label>
@@ -1137,9 +1276,9 @@ function Pengaturan() {
                         onChange={(e) => setNewCashierRole(e.target.value as any)}
                         style={inputStyle}
                       >
-                        <option value="cashier">Kasir</option>
-                        <option value="manager">Manager</option>
-                        <option value="owner">Owner</option>
+                        <option value="cashier">Kasir (Buka/Tutup Kasir)</option>
+                        <option value="manager">Manager (Kelola Produk/Stok)</option>
+                        <option value="owner">Owner (Hak Akses Penuh)</option>
                       </select>
                     </div>
                   </div>
@@ -1147,9 +1286,9 @@ function Pengaturan() {
                   <button
                     type="submit"
                     disabled={isAddingCashier}
-                    className="press-tactile"
+                    className="press-tactile w-full sm:w-auto"
                     style={{
-                      padding: "10px 18px",
+                      padding: "11px 22px",
                       background: "var(--color-brand)",
                       color: "#ffffff",
                       border: "none",
@@ -1159,11 +1298,13 @@ function Pengaturan() {
                       cursor: isAddingCashier ? "not-allowed" : "pointer",
                       display: "inline-flex",
                       alignItems: "center",
+                      justifyContent: "center",
                       gap: 6,
+                      boxShadow: "0 4px 14px rgba(234, 88, 12, 0.25)",
                     }}
                   >
                     <PlusIcon size={16} weight="bold" />
-                    {isAddingCashier ? "Menyimpan..." : "Tambahkan Staf"}
+                    {isAddingCashier ? "Menyimpan Staf..." : "Tambahkan Staf"}
                   </button>
                 </form>
               </section>
@@ -1179,6 +1320,8 @@ function Pengaturan() {
                   {cashiers && cashiers.length > 0 ? (
                     cashiers.map((c) => {
                       const isLastOwner = c.role === "owner" && activeOwners.length <= 1;
+                      const badge = getRoleBadge(c.role || "cashier");
+                      const BadgeIcon = badge.icon;
                       return (
                         <div
                           key={c._id}
@@ -1186,37 +1329,63 @@ function Pengaturan() {
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "space-between",
-                            padding: "12px 16px",
+                            padding: "14px 16px",
                             background: "var(--color-surface-2)",
                             borderRadius: 14,
                             border: "1px solid var(--color-border)",
+                            gap: 12,
+                            flexWrap: "wrap",
                           }}
                         >
-                          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
                             <div
                               style={{
-                                width: 36,
-                                height: 36,
-                                borderRadius: 99,
-                                background: "var(--color-brand-light)",
-                                color: "var(--color-brand)",
+                                width: 40,
+                                height: 40,
+                                borderRadius: 12,
+                                background: badge.bg,
+                                color: badge.color,
+                                border: badge.border,
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
                                 fontWeight: 800,
+                                fontSize: 16,
+                                flexShrink: 0,
                               }}
                             >
                               {c.name.charAt(0).toUpperCase()}
                             </div>
-                            <div>
+                            <div style={{ minWidth: 0 }}>
                               <div
                                 style={{
                                   fontSize: 14,
                                   fontWeight: 800,
                                   color: "var(--color-text)",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 8,
+                                  flexWrap: "wrap",
                                 }}
                               >
-                                {c.name}
+                                <span>{c.name}</span>
+                                <span
+                                  style={{
+                                    fontSize: 11,
+                                    fontWeight: 800,
+                                    color: badge.color,
+                                    background: badge.bg,
+                                    border: badge.border,
+                                    padding: "2px 8px",
+                                    borderRadius: 99,
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: 4,
+                                  }}
+                                >
+                                  <BadgeIcon size={12} weight="bold" />
+                                  {badge.label}
+                                </span>
                               </div>
                               <div
                                 style={{
@@ -1225,35 +1394,26 @@ function Pengaturan() {
                                   display: "flex",
                                   alignItems: "center",
                                   gap: 8,
+                                  marginTop: 3,
                                 }}
                               >
-                                <span>
-                                  Role:{" "}
-                                  <strong style={{ textTransform: "capitalize" }}>{c.role}</strong>
-                                </span>
-                                <span>•</span>
                                 <span>PIN: ••••</span>
                                 {isLastOwner && (
-                                  <span
-                                    style={{
-                                      fontSize: 10,
-                                      fontWeight: 800,
-                                      color: "var(--color-brand)",
-                                      background: "var(--color-brand-light)",
-                                      padding: "1px 6px",
-                                      borderRadius: 6,
-                                    }}
-                                  >
-                                    Owner Utama
-                                  </span>
+                                  <>
+                                    <span>•</span>
+                                    <span style={{ color: "var(--color-brand)", fontWeight: 700 }}>
+                                      Owner Utama
+                                    </span>
+                                  </>
                                 )}
                               </div>
                             </div>
                           </div>
 
-                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: "auto" }}>
                             <button
                               onClick={() => handleOpenEditCashier(c)}
+                              type="button"
                               className="press-tactile"
                               title="Edit Staf / Ubah PIN"
                               style={{
@@ -1262,37 +1422,42 @@ function Pengaturan() {
                                 borderRadius: 8,
                                 color: "var(--color-text)",
                                 cursor: "pointer",
-                                padding: "6px 10px",
+                                padding: "7px 12px",
                                 display: "inline-flex",
                                 alignItems: "center",
-                                gap: 4,
+                                gap: 6,
                                 fontSize: 12,
                                 fontWeight: 700,
                               }}
                             >
-                              <PencilSimpleIcon size={14} />
+                              <PencilSimpleIcon size={14} weight="bold" />
                               <span>Edit</span>
                             </button>
 
                             <button
                               disabled={isLastOwner}
-                              onClick={() => handleDeleteCashier(c._id)}
+                              onClick={() => setDeletingCashier({ id: c._id, name: c.name })}
+                              type="button"
                               className="press-tactile"
                               title={
                                 isLastOwner
                                   ? "Tidak dapat menghapus satu-satunya akun Owner toko"
-                                  : "Hapus Kasir"
+                                  : "Hapus Staf"
                               }
                               style={{
-                                background: "transparent",
-                                border: "none",
-                                color: isLastOwner ? "var(--color-text-3)" : "var(--color-danger)",
+                                background: isLastOwner ? "transparent" : "var(--color-danger-light)",
+                                border: isLastOwner ? "1px solid transparent" : "1px solid rgba(239, 68, 68, 0.2)",
+                                borderRadius: 8,
+                                color: isLastOwner ? "var(--color-text-3)" : "var(--color-danger-text)",
                                 cursor: isLastOwner ? "not-allowed" : "pointer",
                                 opacity: isLastOwner ? 0.4 : 1,
-                                padding: 6,
+                                padding: "7px 10px",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                justifyContent: "center",
                               }}
                             >
-                              <TrashIcon size={18} />
+                              <TrashIcon size={16} weight="bold" />
                             </button>
                           </div>
                         </div>
@@ -1302,7 +1467,7 @@ function Pengaturan() {
                     <div
                       style={{
                         textAlign: "center",
-                        padding: "20px 0",
+                        padding: "24px 0",
                         color: "var(--color-text-3)",
                         fontSize: 13,
                       }}
@@ -1317,11 +1482,14 @@ function Pengaturan() {
 
           {/* Edit Cashier Modal */}
           {editingCashier && (
-            <Modal onClose={() => !isUpdatingCashier && setEditingCashier(null)}>
-              <div style={{ maxWidth: 400 }}>
-                <h3 style={{ fontSize: 18, fontWeight: 800, margin: "0 0 16px", color: "var(--color-text)" }}>
-                  Ubah Data Staf / Kasir
-                </h3>
+            <Modal onClose={() => !isUpdatingCashier && setEditingCashier(null)} maxWidth={420}>
+              <div>
+                <div className="flex items-center gap-2 mb-4">
+                  <PencilSimpleIcon size={20} weight="bold" color="var(--color-brand)" />
+                  <h3 style={{ fontSize: 18, fontWeight: 800, margin: 0, color: "var(--color-text)" }}>
+                    Ubah Data Staf / Kasir
+                  </h3>
+                </div>
 
                 <form onSubmit={handleUpdateCashier}>
                   <div style={{ marginBottom: 14 }}>
@@ -1337,14 +1505,28 @@ function Pengaturan() {
 
                   <div style={{ marginBottom: 14 }}>
                     <label style={labelStyle}>PIN Masuk (4 Digit Angka Unik)</label>
-                    <input
-                      type="password"
-                      maxLength={4}
-                      value={editPin}
-                      onChange={(e) => setEditPin(e.target.value)}
-                      required
-                      style={inputStyle}
-                    />
+                    <div className="relative flex items-center">
+                      <input
+                        type={showEditPin ? "text" : "password"}
+                        maxLength={4}
+                        value={editPin}
+                        onChange={(e) => setEditPin(e.target.value.replace(/\D/g, ""))}
+                        required
+                        style={{
+                          ...inputStyle,
+                          paddingRight: 40,
+                          letterSpacing: showEditPin ? "normal" : "0.2em",
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowEditPin(!showEditPin)}
+                        className="absolute right-3 text-[var(--color-text-3)] hover:text-[var(--color-text)] cursor-pointer"
+                        aria-label={showEditPin ? "Sembunyikan PIN" : "Tampilkan PIN"}
+                      >
+                        {showEditPin ? <EyeSlashIcon size={18} weight="bold" /> : <EyeIcon size={18} weight="bold" />}
+                      </button>
+                    </div>
                     <span style={{ fontSize: 11, color: "var(--color-text-3)", marginTop: 4, display: "block" }}>
                       Pastikan PIN tidak sama dengan staf lain agar akun tidak tertukar.
                     </span>
@@ -1357,9 +1539,9 @@ function Pengaturan() {
                       onChange={(e) => setEditRole(e.target.value as any)}
                       style={inputStyle}
                     >
-                      <option value="cashier">Kasir</option>
-                      <option value="manager">Manager</option>
-                      <option value="owner">Owner</option>
+                      <option value="cashier">Kasir (Buka/Tutup Kasir)</option>
+                      <option value="manager">Manager (Kelola Produk/Stok)</option>
+                      <option value="owner">Owner (Hak Akses Penuh)</option>
                     </select>
                   </div>
 
@@ -1397,6 +1579,7 @@ function Pengaturan() {
                         fontSize: 13,
                         fontWeight: 800,
                         cursor: isUpdatingCashier ? "not-allowed" : "pointer",
+                        boxShadow: "0 4px 14px rgba(234, 88, 12, 0.25)",
                       }}
                     >
                       {isUpdatingCashier ? "Menyimpan..." : "Simpan Perubahan"}
@@ -1406,12 +1589,86 @@ function Pengaturan() {
               </div>
             </Modal>
           )}
+
+          {/* Delete Cashier Confirmation Modal */}
+          {deletingCashier && (
+            <Modal onClose={() => !isDeletingCashier && setDeletingCashier(null)} maxWidth={400}>
+              <div className="text-center">
+                <div
+                  style={{
+                    width: 56,
+                    height: 56,
+                    borderRadius: 99,
+                    background: "var(--color-danger-light)",
+                    color: "var(--color-danger)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    margin: "0 auto 16px",
+                  }}
+                >
+                  <WarningCircleIcon size={32} weight="bold" />
+                </div>
+
+                <h3 style={{ fontSize: 18, fontWeight: 900, margin: "0 0 8px", color: "var(--color-text)" }}>
+                  Hapus Staf Kasir?
+                </h3>
+                <p style={{ fontSize: 13, color: "var(--color-text-2)", margin: "0 0 20px", lineHeight: 1.5 }}>
+                  Apakah Anda yakin ingin menghapus staf{" "}
+                  <strong className="text-[var(--color-text)] font-extrabold">"{deletingCashier.name}"</strong>?
+                  Staf ini tidak akan dapat login lagi menggunakan PIN sebelumnya.
+                </p>
+
+                <div style={{ display: "flex", gap: 10 }}>
+                  <button
+                    type="button"
+                    onClick={() => setDeletingCashier(null)}
+                    disabled={isDeletingCashier}
+                    className="press-tactile"
+                    style={{
+                      flex: 1,
+                      padding: "12px",
+                      borderRadius: "var(--radius-sm)",
+                      border: "1px solid var(--color-border)",
+                      background: "var(--color-surface-2)",
+                      color: "var(--color-text)",
+                      fontSize: 13,
+                      fontWeight: 800,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleConfirmDeleteCashier}
+                    disabled={isDeletingCashier}
+                    className="press-tactile"
+                    style={{
+                      flex: 1.2,
+                      padding: "12px",
+                      borderRadius: "var(--radius-sm)",
+                      border: "none",
+                      background: "var(--color-danger)",
+                      color: "#ffffff",
+                      fontSize: 13,
+                      fontWeight: 800,
+                      cursor: isDeletingCashier ? "not-allowed" : "pointer",
+                      boxShadow: "0 4px 14px rgba(239, 68, 68, 0.3)",
+                    }}
+                  >
+                    {isDeletingCashier ? "Menghapus..." : "Ya, Hapus Staf"}
+                  </button>
+                </div>
+              </div>
+            </Modal>
+          )}
         </div>
       )}
 
       {/* TAB 3: CABANG / OUTLET */}
       {activeTab === "branches" && (
-        <div>
+        <div className="flex flex-col gap-5">
           {/* Add Branch Form */}
           <section style={sectionStyle}>
             <h2 style={sectionTitleStyle}>
@@ -1420,7 +1677,7 @@ function Pengaturan() {
             </h2>
 
             <form onSubmit={handleCreateBranch}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
                 <div>
                   <label style={labelStyle}>Nama Cabang</label>
                   <input
@@ -1447,9 +1704,9 @@ function Pengaturan() {
               <button
                 type="submit"
                 disabled={isAddingBranch}
-                className="press-tactile"
+                className="press-tactile w-full sm:w-auto"
                 style={{
-                  padding: "10px 18px",
+                  padding: "11px 22px",
                   background: "var(--color-brand)",
                   color: "#ffffff",
                   border: "none",
@@ -1459,7 +1716,9 @@ function Pengaturan() {
                   cursor: isAddingBranch ? "not-allowed" : "pointer",
                   display: "inline-flex",
                   alignItems: "center",
+                  justifyContent: "center",
                   gap: 6,
+                  boxShadow: "0 4px 14px rgba(234, 88, 12, 0.25)",
                 }}
               >
                 <PlusIcon size={16} weight="bold" />
@@ -1490,24 +1749,28 @@ function Pengaturan() {
                         background: isCurrent ? "var(--color-brand-light)" : "var(--color-surface-2)",
                         borderRadius: 14,
                         border: isCurrent ? "1.5px solid var(--color-brand)" : "1px solid var(--color-border)",
+                        gap: 12,
+                        flexWrap: "wrap",
                       }}
                     >
-                      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
                         <div
                           style={{
-                            width: 38,
-                            height: 38,
-                            borderRadius: 10,
+                            width: 40,
+                            height: 40,
+                            borderRadius: 12,
                             background: isCurrent ? "var(--color-brand)" : "var(--color-surface)",
                             color: isCurrent ? "#ffffff" : "var(--color-brand)",
+                            border: isCurrent ? "none" : "1px solid var(--color-border)",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
+                            flexShrink: 0,
                           }}
                         >
                           <BuildingsIcon size={20} weight="bold" />
                         </div>
-                        <div>
+                        <div style={{ minWidth: 0 }}>
                           <div style={{ fontSize: 14, fontWeight: 800, color: "var(--color-text)" }}>
                             {st.name} — <span style={{ color: "var(--color-brand)" }}>{st.branchName || "Pusat"}</span>
                           </div>
@@ -1523,23 +1786,29 @@ function Pengaturan() {
                             fontSize: 11,
                             fontWeight: 800,
                             color: "var(--color-brand)",
-                            background: "#ffffff",
-                            padding: "4px 10px",
+                            background: "var(--color-surface)",
+                            padding: "5px 12px",
                             borderRadius: 99,
-                            border: "1px solid var(--color-brand)",
+                            border: "1.5px solid var(--color-brand)",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 4,
+                            marginLeft: "auto",
                           }}
                         >
-                          Sedang Aktif
+                          <CheckCircleIcon size={14} weight="fill" />
+                          Sedang Digunakan
                         </span>
                       ) : (
                         <button
+                          type="button"
                           onClick={() => {
                             setSelectedStoreId(st._id);
                             toast.success(`Beralih ke cabang ${st.branchName || st.name}`);
                           }}
                           className="press-tactile"
                           style={{
-                            padding: "6px 12px",
+                            padding: "7px 14px",
                             borderRadius: 8,
                             border: "1px solid var(--color-border)",
                             background: "var(--color-surface)",
@@ -1547,6 +1816,7 @@ function Pengaturan() {
                             fontSize: 12,
                             fontWeight: 700,
                             cursor: "pointer",
+                            marginLeft: "auto",
                           }}
                         >
                           Beralih ke Cabang Ini
@@ -1600,12 +1870,15 @@ function Loader() {
 
 const sectionStyle: React.CSSProperties = {
   background: "var(--color-surface)",
-  border: "1px solid var(--color-border)",
+  border: "1.5px solid var(--color-border)",
   borderRadius: "var(--radius-lg)",
   padding: "24px",
-  marginBottom: 20,
   boxShadow: "var(--shadow-sm)",
+  width: "100%",
+  maxWidth: "100%",
+  boxSizing: "border-box",
 };
+
 const sectionTitleStyle: React.CSSProperties = {
   fontSize: 16,
   fontWeight: 800,
@@ -1615,16 +1888,18 @@ const sectionTitleStyle: React.CSSProperties = {
   alignItems: "center",
   gap: 8,
 };
+
 const labelStyle: React.CSSProperties = {
   display: "block",
   fontSize: 13,
-  fontWeight: 600,
+  fontWeight: 700,
   color: "var(--color-text)",
   marginBottom: 8,
 };
+
 const inputStyle: React.CSSProperties = {
   width: "100%",
-  padding: "12px 14px",
+  padding: "11px 14px",
   border: "1.5px solid var(--color-border)",
   borderRadius: "var(--radius-sm)",
   fontSize: 14,
