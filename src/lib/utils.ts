@@ -120,7 +120,6 @@ export function calculateCartTotals(
   };
 }
 
-
 /** Round IDR to nearest 100 */
 export function roundIDR(amount: number): number {
   return Math.round(amount / 100) * 100;
@@ -256,4 +255,3 @@ export function compressImageToBlob(file: File, maxDim = 600, quality = 0.85): P
     reader.readAsDataURL(file);
   });
 }
-

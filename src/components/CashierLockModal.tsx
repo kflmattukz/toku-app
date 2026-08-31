@@ -361,7 +361,9 @@ export function CashierLockModal({
                         <div style={{ fontWeight: 800, fontSize: 14, color: "var(--color-text)" }}>
                           {c.name}
                         </div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 2 }}>
+                        <div
+                          style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 2 }}
+                        >
                           <span
                             style={{
                               fontSize: 10,
@@ -474,7 +476,9 @@ export function CashierLockModal({
 
             {/* Role Badge Pill */}
             {currentStaffBadge && StaffRoleIcon && (
-              <div style={{ display: "inline-flex", alignItems: "center", gap: 4, marginBottom: 8 }}>
+              <div
+                style={{ display: "inline-flex", alignItems: "center", gap: 4, marginBottom: 8 }}
+              >
                 <span
                   style={{
                     fontSize: 11,

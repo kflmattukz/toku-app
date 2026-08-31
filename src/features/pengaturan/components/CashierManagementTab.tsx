@@ -108,20 +108,20 @@ export function CashierManagementTab({
 
   if (!isOwner) {
     return (
-      <section className="bg-gradient-to-b from-[var(--color-surface)] to-[var(--color-surface-2)] border-1.5 border-dashed border-[var(--color-border)] rounded-3xl p-12 text-center">
-        <div className="max-w-md mx-auto">
-          <div className="w-16 h-16 rounded-full bg-primary-500/10 text-[var(--color-brand)] flex items-center justify-center mx-auto mb-4 border border-primary-500/20 shadow-md">
+      <section className="border-1.5 rounded-3xl border-dashed border-[var(--color-border)] bg-gradient-to-b from-[var(--color-surface)] to-[var(--color-surface-2)] p-12 text-center">
+        <div className="mx-auto max-w-md">
+          <div className="bg-primary-500/10 border-primary-500/20 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border text-[var(--color-brand)] shadow-md">
             <LockKeyIcon size={34} weight="bold" />
           </div>
 
-          <div className="inline-block text-[11px] font-extrabold text-[var(--color-brand)] bg-[var(--color-brand-light)] px-2.5 py-1 rounded-full uppercase tracking-wider mb-2">
+          <div className="mb-2 inline-block rounded-full bg-[var(--color-brand-light)] px-2.5 py-1 text-[11px] font-extrabold tracking-wider text-[var(--color-brand)] uppercase">
             FITUR TERPROTEKSI
           </div>
 
-          <h2 className="text-xl font-black text-[var(--color-text)] tracking-tight mb-2">
+          <h2 className="mb-2 text-xl font-black tracking-tight text-[var(--color-text)]">
             Akses Khusus Pemilik Toko
           </h2>
-          <p className="text-xs text-[var(--color-text-2)] mb-6 leading-relaxed">
+          <p className="mb-6 text-xs leading-relaxed text-[var(--color-text-2)]">
             Halaman penambahan, pengubahan peran, dan pengelolaan staf kasir diproteksi demi
             keamanan operasional toko Anda. Masukkan PIN Owner untuk membuka hak akses.
           </p>
@@ -129,7 +129,7 @@ export function CashierManagementTab({
           <button
             type="button"
             onClick={onOpenOwnerAuth}
-            className="press-tactile py-3.5 px-7 rounded-full bg-[var(--color-brand)] text-white text-sm font-extrabold cursor-pointer inline-flex items-center gap-2 shadow-lg shadow-primary-500/30"
+            className="press-tactile shadow-primary-500/30 inline-flex cursor-pointer items-center gap-2 rounded-full bg-[var(--color-brand)] px-7 py-3.5 text-sm font-extrabold text-white shadow-lg"
           >
             <CrownIcon size={18} weight="bold" />
             <span>Buka Kunci Akses Owner</span>
@@ -142,16 +142,16 @@ export function CashierManagementTab({
   return (
     <div className="flex flex-col gap-5">
       {/* Add Cashier Form */}
-      <section className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-5 shadow-xs">
-        <h2 className="text-base font-extrabold text-[var(--color-text)] flex items-center gap-2 mb-4">
+      <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-xs">
+        <h2 className="mb-4 flex items-center gap-2 text-base font-extrabold text-[var(--color-text)]">
           <UsersIcon size={20} weight="bold" className="text-[var(--color-brand)]" />
           <span>Tambah Staf / Kasir Baru</span>
         </h2>
 
         <form onSubmit={onCreateCashier}>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+          <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div>
-              <label className="block text-xs font-bold text-[var(--color-text)] mb-2">
+              <label className="mb-2 block text-xs font-bold text-[var(--color-text)]">
                 Nama Staf / Kasir
               </label>
               <input
@@ -160,11 +160,11 @@ export function CashierManagementTab({
                 onChange={(e) => setNewCashierName(e.target.value)}
                 placeholder="Contoh: Siti Rahma"
                 required
-                className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
+                className="focus:ring-primary-500/20 focus:border-primary-500 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 text-sm font-medium text-[var(--color-text)] focus:ring-2 focus:outline-none"
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-[var(--color-text)] mb-2">
+              <label className="mb-2 block text-xs font-bold text-[var(--color-text)]">
                 PIN Masuk (4 Digit)
               </label>
               <div className="relative flex items-center">
@@ -175,13 +175,13 @@ export function CashierManagementTab({
                   onChange={(e) => setNewCashierPin(e.target.value.replace(/\D/g, ""))}
                   placeholder="••••"
                   required
-                  className="w-full pl-3.5 pr-10 py-2.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
+                  className="focus:ring-primary-500/20 focus:border-primary-500 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] py-2.5 pr-10 pl-3.5 text-sm font-medium text-[var(--color-text)] focus:ring-2 focus:outline-none"
                   style={{ letterSpacing: showNewCashierPin ? "normal" : "0.2em" }}
                 />
                 <button
                   type="button"
                   onClick={() => setShowNewCashierPin(!showNewCashierPin)}
-                  className="absolute right-3 text-[var(--color-text-3)] hover:text-[var(--color-text)] cursor-pointer"
+                  className="absolute right-3 cursor-pointer text-[var(--color-text-3)] hover:text-[var(--color-text)]"
                   aria-label={showNewCashierPin ? "Sembunyikan PIN" : "Tampilkan PIN"}
                 >
                   {showNewCashierPin ? (
@@ -193,13 +193,13 @@ export function CashierManagementTab({
               </div>
             </div>
             <div>
-              <label className="block text-xs font-bold text-[var(--color-text)] mb-2">
+              <label className="mb-2 block text-xs font-bold text-[var(--color-text)]">
                 Peran (Role)
               </label>
               <select
                 value={newCashierRole}
                 onChange={(e) => setNewCashierRole(e.target.value as any)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 cursor-pointer"
+                className="focus:ring-primary-500/20 focus:border-primary-500 w-full cursor-pointer rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 text-sm font-medium text-[var(--color-text)] focus:ring-2 focus:outline-none"
               >
                 <option value="cashier">Kasir (Buka/Tutup Kasir)</option>
                 <option value="manager">Manager (Kelola Produk/Stok)</option>
@@ -211,7 +211,7 @@ export function CashierManagementTab({
           <button
             type="submit"
             disabled={isAddingCashier}
-            className="press-tactile w-full sm:w-auto px-6 py-2.5 rounded-full bg-[var(--color-brand)] text-white font-extrabold text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-md shadow-primary-500/20 disabled:opacity-60"
+            className="press-tactile shadow-primary-500/20 flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-full bg-[var(--color-brand)] px-6 py-2.5 text-xs font-extrabold text-white shadow-md disabled:opacity-60 sm:w-auto"
           >
             <PlusIcon size={16} weight="bold" />
             <span>{isAddingCashier ? "Menyimpan Staf..." : "Tambahkan Staf"}</span>
@@ -220,8 +220,8 @@ export function CashierManagementTab({
       </section>
 
       {/* Cashiers List */}
-      <section className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-5 shadow-xs">
-        <h2 className="text-base font-extrabold text-[var(--color-text)] flex items-center gap-2 mb-4">
+      <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-xs">
+        <h2 className="mb-4 flex items-center gap-2 text-base font-extrabold text-[var(--color-text)]">
           <UsersIcon size={20} weight="bold" className="text-[var(--color-brand)]" />
           <span>Daftar Staf Kasir ({cashiers?.length ?? 0})</span>
         </h2>
@@ -235,11 +235,11 @@ export function CashierManagementTab({
               return (
                 <div
                   key={c._id}
-                  className="flex items-center justify-between p-3.5 rounded-xl bg-[var(--color-surface-2)] border border-[var(--color-border)] gap-3 flex-wrap"
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-2)] p-3.5"
                 >
-                  <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex min-w-0 items-center gap-3">
                     <div
-                      className="w-10 h-10 rounded-xl flex items-center justify-center font-extrabold text-base shrink-0"
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-base font-extrabold"
                       style={{
                         background: badge.bg,
                         color: badge.color,
@@ -249,10 +249,10 @@ export function CashierManagementTab({
                       {c.name.charAt(0).toUpperCase()}
                     </div>
                     <div className="min-w-0">
-                      <div className="text-sm font-extrabold text-[var(--color-text)] flex items-center gap-2 flex-wrap">
+                      <div className="flex flex-wrap items-center gap-2 text-sm font-extrabold text-[var(--color-text)]">
                         <span>{c.name}</span>
                         <span
-                          className="text-[11px] font-extrabold px-2 py-0.5 rounded-full inline-flex items-center gap-1"
+                          className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-extrabold"
                           style={{
                             color: badge.color,
                             background: badge.bg,
@@ -263,25 +263,23 @@ export function CashierManagementTab({
                           <span>{badge.label}</span>
                         </span>
                       </div>
-                      <div className="text-xs text-[var(--color-text-3)] flex items-center gap-2 mt-0.5">
+                      <div className="mt-0.5 flex items-center gap-2 text-xs text-[var(--color-text-3)]">
                         <span>PIN: ••••</span>
                         {isLastOwner && (
                           <>
                             <span>•</span>
-                            <span className="text-[var(--color-brand)] font-bold">
-                              Owner Utama
-                            </span>
+                            <span className="font-bold text-[var(--color-brand)]">Owner Utama</span>
                           </>
                         )}
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 ml-auto">
+                  <div className="ml-auto flex items-center gap-2">
                     <button
                       type="button"
                       onClick={() => onOpenEditCashier(c)}
-                      className="press-tactile py-1.5 px-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] text-xs font-bold flex items-center gap-1.5 cursor-pointer hover:bg-[var(--color-surface-2)]"
+                      className="press-tactile flex cursor-pointer items-center gap-1.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-xs font-bold text-[var(--color-text)] hover:bg-[var(--color-surface-2)]"
                       title="Edit Staf / Ubah PIN"
                     >
                       <PencilSimpleIcon size={14} weight="bold" />
@@ -292,7 +290,7 @@ export function CashierManagementTab({
                       type="button"
                       disabled={isLastOwner}
                       onClick={() => setDeletingCashier({ id: c._id, name: c.name })}
-                      className="press-tactile py-1.5 px-2.5 rounded-[10px] border border-[var(--color-danger)]/30 text-xs font-bold flex items-center justify-center cursor-pointer transition-colors disabled:opacity-40 disabled:cursor-not-allowed bg-[var(--color-danger-light)] text-[var(--color-danger-text)]"
+                      className="press-tactile flex cursor-pointer items-center justify-center rounded-[10px] border border-[var(--color-danger)]/30 bg-[var(--color-danger-light)] px-2.5 py-1.5 text-xs font-bold text-[var(--color-danger-text)] transition-colors disabled:cursor-not-allowed disabled:opacity-40"
                       title={
                         isLastOwner
                           ? "Tidak dapat menghapus satu-satunya akun Owner toko"
@@ -306,7 +304,7 @@ export function CashierManagementTab({
               );
             })
           ) : (
-            <div className="text-center py-6 text-xs text-[var(--color-text-3)]">
+            <div className="py-6 text-center text-xs text-[var(--color-text-3)]">
               Belum ada kasir tersimpan. Kasir utama default: PIN 1234 (Pemilik).
             </div>
           )}
@@ -317,16 +315,16 @@ export function CashierManagementTab({
       {editingCashier && (
         <Modal onClose={() => !isUpdatingCashier && setEditingCashier(null)} maxWidth={420}>
           <div>
-            <div className="flex items-center gap-2 mb-4">
+            <div className="mb-4 flex items-center gap-2">
               <PencilSimpleIcon size={20} weight="bold" className="text-[var(--color-brand)]" />
-              <h3 className="text-lg font-extrabold text-[var(--color-text)] m-0">
+              <h3 className="m-0 text-lg font-extrabold text-[var(--color-text)]">
                 Ubah Data Staf / Kasir
               </h3>
             </div>
 
             <form onSubmit={onUpdateCashier}>
               <div className="mb-3.5">
-                <label className="block text-xs font-bold text-[var(--color-text)] mb-2">
+                <label className="mb-2 block text-xs font-bold text-[var(--color-text)]">
                   Nama Staf / Kasir
                 </label>
                 <input
@@ -334,12 +332,12 @@ export function CashierManagementTab({
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
                   required
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
+                  className="focus:ring-primary-500/20 focus:border-primary-500 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 text-sm font-medium text-[var(--color-text)] focus:ring-2 focus:outline-none"
                 />
               </div>
 
               <div className="mb-3.5">
-                <label className="block text-xs font-bold text-[var(--color-text)] mb-2">
+                <label className="mb-2 block text-xs font-bold text-[var(--color-text)]">
                   PIN Masuk (4 Digit Angka Unik)
                 </label>
                 <div className="relative flex items-center">
@@ -349,13 +347,13 @@ export function CashierManagementTab({
                     value={editPin}
                     onChange={(e) => setEditPin(e.target.value.replace(/\D/g, ""))}
                     required
-                    className="w-full pl-3.5 pr-10 py-2.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
+                    className="focus:ring-primary-500/20 focus:border-primary-500 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] py-2.5 pr-10 pl-3.5 text-sm font-medium text-[var(--color-text)] focus:ring-2 focus:outline-none"
                     style={{ letterSpacing: showEditPin ? "normal" : "0.2em" }}
                   />
                   <button
                     type="button"
                     onClick={() => setShowEditPin(!showEditPin)}
-                    className="absolute right-3 text-[var(--color-text-3)] hover:text-[var(--color-text)] cursor-pointer"
+                    className="absolute right-3 cursor-pointer text-[var(--color-text-3)] hover:text-[var(--color-text)]"
                     aria-label={showEditPin ? "Sembunyikan PIN" : "Tampilkan PIN"}
                   >
                     {showEditPin ? (
@@ -365,19 +363,19 @@ export function CashierManagementTab({
                     )}
                   </button>
                 </div>
-                <span className="text-[11px] text-[var(--color-text-3)] mt-1 block">
+                <span className="mt-1 block text-[11px] text-[var(--color-text-3)]">
                   Pastikan PIN tidak sama dengan staf lain agar akun tidak tertukar.
                 </span>
               </div>
 
               <div className="mb-5">
-                <label className="block text-xs font-bold text-[var(--color-text)] mb-2">
+                <label className="mb-2 block text-xs font-bold text-[var(--color-text)]">
                   Peran (Role)
                 </label>
                 <select
                   value={editRole}
                   onChange={(e) => setEditRole(e.target.value as any)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 cursor-pointer"
+                  className="focus:ring-primary-500/20 focus:border-primary-500 w-full cursor-pointer rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 text-sm font-medium text-[var(--color-text)] focus:ring-2 focus:outline-none"
                 >
                   <option value="cashier">Kasir (Buka/Tutup Kasir)</option>
                   <option value="manager">Manager (Kelola Produk/Stok)</option>
@@ -390,14 +388,14 @@ export function CashierManagementTab({
                   type="button"
                   onClick={() => setEditingCashier(null)}
                   disabled={isUpdatingCashier}
-                  className="press-tactile flex-1 py-3 rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-text)] text-xs font-extrabold cursor-pointer"
+                  className="press-tactile flex-1 cursor-pointer rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] py-3 text-xs font-extrabold text-[var(--color-text)]"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={isUpdatingCashier}
-                  className="press-tactile flex-1.5 py-3 rounded-full bg-[var(--color-brand)] text-white text-xs font-extrabold cursor-pointer shadow-md shadow-primary-500/20 disabled:opacity-60"
+                  className="press-tactile flex-1.5 shadow-primary-500/20 cursor-pointer rounded-full bg-[var(--color-brand)] py-3 text-xs font-extrabold text-white shadow-md disabled:opacity-60"
                 >
                   {isUpdatingCashier ? "Menyimpan..." : "Simpan Perubahan"}
                 </button>
@@ -411,16 +409,16 @@ export function CashierManagementTab({
       {deletingCashier && (
         <Modal onClose={() => !isDeletingCashier && setDeletingCashier(null)} maxWidth={400}>
           <div className="text-center">
-            <div className="w-14 h-14 rounded-full bg-[var(--color-danger-light)] border border-[var(--color-danger)]/30 text-[var(--color-danger-text)] flex items-center justify-center mx-auto mb-4">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-[var(--color-danger)]/30 bg-[var(--color-danger-light)] text-[var(--color-danger-text)]">
               <WarningCircleIcon size={32} weight="bold" />
             </div>
 
-            <h3 className="text-lg font-black text-[var(--color-text)] m-0 mb-2">
+            <h3 className="m-0 mb-2 text-lg font-black text-[var(--color-text)]">
               Hapus Staf Kasir?
             </h3>
-            <p className="text-xs text-[var(--color-text-2)] mb-5 leading-relaxed">
+            <p className="mb-5 text-xs leading-relaxed text-[var(--color-text-2)]">
               Apakah Anda yakin ingin menghapus staf{" "}
-              <strong className="text-[var(--color-text)] font-extrabold">
+              <strong className="font-extrabold text-[var(--color-text)]">
                 "{deletingCashier.name}"
               </strong>
               ? Staf ini tidak akan dapat login lagi menggunakan PIN sebelumnya.
@@ -431,7 +429,7 @@ export function CashierManagementTab({
                 type="button"
                 onClick={() => setDeletingCashier(null)}
                 disabled={isDeletingCashier}
-                className="press-tactile flex-1 py-3 rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-text)] text-xs font-extrabold cursor-pointer"
+                className="press-tactile flex-1 cursor-pointer rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] py-3 text-xs font-extrabold text-[var(--color-text)]"
               >
                 Batal
               </button>
@@ -439,7 +437,7 @@ export function CashierManagementTab({
                 type="button"
                 onClick={onConfirmDeleteCashier}
                 disabled={isDeletingCashier}
-                className="press-tactile flex-1.2 py-3 rounded-full bg-[var(--color-danger)] text-white text-xs font-extrabold cursor-pointer shadow-md shadow-danger-500/30 disabled:opacity-60"
+                className="press-tactile flex-1.2 shadow-danger-500/30 cursor-pointer rounded-full bg-[var(--color-danger)] py-3 text-xs font-extrabold text-white shadow-md disabled:opacity-60"
               >
                 {isDeletingCashier ? "Menghapus..." : "Ya, Hapus Staf"}
               </button>

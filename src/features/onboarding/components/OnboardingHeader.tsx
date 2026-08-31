@@ -1,16 +1,16 @@
 export function OnboardingHeader() {
   return (
-    <div className="text-center mb-8">
+    <div className="mb-8 text-center">
       <img
         src="/logo.png"
         alt="Toku POS"
-        className="w-16 h-16 rounded-2xl object-contain mx-auto mb-4 shadow-sm"
+        className="mx-auto mb-4 h-16 w-16 rounded-2xl object-contain shadow-sm"
       />
-      <div className="eyebrow-tag justify-center mb-1">ATUR TOKO KASIR</div>
-      <h1 className="text-2xl font-black text-[var(--color-text)] tracking-tight m-0 mb-1.5">
+      <div className="eyebrow-tag mb-1 justify-center">ATUR TOKO KASIR</div>
+      <h1 className="m-0 mb-1.5 text-2xl font-black tracking-tight text-[var(--color-text)]">
         Buat Profil Tokomu
       </h1>
-      <p className="text-xs text-[var(--color-text-2)] m-0 font-medium">
+      <p className="m-0 text-xs font-medium text-[var(--color-text-2)]">
         Hanya butuh 1 menit. Dapat diubah kapan saja di Pengaturan.
       </p>
     </div>

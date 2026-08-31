@@ -1,10 +1,4 @@
-import {
-  createFileRoute,
-  Outlet,
-  Link,
-  useNavigate,
-  useRouterState,
-} from "@tanstack/react-router";
+import { createFileRoute, Outlet, Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { authClient } from "#/lib/auth-client";
 import { useEffect, useState } from "react";
 import { useQuery } from "convex/react";
@@ -80,10 +74,7 @@ function AppShell() {
 
   const isPro = true;
 
-  const activeShift = useQuery(
-    api.shifts.getActive,
-    store ? { storeId: store._id } : "skip",
-  );
+  const activeShift = useQuery(api.shifts.getActive, store ? { storeId: store._id } : "skip");
 
   const setCurrentCashier = (cashier: ActiveCashier | null) => {
     const next = cashier || { name: "Kasir Utama", role: "owner" };
@@ -167,7 +158,7 @@ function AppShell() {
     <div className="flex min-h-screen bg-[var(--color-bg)]">
       {/* Desktop Persistent Sidebar */}
       <aside
-        className={`desktop-only h-screen sticky top-0 z-30 transition-all duration-200 border-r border-[var(--color-border)] ${
+        className={`desktop-only sticky top-0 z-30 h-screen border-r border-[var(--color-border)] transition-all duration-200 ${
           collapsed ? "w-16" : "w-60"
         }`}
       >
@@ -190,21 +181,21 @@ function AppShell() {
       {/* Mobile Drawer Backdrop & Drawer */}
       {sidebarOpen && (
         <div
-          className="mobile-only fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex"
+          className="mobile-only fixed inset-0 z-50 flex bg-black/50 backdrop-blur-xs"
           onClick={() => setSidebarOpen(false)}
         >
           <div
-            className="w-4/5 max-w-[300px] h-full bg-[var(--color-surface)] shadow-2xl flex flex-col"
+            className="flex h-full w-4/5 max-w-[300px] flex-col bg-[var(--color-surface)] shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="p-3 border-b border-[var(--color-border)] flex items-center justify-between">
-              <span className="text-xs font-black text-[var(--color-text)] tracking-wider">
+            <div className="flex items-center justify-between border-b border-[var(--color-border)] p-3">
+              <span className="text-xs font-black tracking-wider text-[var(--color-text)]">
                 MENU APLIKASI
               </span>
               <button
                 type="button"
                 onClick={() => setSidebarOpen(false)}
-                className="p-1 rounded-full text-[var(--color-text-2)] hover:bg-[var(--color-surface-2)] cursor-pointer"
+                className="cursor-pointer rounded-full p-1 text-[var(--color-text-2)] hover:bg-[var(--color-surface-2)]"
               >
                 <XIcon size={18} />
               </button>
@@ -227,7 +218,7 @@ function AppShell() {
       )}
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 min-h-screen">
+      <div className="flex min-h-screen min-w-0 flex-1 flex-col">
         {/* Top Header */}
         <TopHeader
           store={store}
@@ -238,8 +229,11 @@ function AppShell() {
         />
 
         {/* Route Content */}
-        <main className="flex-1 p-4 sm:p-6 pb-28 max-w-6xl w-full mx-auto flex flex-col">
-          <div key={currentPath} className="page-enter-animation flex-1 flex flex-col w-full min-w-0">
+        <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col p-4 pb-28 sm:p-6">
+          <div
+            key={currentPath}
+            className="page-enter-animation flex w-full min-w-0 flex-1 flex-col"
+          >
             <AppStoreContext.Provider
               value={{
                 store,
@@ -258,7 +252,7 @@ function AppShell() {
         </main>
 
         {/* Mobile Floating Bottom Dock */}
-        <nav className="mobile-bottom-nav floating-dock p-1.5 flex justify-around items-center">
+        <nav className="mobile-bottom-nav floating-dock flex items-center justify-around p-1.5">
           {NAV_ITEMS.slice(0, 5).map((item) => {
             const Icon = item.icon;
             const active = currentPath.startsWith(item.to);
@@ -267,14 +261,14 @@ function AppShell() {
                 key={item.to}
                 to={item.to}
                 preload="intent"
-                className={`press-tactile flex flex-col items-center justify-center p-2 rounded-2xl transition-all ${
+                className={`press-tactile flex flex-col items-center justify-center rounded-2xl p-2 transition-all ${
                   active
-                    ? "bg-[var(--color-brand)] text-white shadow-md shadow-primary-500/25"
+                    ? "shadow-primary-500/25 bg-[var(--color-brand)] text-white shadow-md"
                     : "text-[var(--color-text-2)] hover:text-[var(--color-text)]"
                 }`}
               >
                 <Icon size={20} weight={active ? "fill" : "regular"} />
-                <span className="text-[10px] font-extrabold mt-0.5">{item.label}</span>
+                <span className="mt-0.5 text-[10px] font-extrabold">{item.label}</span>
               </Link>
             );
           })}

@@ -1,11 +1,6 @@
 import { Modal } from "#/components/Modal";
 import { formatIDRInput, parseIDRInput, formatIDR, calculateItemDiscount } from "#/lib/utils";
-import {
-  PackageIcon,
-  CameraIcon,
-  CircleNotchIcon,
-  XIcon,
-} from "@phosphor-icons/react";
+import { PackageIcon, CameraIcon, CircleNotchIcon, XIcon } from "@phosphor-icons/react";
 import type { ProductFormState } from "../types";
 
 interface ProductFormModalProps {
@@ -46,10 +41,8 @@ export function ProductFormModal({
   return (
     <Modal onClose={onClose} maxWidth={520}>
       <div className="mb-4">
-        <div className="eyebrow-tag mb-1">
-          {editId ? "EDIT PRODUK" : "TAMBAH PRODUK BARU"}
-        </div>
-        <h2 className="text-xl font-black text-[var(--color-text)] tracking-tight">
+        <div className="eyebrow-tag mb-1">{editId ? "EDIT PRODUK" : "TAMBAH PRODUK BARU"}</div>
+        <h2 className="text-xl font-black tracking-tight text-[var(--color-text)]">
           {editId ? "Edit Informasi Produk" : "Tambah Produk ke Katalog"}
         </h2>
       </div>
@@ -57,31 +50,31 @@ export function ProductFormModal({
       <form onSubmit={onSave} className="flex flex-col gap-4">
         {/* Foto Produk / Upload Box */}
         <div>
-          <label className="block text-xs font-bold text-[var(--color-text)] mb-1.5">
+          <label className="mb-1.5 block text-xs font-bold text-[var(--color-text)]">
             Foto Produk
           </label>
-          <div className="flex items-center gap-4 p-3 bg-[var(--color-surface-2)] border border-[var(--color-border)] rounded-2xl">
-            <div className="relative w-20 h-20 rounded-xl overflow-hidden bg-[var(--color-surface)] border border-[var(--color-border)] flex items-center justify-center shrink-0">
+          <div className="flex items-center gap-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-2)] p-3">
+            <div className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]">
               {imageUploading ? (
                 <div className="flex flex-col items-center justify-center gap-1 text-[var(--color-brand)]">
                   <CircleNotchIcon size={24} className="animate-spin" />
                   <span className="text-[9px] font-extrabold">Upload...</span>
                 </div>
               ) : imagePreview ? (
-                <img
-                  src={imagePreview}
-                  alt="Preview"
-                  className="w-full h-full object-cover"
-                />
+                <img src={imagePreview} alt="Preview" className="h-full w-full object-cover" />
               ) : (
-                <PackageIcon size={32} weight="duotone" className="text-[var(--color-brand)] opacity-40" />
+                <PackageIcon
+                  size={32}
+                  weight="duotone"
+                  className="text-[var(--color-brand)] opacity-40"
+                />
               )}
             </div>
 
-            <div className="flex-1 min-w-0">
+            <div className="min-w-0 flex-1">
               <label
                 htmlFor="product-photo-upload"
-                className="press-tactile py-2 px-3.5 rounded-full bg-[var(--color-surface)] border border-[var(--color-border)] text-xs font-bold text-[var(--color-text)] inline-flex items-center gap-1.5 cursor-pointer hover:bg-[var(--color-surface-3)]"
+                className="press-tactile inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2 text-xs font-bold text-[var(--color-text)] hover:bg-[var(--color-surface-3)]"
               >
                 <CameraIcon size={16} weight="bold" />
                 <span>{imagePreview ? "Ganti Foto" : "Pilih Foto Produk"}</span>
@@ -93,7 +86,7 @@ export function ProductFormModal({
                 onChange={onImageFileChange}
                 className="hidden"
               />
-              <p className="text-[11px] text-[var(--color-text-3)] mt-1.5 leading-snug">
+              <p className="mt-1.5 text-[11px] leading-snug text-[var(--color-text-3)]">
                 Mendukung JPEG, PNG, WebP. Gambar dikompres otomatis hemat memori.
               </p>
             </div>
@@ -104,7 +97,7 @@ export function ProductFormModal({
                 onClick={() => {
                   onChangeForm((prev) => ({ ...prev, imageId: "" }));
                 }}
-                className="p-1 text-[var(--color-text-3)] hover:text-rose-600 cursor-pointer"
+                className="cursor-pointer p-1 text-[var(--color-text-3)] hover:text-rose-600"
                 title="Hapus foto"
               >
                 <XIcon size={16} weight="bold" />
@@ -115,7 +108,7 @@ export function ProductFormModal({
 
         {/* Nama Produk */}
         <div>
-          <label className="block text-xs font-bold text-[var(--color-text)] mb-1.5">
+          <label className="mb-1.5 block text-xs font-bold text-[var(--color-text)]">
             Nama Produk / Jasa
           </label>
           <input
@@ -124,14 +117,14 @@ export function ProductFormModal({
             value={form.name}
             onChange={(e) => onChangeForm((p) => ({ ...p, name: e.target.value }))}
             required
-            className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
+            className="focus:ring-primary-500/20 focus:border-primary-500 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 text-sm font-medium text-[var(--color-text)] focus:ring-2 focus:outline-none"
           />
         </div>
 
         {/* Kategori & Barcode Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
-            <label className="block text-xs font-bold text-[var(--color-text)] mb-1.5">
+            <label className="mb-1.5 block text-xs font-bold text-[var(--color-text)]">
               Kategori
             </label>
             <input
@@ -140,12 +133,12 @@ export function ProductFormModal({
               value={form.category}
               onChange={(e) => onChangeForm((p) => ({ ...p, category: e.target.value }))}
               required
-              className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
+              className="focus:ring-primary-500/20 focus:border-primary-500 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 text-sm font-medium text-[var(--color-text)] focus:ring-2 focus:outline-none"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-[var(--color-text)] mb-1.5">
+            <label className="mb-1.5 block text-xs font-bold text-[var(--color-text)]">
               Barcode / SKU (Opsional)
             </label>
             <input
@@ -153,15 +146,15 @@ export function ProductFormModal({
               placeholder="Contoh: 89912345678"
               value={form.barcode}
               onChange={(e) => onChangeForm((p) => ({ ...p, barcode: e.target.value }))}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
+              className="focus:ring-primary-500/20 focus:border-primary-500 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 text-sm font-medium text-[var(--color-text)] focus:ring-2 focus:outline-none"
             />
           </div>
         </div>
 
         {/* Harga Jual & Stok Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
-            <label className="block text-xs font-bold text-[var(--color-text)] mb-1.5">
+            <label className="mb-1.5 block text-xs font-bold text-[var(--color-text)]">
               Harga Jual Normal (IDR)
             </label>
             <div className="relative flex items-center">
@@ -177,13 +170,13 @@ export function ProductFormModal({
                   onChangeForm((p) => ({ ...p, price: formatIDRInput(e.target.value) }))
                 }
                 required
-                className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] text-sm font-extrabold focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
+                className="focus:ring-primary-500/20 focus:border-primary-500 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] py-2.5 pr-3.5 pl-10 text-sm font-extrabold text-[var(--color-text)] focus:ring-2 focus:outline-none"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-[var(--color-text)] mb-1.5">
+            <label className="mb-1.5 block text-xs font-bold text-[var(--color-text)]">
               Jumlah Stok Tersedia
             </label>
             <input
@@ -193,18 +186,18 @@ export function ProductFormModal({
               value={form.stock}
               onChange={(e) => onChangeForm((p) => ({ ...p, stock: e.target.value }))}
               required
-              className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
+              className="focus:ring-primary-500/20 focus:border-primary-500 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 text-sm font-bold text-[var(--color-text)] focus:ring-2 focus:outline-none"
             />
           </div>
         </div>
 
         {/* Diskon Produk Section */}
-        <div className="bg-[var(--color-surface-2)] border border-[var(--color-border)] rounded-2xl p-3.5">
-          <label className="block text-xs font-extrabold text-[var(--color-text)] mb-2">
+        <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-2)] p-3.5">
+          <label className="mb-2 block text-xs font-extrabold text-[var(--color-text)]">
             Diskon Khusus Produk
           </label>
 
-          <div className="flex gap-1.5 mb-2.5">
+          <div className="mb-2.5 flex gap-1.5">
             {[
               { key: "none", label: "Tanpa Diskon" },
               { key: "percentage", label: "Persen (%)" },
@@ -222,7 +215,7 @@ export function ProductFormModal({
                       discountValue: t.key === p.discountType ? p.discountValue : "",
                     }))
                   }
-                  className={`press-tactile flex-1 py-1.5 px-1 rounded-full text-xs font-bold cursor-pointer border transition-all ${
+                  className={`press-tactile flex-1 cursor-pointer rounded-full border px-1 py-1.5 text-xs font-bold transition-all ${
                     active
                       ? "border-[var(--color-brand)] bg-[var(--color-brand-light)] text-[var(--color-brand)]"
                       : "border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-2)]"
@@ -243,10 +236,8 @@ export function ProductFormModal({
                   max="100"
                   placeholder="Contoh: 10"
                   value={form.discountValue}
-                  onChange={(e) =>
-                    onChangeForm((p) => ({ ...p, discountValue: e.target.value }))
-                  }
-                  className="w-full pr-10 pl-3.5 py-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] text-xs font-extrabold"
+                  onChange={(e) => onChangeForm((p) => ({ ...p, discountValue: e.target.value }))}
+                  className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] py-2 pr-10 pl-3.5 text-xs font-extrabold text-[var(--color-text)]"
                 />
                 <span className="absolute right-3.5 text-xs font-extrabold text-[var(--color-brand)]">
                   %
@@ -272,15 +263,15 @@ export function ProductFormModal({
                       discountValue: formatIDRInput(e.target.value),
                     }))
                   }
-                  className="w-full pl-10 pr-3.5 py-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] text-xs font-extrabold"
+                  className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] py-2 pr-3.5 pl-10 text-xs font-extrabold text-[var(--color-text)]"
                 />
               </div>
             </div>
           )}
 
           {form.discountType !== "none" && preview.hasDiscount && (
-            <div className="mt-2.5 p-2.5 rounded-xl bg-[var(--color-brand-light)] border border-[var(--color-brand)] flex justify-between items-center text-xs">
-              <span className="text-[var(--color-text-2)] font-semibold">Harga Akhir:</span>
+            <div className="mt-2.5 flex items-center justify-between rounded-xl border border-[var(--color-brand)] bg-[var(--color-brand-light)] p-2.5 text-xs">
+              <span className="font-semibold text-[var(--color-text-2)]">Harga Akhir:</span>
               <span className="price font-black text-[var(--color-brand)]">
                 {formatIDR(preview.unitPrice)}
               </span>
@@ -293,14 +284,14 @@ export function ProductFormModal({
           <button
             type="button"
             onClick={onClose}
-            className="press-tactile flex-1 py-3 rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-text)] text-xs font-extrabold cursor-pointer"
+            className="press-tactile flex-1 cursor-pointer rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] py-3 text-xs font-extrabold text-[var(--color-text)]"
           >
             Batal
           </button>
           <button
             type="submit"
             disabled={saving}
-            className="press-tactile flex-1.5 py-3 rounded-full bg-[var(--color-brand)] text-white text-xs font-extrabold cursor-pointer shadow-md shadow-primary-500/25 disabled:opacity-60"
+            className="press-tactile flex-1.5 shadow-primary-500/25 cursor-pointer rounded-full bg-[var(--color-brand)] py-3 text-xs font-extrabold text-white shadow-md disabled:opacity-60"
           >
             {saving ? "Menyimpan..." : editId ? "Simpan Perubahan" : "Tambah Produk"}
           </button>

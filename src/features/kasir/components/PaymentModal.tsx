@@ -48,17 +48,17 @@ export function PaymentModal({
     <Modal onClose={onClose} maxWidth={520}>
       <div className="mb-4">
         <div className="eyebrow-tag mb-1">PEMBAYARAN</div>
-        <h2 className="text-xl font-extrabold text-(--color-text) tracking-tight">
+        <h2 className="text-xl font-extrabold tracking-tight text-(--color-text)">
           Konfirmasi Transaksi
         </h2>
-        <p className="text-xs text-(--color-text-3) mt-1">
+        <p className="mt-1 text-xs text-(--color-text-3)">
           Tinjau total keranjang, atur diskon transaksi, dan pilih metode bayar
         </p>
       </div>
 
       <div className="flex flex-col">
         {/* Payment Method Switcher */}
-        <div className="flex gap-2.5 mb-4">
+        <div className="mb-4 flex gap-2.5">
           {(["cash", "qris"] as PaymentMethod[]).map((m) => {
             const active = payMethod === m;
             return (
@@ -66,7 +66,7 @@ export function PaymentModal({
                 key={m}
                 type="button"
                 onClick={() => onPayMethodChange(m)}
-                className={`press-tactile flex-1 py-3 px-2.5 rounded-full font-extrabold text-xs cursor-pointer flex items-center justify-center gap-2 border-2 transition-all ${
+                className={`press-tactile flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-full border-2 px-2.5 py-3 text-xs font-extrabold transition-all ${
                   active
                     ? "border-(--color-brand) bg-(--color-brand-light) text-(--color-brand) shadow-xs"
                     : "border-(--color-border) bg-(--color-surface) text-(--color-text-2)"
@@ -84,8 +84,8 @@ export function PaymentModal({
         </div>
 
         {/* BASKET TOTAL DISCOUNT CARD */}
-        <div className="bg-[var(--color-surface-2)] border border-[var(--color-border)] rounded-2xl p-3 mb-4">
-          <div className="flex items-center justify-between mb-2">
+        <div className="mb-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-2)] p-3">
+          <div className="mb-2 flex items-center justify-between">
             <div className="flex items-center gap-1.5 text-xs font-extrabold text-[var(--color-text)]">
               <TagIcon size={15} weight="bold" color="var(--color-brand)" />
               <span>Diskon Total Keranjang / Transaksi</span>
@@ -97,7 +97,7 @@ export function PaymentModal({
                   onBasketDiscountTypeChange("none");
                   onBasketDiscountValueChange("");
                 }}
-                className="bg-none border-none text-[var(--color-text-3)] text-[11px] font-bold cursor-pointer hover:text-rose-500"
+                className="cursor-pointer border-none bg-none text-[11px] font-bold text-[var(--color-text-3)] hover:text-rose-500"
               >
                 Hapus
               </button>
@@ -105,7 +105,7 @@ export function PaymentModal({
           </div>
 
           {/* Basket Discount Type Toggle */}
-          <div className="flex gap-1.5 mb-2">
+          <div className="mb-2 flex gap-1.5">
             {[
               { key: "none", label: "Tanpa Diskon" },
               { key: "percentage", label: "Persen (%)" },
@@ -120,7 +120,7 @@ export function PaymentModal({
                     onBasketDiscountTypeChange(t.key as any);
                     if (t.key !== basketDiscountType) onBasketDiscountValueChange("");
                   }}
-                  className={`press-tactile flex-1 py-1.5 px-0.5 rounded-full text-[11px] font-extrabold cursor-pointer border transition-all ${
+                  className={`press-tactile flex-1 cursor-pointer rounded-full border px-0.5 py-1.5 text-[11px] font-extrabold transition-all ${
                     active
                       ? "border-[var(--color-brand)] bg-[var(--color-brand-light)] text-[var(--color-brand)]"
                       : "border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-2)]"
@@ -142,19 +142,19 @@ export function PaymentModal({
                   placeholder="Besar diskon keranjang (%)"
                   value={basketDiscountValue}
                   onChange={(e) => onBasketDiscountValueChange(e.target.value)}
-                  className="w-full pr-10 pl-4 py-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] font-extrabold text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 h-10"
+                  className="focus:ring-primary-500/20 focus:border-primary-500 h-10 w-full rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] py-2 pr-10 pl-4 text-sm font-extrabold text-[var(--color-text)] focus:ring-2 focus:outline-none"
                 />
                 <span className="absolute right-3.5 text-sm font-extrabold text-[var(--color-brand)]">
                   %
                 </span>
               </div>
-              <div className="flex gap-1.5 mt-1.5 flex-wrap">
+              <div className="mt-1.5 flex flex-wrap gap-1.5">
                 {[5, 10, 15, 20, 50].map((pct) => (
                   <button
                     key={pct}
                     type="button"
                     onClick={() => onBasketDiscountValueChange(String(pct))}
-                    className={`press-tactile py-0.5 px-2.5 rounded-full text-[11px] font-bold border transition-all cursor-pointer ${
+                    className={`press-tactile cursor-pointer rounded-full border px-2.5 py-0.5 text-[11px] font-bold transition-all ${
                       basketDiscountValue === String(pct)
                         ? "border-[var(--color-brand)] bg-[var(--color-brand)] text-white"
                         : "border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)]"
@@ -179,16 +179,16 @@ export function PaymentModal({
                   placeholder="Potongan total keranjang"
                   value={basketDiscountValue}
                   onChange={(e) => onBasketDiscountValueChange(formatIDRInput(e.target.value))}
-                  className="w-full pl-10 pr-4 py-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] font-extrabold text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 h-10"
+                  className="focus:ring-primary-500/20 focus:border-primary-500 h-10 w-full rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] py-2 pr-4 pl-10 text-sm font-extrabold text-[var(--color-text)] focus:ring-2 focus:outline-none"
                 />
               </div>
-              <div className="flex gap-1.5 mt-1.5 flex-wrap">
+              <div className="mt-1.5 flex flex-wrap gap-1.5">
                 {[5000, 10000, 20000, 50000].map((nom) => (
                   <button
                     key={nom}
                     type="button"
                     onClick={() => onBasketDiscountValueChange(formatIDRInput(nom))}
-                    className={`press-tactile py-0.5 px-2.5 rounded-full text-[11px] font-bold border transition-all cursor-pointer ${
+                    className={`press-tactile cursor-pointer rounded-full border px-2.5 py-0.5 text-[11px] font-bold transition-all ${
                       parseIDRInput(basketDiscountValue) === nom
                         ? "border-[var(--color-brand)] bg-[var(--color-brand)] text-white"
                         : "border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)]"
@@ -203,26 +203,26 @@ export function PaymentModal({
         </div>
 
         {/* Total Bayar & Breakdown Box */}
-        <div className="bg-[var(--color-surface-2)] border border-[var(--color-border)] rounded-2xl p-4 mb-4">
-          <div className="flex justify-between items-center mb-1 text-xs text-[var(--color-text-2)]">
+        <div className="mb-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-2)] p-4">
+          <div className="mb-1 flex items-center justify-between text-xs text-[var(--color-text-2)]">
             <span>Subtotal Barang:</span>
             <span className="price font-bold">{formatIDR(subtotal)}</span>
           </div>
 
           {basketDiscountAmount > 0 && (
-            <div className="flex justify-between items-center mb-1 text-xs text-[var(--color-brand)] font-bold">
+            <div className="mb-1 flex items-center justify-between text-xs font-bold text-[var(--color-brand)]">
               <span>Diskon Keranjang:</span>
               <span className="price">-{formatIDR(basketDiscountAmount)}</span>
             </div>
           )}
 
-          <div className="flex justify-between items-baseline pt-2 mt-1.5 border-t border-[var(--color-border)]">
+          <div className="mt-1.5 flex items-baseline justify-between border-t border-[var(--color-border)] pt-2">
             <div>
-              <div className="text-[11px] text-[var(--color-text-3)] font-bold uppercase tracking-wider">
+              <div className="text-[11px] font-bold tracking-wider text-[var(--color-text-3)] uppercase">
                 Total Akhir Bayar
               </div>
               {totalSavings > 0 && (
-                <span className="text-[10px] font-extrabold text-[var(--color-brand)] bg-[var(--color-brand-light)] px-1.5 py-0.5 rounded-full mt-0.5 inline-block">
+                <span className="mt-0.5 inline-block rounded-full bg-[var(--color-brand-light)] px-1.5 py-0.5 text-[10px] font-extrabold text-[var(--color-brand)]">
                   Hemat {formatIDR(totalSavings)}
                 </span>
               )}
@@ -236,7 +236,7 @@ export function PaymentModal({
         {payMethod === "cash" ? (
           <>
             <div className="mb-3">
-              <label className="block text-xs font-bold text-[var(--color-text)] mb-2">
+              <label className="mb-2 block text-xs font-bold text-[var(--color-text)]">
                 Uang Tunai Diterima (IDR)
               </label>
               <div className="relative flex items-center">
@@ -248,14 +248,14 @@ export function PaymentModal({
                   placeholder="0"
                   value={cashInput}
                   onChange={(e) => onCashInputChange(e.target.value)}
-                  className="w-full pl-12 pr-4 py-2.5 text-lg font-bold rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 h-12"
+                  className="focus:ring-primary-500/20 focus:border-primary-500 h-12 w-full rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] py-2.5 pr-4 pl-12 text-lg font-bold text-[var(--color-text)] focus:ring-2 focus:outline-none"
                   autoFocus
                 />
               </div>
             </div>
 
             {/* Quick Cash Presets */}
-            <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
+            <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
               {Array.from(new Set([total, 10000, 20000, 50000, 100000, 200000]))
                 .filter((v) => v >= total)
                 .map((preset, idx) => (
@@ -263,7 +263,7 @@ export function PaymentModal({
                     key={`${preset}-${idx}`}
                     type="button"
                     onClick={() => onCashInputChange(String(preset))}
-                    className="press-tactile price py-2 px-3.5 rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] text-xs font-extrabold cursor-pointer text-[var(--color-text)] whitespace-nowrap hover:bg-[var(--color-surface)]"
+                    className="press-tactile price cursor-pointer rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] px-3.5 py-2 text-xs font-extrabold whitespace-nowrap text-[var(--color-text)] hover:bg-[var(--color-surface)]"
                   >
                     {preset === total ? "Uang Pas" : formatIDR(preset)}
                   </button>
@@ -272,10 +272,10 @@ export function PaymentModal({
 
             {cashPaid > 0 && (
               <div
-                className={`p-3 rounded-xl border mb-4 ${
+                className={`mb-4 rounded-xl border p-3 ${
                   cashPaid >= total
-                    ? "bg-[var(--color-success-light)] border-[var(--color-success)]"
-                    : "bg-[var(--color-danger-light)] border-[var(--color-danger)]"
+                    ? "border-[var(--color-success)] bg-[var(--color-success-light)]"
+                    : "border-[var(--color-danger)] bg-[var(--color-danger-light)]"
                 }`}
               >
                 <span
@@ -296,10 +296,10 @@ export function PaymentModal({
               type="button"
               onClick={onConfirm}
               disabled={cashPaid < total}
-              className={`press-tactile w-full py-3.5 px-5 rounded-full font-extrabold text-sm text-white cursor-pointer shadow-lg transition-all ${
+              className={`press-tactile w-full cursor-pointer rounded-full px-5 py-3.5 text-sm font-extrabold text-white shadow-lg transition-all ${
                 cashPaid >= total
-                  ? "bg-[var(--color-brand)] shadow-primary-500/30"
-                  : "bg-[var(--color-border)] cursor-not-allowed opacity-60"
+                  ? "shadow-primary-500/30 bg-[var(--color-brand)]"
+                  : "cursor-not-allowed bg-[var(--color-border)] opacity-60"
               }`}
             >
               Selesaikan Pembayaran Tunai
@@ -307,23 +307,23 @@ export function PaymentModal({
           </>
         ) : (
           <>
-            <div className="text-center py-5 px-4 bg-[var(--color-surface-2)] border border-[var(--color-border)] rounded-2xl mb-4">
+            <div className="mb-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-2)] px-4 py-5 text-center">
               <QrCodeIcon
                 size={72}
                 weight="duotone"
-                className="text-[var(--color-brand)] mx-auto mb-2"
+                className="mx-auto mb-2 text-[var(--color-brand)]"
               />
               <div className="text-sm font-extrabold text-[var(--color-text)]">
                 Scan QRIS Pelanggan
               </div>
-              <p className="text-xs text-[var(--color-text-3)] mt-0.5">
+              <p className="mt-0.5 text-xs text-[var(--color-text-3)]">
                 Mendukung GoPay, OVO, Dana, ShopeePay, BCA & LinkAja
               </p>
             </div>
             <button
               type="button"
               onClick={onConfirm}
-              className="press-tactile w-full py-3.5 px-5 rounded-full font-extrabold text-sm text-white cursor-pointer bg-[var(--color-brand)] shadow-lg shadow-primary-500/30"
+              className="press-tactile shadow-primary-500/30 w-full cursor-pointer rounded-full bg-[var(--color-brand)] px-5 py-3.5 text-sm font-extrabold text-white shadow-lg"
             >
               Konfirmasi Pembayaran QRIS Lunas
             </button>

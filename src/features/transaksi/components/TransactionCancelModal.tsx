@@ -31,26 +31,26 @@ export function TransactionCancelModal({
   return (
     <Modal onClose={onClose} maxWidth={440}>
       <div>
-        <div className="w-12 h-12 rounded-full bg-[var(--color-danger-light)] border border-[var(--color-danger)]/30 text-[var(--color-danger-text)] flex items-center justify-center mx-auto mb-4">
+        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-[var(--color-danger)]/30 bg-[var(--color-danger-light)] text-[var(--color-danger-text)]">
           <WarningCircleIcon size={28} weight="bold" />
         </div>
 
-        <h3 className="text-lg font-black text-center text-[var(--color-text)] m-0 mb-2">
+        <h3 className="m-0 mb-2 text-center text-lg font-black text-[var(--color-text)]">
           Batalkan Transaksi & Retur Stok?
         </h3>
 
-        <p className="text-xs text-[var(--color-text-2)] text-center mb-5 leading-relaxed">
+        <p className="mb-5 text-center text-xs leading-relaxed text-[var(--color-text-2)]">
           Transaksi senilai{" "}
-          <strong className="text-[var(--color-text)] font-extrabold">
+          <strong className="font-extrabold text-[var(--color-text)]">
             {formatIDR(cancelTarget.total)}
           </strong>{" "}
-          akan ditandai sebagai batal. Seluruh stok ({totalQty} item) akan otomatis dikembalikan
-          ke inventaris.
+          akan ditandai sebagai batal. Seluruh stok ({totalQty} item) akan otomatis dikembalikan ke
+          inventaris.
         </p>
 
         {/* Select Reason */}
         <div className="mb-4">
-          <label className="block text-xs font-bold text-[var(--color-text)] mb-2">
+          <label className="mb-2 block text-xs font-bold text-[var(--color-text)]">
             Pilih Alasan Pembatalan:
           </label>
           <div className="flex flex-col gap-2">
@@ -60,14 +60,14 @@ export function TransactionCancelModal({
                 <div
                   key={r.id}
                   onClick={() => onSelectReasonId(r.id)}
-                  className={`press-tactile p-3 rounded-[12px] border cursor-pointer text-xs flex items-center gap-2.5 transition-all ${
+                  className={`press-tactile flex cursor-pointer items-center gap-2.5 rounded-[12px] border p-3 text-xs transition-all ${
                     isSelected
-                      ? "border-[var(--color-brand)] bg-[var(--color-brand-light)] text-[var(--color-brand)] font-extrabold"
-                      : "border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-text)] font-semibold"
+                      ? "border-[var(--color-brand)] bg-[var(--color-brand-light)] font-extrabold text-[var(--color-brand)]"
+                      : "border-[var(--color-border)] bg-[var(--color-surface-2)] font-semibold text-[var(--color-text)]"
                   }`}
                 >
                   <div
-                    className="w-4 h-4 rounded-full bg-white shrink-0"
+                    className="h-4 w-4 shrink-0 rounded-full bg-white"
                     style={{
                       border: isSelected
                         ? "5px solid var(--color-brand)"
@@ -84,7 +84,7 @@ export function TransactionCancelModal({
         {/* Custom Reason Note */}
         {selectedReasonId === "lainnya" && (
           <div className="mb-5">
-            <label className="block text-xs font-bold text-[var(--color-text)] mb-1.5">
+            <label className="mb-1.5 block text-xs font-bold text-[var(--color-text)]">
               Tulis Catatan Alasan Pembatalan:
             </label>
             <textarea
@@ -92,7 +92,7 @@ export function TransactionCancelModal({
               placeholder="Contoh: Kesalahan nominal pembayaran QRIS"
               value={customReasonNote}
               onChange={(e) => onCustomReasonNoteChange(e.target.value)}
-              className="w-full px-3 py-2 rounded-[12px] border border-[var(--color-border)] bg-[var(--color-surface)] text-xs text-[var(--color-text)] outline-none focus:ring-1 focus:ring-primary-500 resize-none"
+              className="focus:ring-primary-500 w-full resize-none rounded-[12px] border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-xs text-[var(--color-text)] outline-none focus:ring-1"
               autoFocus
             />
           </div>
@@ -103,7 +103,7 @@ export function TransactionCancelModal({
             type="button"
             onClick={onClose}
             disabled={cancelling}
-            className="press-tactile flex-1 py-3 rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-text)] text-xs font-extrabold cursor-pointer"
+            className="press-tactile flex-1 cursor-pointer rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] py-3 text-xs font-extrabold text-[var(--color-text)]"
           >
             Batal
           </button>
@@ -111,7 +111,7 @@ export function TransactionCancelModal({
             type="button"
             onClick={onConfirm}
             disabled={cancelling}
-            className="press-tactile flex-1.3 py-3 rounded-full bg-[var(--color-danger)] text-white text-xs font-extrabold cursor-pointer shadow-md shadow-danger-500/30 disabled:opacity-60"
+            className="press-tactile flex-1.3 shadow-danger-500/30 cursor-pointer rounded-full bg-[var(--color-danger)] py-3 text-xs font-extrabold text-white shadow-md disabled:opacity-60"
           >
             {cancelling ? "Membatalkan..." : "Ya, Batalkan Transaksi"}
           </button>

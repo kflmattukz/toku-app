@@ -49,13 +49,13 @@ function Produk() {
   return (
     <div className="w-full pb-12">
       {/* Header */}
-      <div className="flex items-center justify-between mb-5 flex-wrap gap-4">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
         <div>
           <div className="eyebrow-tag">KATALOG PRODUK</div>
-          <h1 className="text-2xl font-black text-[var(--color-text)] tracking-tight mt-0.5">
+          <h1 className="mt-0.5 text-2xl font-black tracking-tight text-[var(--color-text)]">
             Produk Toko
           </h1>
-          <p className="text-xs text-[var(--color-text-2)] mt-1">
+          <p className="mt-1 text-xs text-[var(--color-text-2)]">
             {products.length} jenis barang terdaftar dalam sistem
           </p>
         </div>
@@ -63,7 +63,7 @@ function Produk() {
         <button
           type="button"
           onClick={openAdd}
-          className="press-tactile py-2.5 px-5 rounded-full bg-[var(--color-brand)] text-white text-xs font-extrabold flex items-center gap-2 cursor-pointer shadow-md shadow-primary-500/25"
+          className="press-tactile shadow-primary-500/25 flex cursor-pointer items-center gap-2 rounded-full bg-[var(--color-brand)] px-5 py-2.5 text-xs font-extrabold text-white shadow-md"
         >
           <PlusIcon size={16} weight="bold" />
           <span>Tambah Produk</span>
@@ -121,13 +121,13 @@ function Produk() {
 
 function ProdukLoader() {
   return (
-    <div className="flex flex-col items-center justify-center h-[60vh] gap-3">
+    <div className="flex h-[60vh] flex-col items-center justify-center gap-3">
       <PackageIcon
         size={48}
         weight="duotone"
-        className="text-[var(--color-brand)] opacity-50 animate-pulse"
+        className="animate-pulse text-[var(--color-brand)] opacity-50"
       />
-      <p className="text-[var(--color-text-2)] text-sm font-bold">Memuat data produk...</p>
+      <p className="text-sm font-bold text-[var(--color-text-2)]">Memuat data produk...</p>
     </div>
   );
 }

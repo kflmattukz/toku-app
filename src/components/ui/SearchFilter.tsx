@@ -23,25 +23,25 @@ export function SearchFilter({
   extraActions,
 }: SearchFilterProps) {
   return (
-    <div className={`flex flex-col sm:flex-row items-stretch sm:items-center gap-3 ${className}`}>
+    <div className={`flex flex-col items-stretch gap-3 sm:flex-row sm:items-center ${className}`}>
       {/* Search Input Box */}
       <div className="relative flex-1">
         <MagnifyingGlassIcon
           size={18}
-          className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--color-text-3)] pointer-events-none"
+          className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-[var(--color-text-3)]"
         />
         <input
           type="text"
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder={placeholder}
-          className="w-full pl-10 pr-10 py-2.5 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] placeholder:text-[var(--color-text-3)] text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/20 focus:border-[var(--color-brand)] transition-all"
+          className="w-full rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] py-2.5 pr-10 pl-10 text-xs font-semibold text-[var(--color-text)] transition-all placeholder:text-[var(--color-text-3)] focus:border-[var(--color-brand)] focus:ring-2 focus:ring-[var(--color-brand)]/20 focus:outline-none"
         />
         {search && (
           <button
             type="button"
             onClick={() => onSearchChange("")}
-            className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-[var(--color-text-3)] hover:text-[var(--color-text)] rounded-full hover:bg-[var(--color-surface-2)] transition-colors cursor-pointer"
+            className="absolute top-1/2 right-3 -translate-y-1/2 cursor-pointer rounded-full p-1 text-[var(--color-text-3)] transition-colors hover:bg-[var(--color-surface-2)] hover:text-[var(--color-text)]"
             title="Hapus pencarian"
           >
             <XIcon size={14} weight="bold" />
@@ -55,7 +55,7 @@ export function SearchFilter({
           <select
             value={selectedCategory || "Semua"}
             onChange={(e) => onCategoryChange(e.target.value)}
-            className="px-3.5 py-2.5 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--color-brand)]/20 focus:border-[var(--color-brand)] cursor-pointer"
+            className="cursor-pointer rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 text-xs font-semibold text-[var(--color-text)] focus:border-[var(--color-brand)] focus:ring-2 focus:ring-[var(--color-brand)]/20 focus:outline-none"
           >
             <option value="Semua">Semua Kategori</option>
             {categories

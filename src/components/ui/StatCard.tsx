@@ -4,7 +4,11 @@ interface StatCardProps {
   title: string;
   value: string | number;
   subtitle?: string;
-  icon?: React.ComponentType<{ size?: number | string; className?: string; weight?: "regular" | "bold" | "fill" | "duotone" }>;
+  icon?: React.ComponentType<{
+    size?: number | string;
+    className?: string;
+    weight?: "regular" | "bold" | "fill" | "duotone";
+  }>;
   trend?: {
     value: string;
     isPositive?: boolean;
@@ -22,20 +26,20 @@ export function StatCard({
 }: StatCardProps) {
   return (
     <div
-      className={`p-4 sm:p-5 rounded-[18px] border border-[var(--color-border)] bg-[var(--color-surface)] shadow-xs transition-all hover:border-[var(--color-brand)] ${className}`}
+      className={`rounded-[18px] border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-xs transition-all hover:border-[var(--color-brand)] sm:p-5 ${className}`}
     >
       <div className="flex items-center justify-between gap-3">
-        <span className="text-xs font-bold text-[var(--color-text-3)] uppercase tracking-wider">
+        <span className="text-xs font-bold tracking-wider text-[var(--color-text-3)] uppercase">
           {title}
         </span>
         {Icon && (
-          <div className="w-9 h-9 rounded-full bg-[var(--color-brand-light)] border border-[var(--color-brand)]/30 text-[var(--color-brand)] flex items-center justify-center">
+          <div className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--color-brand)]/30 bg-[var(--color-brand-light)] text-[var(--color-brand)]">
             <Icon size={18} weight="bold" />
           </div>
         )}
       </div>
 
-      <div className="mt-2 text-xl sm:text-2xl font-black text-[var(--color-text)] tracking-tight">
+      <div className="mt-2 text-xl font-black tracking-tight text-[var(--color-text)] sm:text-2xl">
         {value}
       </div>
 

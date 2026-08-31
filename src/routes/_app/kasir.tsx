@@ -85,9 +85,9 @@ function Kasir() {
   const categories = ["Semua", ...new Set(products.map((p) => p.category))];
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 flex-1 min-h-[calc(100vh-120px)]">
+    <div className="flex min-h-[calc(100vh-120px)] flex-1 flex-col gap-6 lg:flex-row">
       {/* Products Panel */}
-      <div className={`flex-1 flex flex-col min-w-0 ${cart.length > 0 ? "pb-20 lg:pb-0" : ""}`}>
+      <div className={`flex min-w-0 flex-1 flex-col ${cart.length > 0 ? "pb-20 lg:pb-0" : ""}`}>
         <KasirHeader productCount={products.length} isOnline={isOnline} />
 
         <ProductCatalogGrid
@@ -166,13 +166,13 @@ function Kasir() {
 
 function KasirLoader() {
   return (
-    <div className="flex flex-col items-center justify-center h-[60vh] gap-3">
+    <div className="flex h-[60vh] flex-col items-center justify-center gap-3">
       <PackageIcon
         size={48}
         weight="duotone"
-        className="text-[var(--color-brand)] opacity-50 animate-pulse"
+        className="animate-pulse text-[var(--color-brand)] opacity-50"
       />
-      <p className="text-[var(--color-text-2)] text-sm font-bold">Memuat Kasir...</p>
+      <p className="text-sm font-bold text-[var(--color-text-2)]">Memuat Kasir...</p>
     </div>
   );
 }

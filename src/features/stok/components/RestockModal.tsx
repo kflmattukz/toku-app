@@ -31,22 +31,20 @@ export function RestockModal({
       <div>
         <div className="mb-4">
           <div className="eyebrow-tag mb-1">RESTOCK BARANG</div>
-          <h2 className="text-xl font-black text-[var(--color-text)] tracking-tight">
+          <h2 className="text-xl font-black tracking-tight text-[var(--color-text)]">
             Tambah Stok: {product.name}
           </h2>
-          <p className="text-xs text-[var(--color-text-3)] mt-0.5">
-            Kategori: {product.category}
-          </p>
+          <p className="mt-0.5 text-xs text-[var(--color-text-3)]">Kategori: {product.category}</p>
         </div>
 
         {/* Before / After Comparison Card */}
-        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 p-3.5 bg-[var(--color-surface-2)] border border-[var(--color-border)] rounded-[14px] mb-5 text-center">
+        <div className="mb-5 grid grid-cols-[1fr_auto_1fr] items-center gap-3 rounded-[14px] border border-[var(--color-border)] bg-[var(--color-surface-2)] p-3.5 text-center">
           <div>
-            <div className="text-[10px] font-extrabold text-[var(--color-text-3)] uppercase tracking-wider">
+            <div className="text-[10px] font-extrabold tracking-wider text-[var(--color-text-3)] uppercase">
               Stok Saat Ini
             </div>
             <div
-              className={`price text-xl font-black mt-0.5 ${
+              className={`price mt-0.5 text-xl font-black ${
                 isLow ? "text-[var(--color-danger-text)]" : "text-[var(--color-text)]"
               }`}
             >
@@ -57,10 +55,10 @@ export function RestockModal({
           <div className="text-base font-black text-[var(--color-text-3)] opacity-60">➔</div>
 
           <div>
-            <div className="text-[10px] font-extrabold text-[var(--color-brand)] uppercase tracking-wider">
+            <div className="text-[10px] font-extrabold tracking-wider text-[var(--color-brand)] uppercase">
               Stok Baru
             </div>
-            <div className="price text-xl font-black text-[var(--color-brand)] mt-0.5">
+            <div className="price mt-0.5 text-xl font-black text-[var(--color-brand)]">
               {product.stock + currentAmt} pcs
             </div>
           </div>
@@ -68,15 +66,15 @@ export function RestockModal({
 
         {/* Stepper Input */}
         <div className="mb-4">
-          <label className="block text-xs font-bold text-[var(--color-text)] mb-2">
+          <label className="mb-2 block text-xs font-bold text-[var(--color-text)]">
             Jumlah Tambahan Stok (pcs)
           </label>
-          <div className="flex items-center gap-2.5 bg-[var(--color-surface)] border-2 border-[var(--color-brand)] rounded-[14px] p-2 shadow-xs">
+          <div className="flex items-center gap-2.5 rounded-[14px] border-2 border-[var(--color-brand)] bg-[var(--color-surface)] p-2 shadow-xs">
             <button
               type="button"
               onClick={() => onChangeRestockAmt(String(Math.max(1, currentAmt - 1)))}
               disabled={currentAmt <= 1 || saving}
-              className="press-tactile w-10 h-10 rounded-[10px] bg-[var(--color-surface-2)] border border-[var(--color-border)] text-[var(--color-text)] flex items-center justify-center cursor-pointer disabled:opacity-40 shrink-0"
+              className="press-tactile flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-[10px] border border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-text)] disabled:opacity-40"
             >
               <MinusIcon size={16} weight="bold" />
             </button>
@@ -98,14 +96,14 @@ export function RestockModal({
               }}
               autoFocus
               placeholder="0"
-              className="w-full text-center text-2xl font-black text-[var(--color-text)] border-none bg-transparent outline-none font-mono"
+              className="w-full border-none bg-transparent text-center font-mono text-2xl font-black text-[var(--color-text)] outline-none"
             />
 
             <button
               type="button"
               onClick={() => onChangeRestockAmt(String(currentAmt + 1))}
               disabled={saving}
-              className="press-tactile w-10 h-10 rounded-[10px] bg-[var(--color-brand)] text-white flex items-center justify-center cursor-pointer shadow-md shadow-primary-500/25 shrink-0"
+              className="press-tactile shadow-primary-500/25 flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-[10px] bg-[var(--color-brand)] text-white shadow-md"
             >
               <PlusIcon size={16} weight="bold" />
             </button>
@@ -114,7 +112,7 @@ export function RestockModal({
 
         {/* Quick Presets */}
         <div className="mb-5">
-          <div className="text-[11px] font-bold text-[var(--color-text-3)] mb-1.5">
+          <div className="mb-1.5 text-[11px] font-bold text-[var(--color-text-3)]">
             Pilihan Cepat Tambahan:
           </div>
           <div className="flex gap-2">
@@ -123,10 +121,10 @@ export function RestockModal({
                 key={preset}
                 type="button"
                 onClick={() => onChangeRestockAmt(String(preset))}
-                className={`press-tactile flex-1 py-1.5 rounded-full text-xs font-extrabold cursor-pointer border transition-all ${
+                className={`press-tactile flex-1 cursor-pointer rounded-full border py-1.5 text-xs font-extrabold transition-all ${
                   currentAmt === preset
-                    ? "bg-[var(--color-brand)] text-white border-[var(--color-brand)] shadow-sm"
-                    : "bg-[var(--color-surface-2)] text-[var(--color-text)] border-[var(--color-border)]"
+                    ? "border-[var(--color-brand)] bg-[var(--color-brand)] text-white shadow-sm"
+                    : "border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-text)]"
                 }`}
               >
                 +{preset}
@@ -141,7 +139,7 @@ export function RestockModal({
             type="button"
             onClick={onClose}
             disabled={saving}
-            className="press-tactile flex-1 py-3 rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-text)] text-xs font-extrabold cursor-pointer"
+            className="press-tactile flex-1 cursor-pointer rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] py-3 text-xs font-extrabold text-[var(--color-text)]"
           >
             Batal
           </button>
@@ -149,7 +147,7 @@ export function RestockModal({
             type="button"
             onClick={onConfirm}
             disabled={saving || currentAmt <= 0}
-            className="press-tactile flex-1.3 py-3 rounded-full bg-[var(--color-brand)] text-white text-xs font-extrabold cursor-pointer shadow-md shadow-primary-500/25 disabled:opacity-60"
+            className="press-tactile flex-1.3 shadow-primary-500/25 cursor-pointer rounded-full bg-[var(--color-brand)] py-3 text-xs font-extrabold text-white shadow-md disabled:opacity-60"
           >
             {saving ? "Menyimpan..." : "Simpan Tambahan Stok"}
           </button>

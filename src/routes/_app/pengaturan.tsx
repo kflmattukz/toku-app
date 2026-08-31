@@ -8,17 +8,8 @@ import { isDarkMode, toggleTheme } from "#/lib/utils";
 import { toast } from "sonner";
 import { CashierLockModal } from "#/components/CashierLockModal";
 import { Tabs } from "#/components/ui/Tabs";
-import {
-  StorefrontIcon,
-  UsersIcon,
-  BuildingsIcon,
-  UserIcon,
-} from "@phosphor-icons/react";
-import {
-  StoreProfileTab,
-  CashierManagementTab,
-  BranchesTab,
-} from "#/features/pengaturan";
+import { StorefrontIcon, UsersIcon, BuildingsIcon, UserIcon } from "@phosphor-icons/react";
+import { StoreProfileTab, CashierManagementTab, BranchesTab } from "#/features/pengaturan";
 import type { Id } from "../../../convex/_generated/dataModel";
 
 export const Route = createFileRoute("/_app/pengaturan")({ component: Pengaturan });
@@ -35,10 +26,7 @@ function Pengaturan() {
       : "skip",
   );
 
-  const cashiers = useQuery(
-    api.cashiers.listByStore,
-    store ? { storeId: store._id } : "skip",
-  );
+  const cashiers = useQuery(api.cashiers.listByStore, store ? { storeId: store._id } : "skip");
   const createCashier = useMutation(api.cashiers.create);
   const updateCashier = useMutation(api.cashiers.update);
   const removeCashier = useMutation(api.cashiers.remove);
@@ -70,9 +58,10 @@ function Pengaturan() {
   const [editPin, setEditPin] = useState("");
   const [editRole, setEditRole] = useState<"cashier" | "manager" | "owner">("cashier");
   const [isUpdatingCashier, setIsUpdatingCashier] = useState(false);
-  const [deletingCashier, setDeletingCashier] = useState<{ id: Id<"cashiers">; name: string } | null>(
-    null,
-  );
+  const [deletingCashier, setDeletingCashier] = useState<{
+    id: Id<"cashiers">;
+    name: string;
+  } | null>(null);
   const [isDeletingCashier, setIsDeletingCashier] = useState(false);
 
   // Tab 3 (Branches) State
@@ -98,9 +87,7 @@ function Pengaturan() {
   }, [store]);
 
   const isOwner =
-    currentCashier?.role === "owner" ||
-    isOwnerUnlocked ||
-    (cashiers && cashiers.length === 0);
+    currentCashier?.role === "owner" || isOwnerUnlocked || (cashiers && cashiers.length === 0);
 
   const activeOwners = (cashiers || []).filter((c: any) => c.role === "owner");
 
@@ -238,15 +225,15 @@ function Pengaturan() {
   if (!store) return <PengaturanLoader />;
 
   return (
-    <div className="w-full max-w-4xl mx-auto pb-12">
+    <div className="mx-auto w-full max-w-4xl pb-12">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
           <div className="eyebrow-tag">KONTROL SISTEM</div>
-          <h1 className="text-2xl font-black text-[var(--color-text)] tracking-tight mt-0.5">
+          <h1 className="mt-0.5 text-2xl font-black tracking-tight text-[var(--color-text)]">
             Pengaturan Toko
           </h1>
-          <p className="text-xs text-[var(--color-text-3)] mt-1">
+          <p className="mt-1 text-xs text-[var(--color-text-3)]">
             Konfigurasi profil usaha, staf kasir PIN, dan multi-cabang outlet
           </p>
         </div>
@@ -359,13 +346,13 @@ function Pengaturan() {
 
 function PengaturanLoader() {
   return (
-    <div className="flex flex-col items-center justify-center h-[60vh] gap-3">
+    <div className="flex h-[60vh] flex-col items-center justify-center gap-3">
       <UserIcon
         size={40}
         weight="duotone"
-        className="text-[var(--color-brand)] opacity-50 animate-pulse"
+        className="animate-pulse text-[var(--color-brand)] opacity-50"
       />
-      <p className="text-[var(--color-text-2)] text-sm font-bold">Memuat pengaturan...</p>
+      <p className="text-sm font-bold text-[var(--color-text-2)]">Memuat pengaturan...</p>
     </div>
   );
 }

@@ -26,7 +26,7 @@ declare global {
           onPending?: (result: any) => void;
           onError?: (result: any) => void;
           onClose?: () => void;
-        }
+        },
       ) => void;
     };
   }
@@ -41,11 +41,31 @@ interface UpgradeProModalProps {
 }
 
 const PRO_FEATURES = [
-  { icon: StorefrontIcon, title: "Multi-Cabang & Outlet", desc: "Kelola banyak toko/cabang dalam 1 akun terpusat" },
-  { icon: UsersIcon, title: "Multi-Kasir & PIN Role", desc: "Akses khusus Kasir, Manager, dan Owner dengan PIN 4-digit" },
-  { icon: ReceiptIcon, title: "Shift & Kas Drawer", desc: "Rekap kas masuk, modal awal, dan selisih kas per pergantian kasir" },
-  { icon: BellRingingIcon, title: "Auto Restock Alert", desc: "Notifikasi otomatis saat stok barang di bawah batas aman" },
-  { icon: SparkleIcon, title: "Unlimited Produk", desc: "Input ribuan produk tanpa batas (Free tier maks 100 produk)" },
+  {
+    icon: StorefrontIcon,
+    title: "Multi-Cabang & Outlet",
+    desc: "Kelola banyak toko/cabang dalam 1 akun terpusat",
+  },
+  {
+    icon: UsersIcon,
+    title: "Multi-Kasir & PIN Role",
+    desc: "Akses khusus Kasir, Manager, dan Owner dengan PIN 4-digit",
+  },
+  {
+    icon: ReceiptIcon,
+    title: "Shift & Kas Drawer",
+    desc: "Rekap kas masuk, modal awal, dan selisih kas per pergantian kasir",
+  },
+  {
+    icon: BellRingingIcon,
+    title: "Auto Restock Alert",
+    desc: "Notifikasi otomatis saat stok barang di bawah batas aman",
+  },
+  {
+    icon: SparkleIcon,
+    title: "Unlimited Produk",
+    desc: "Input ribuan produk tanpa batas (Free tier maks 100 produk)",
+  },
 ];
 
 export function UpgradeProModal({
@@ -103,7 +123,9 @@ export function UpgradeProModal({
       } else {
         // Instant Sandbox Simulator
         await simulatePayment({ orderId: order.orderId });
-        toast.success(`Pembayaran Rp ${order.amount.toLocaleString("id-ID")} Berhasil! Akun Anda kini PRO.`);
+        toast.success(
+          `Pembayaran Rp ${order.amount.toLocaleString("id-ID")} Berhasil! Akun Anda kini PRO.`,
+        );
         setIsLoading(false);
         onClose();
       }
@@ -212,7 +234,9 @@ export function UpgradeProModal({
             <CrownIcon size={16} weight="fill" />
             TOKU POS PRO UPGRADE
           </div>
-          <h2 style={{ fontSize: 24, fontWeight: 900, color: "var(--color-text)", margin: "0 0 8px" }}>
+          <h2
+            style={{ fontSize: 24, fontWeight: 900, color: "var(--color-text)", margin: "0 0 8px" }}
+          >
             Tingkatkan Bisnis Tanpa Batas
           </h2>
           <p style={{ fontSize: 14, color: "var(--color-text-2)", margin: 0 }}>
@@ -237,18 +261,29 @@ export function UpgradeProModal({
               borderRadius: 18,
               padding: "18px 16px",
               border: `2px solid ${selectedPlan === "monthly" ? "var(--color-brand)" : "var(--color-border)"}`,
-              background: selectedPlan === "monthly" ? "var(--color-brand-light)" : "var(--color-surface-2)",
+              background:
+                selectedPlan === "monthly" ? "var(--color-brand-light)" : "var(--color-surface-2)",
               cursor: "pointer",
               position: "relative",
               transition: "all 200ms ease",
             }}
           >
-            <div style={{ fontSize: 13, fontWeight: 700, color: "var(--color-text-2)", marginBottom: 4 }}>
+            <div
+              style={{
+                fontSize: 13,
+                fontWeight: 700,
+                color: "var(--color-text-2)",
+                marginBottom: 4,
+              }}
+            >
               Paket Bulanan
             </div>
             <div style={{ fontSize: 22, fontWeight: 900, color: "var(--color-text)" }}>
               Rp 35.000
-              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text-3)" }}> /bulan</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text-3)" }}>
+                {" "}
+                /bulan
+              </span>
             </div>
             <p style={{ fontSize: 12, color: "var(--color-text-3)", margin: "6px 0 0" }}>
               Fleksibel bayar per bulan
@@ -263,7 +298,8 @@ export function UpgradeProModal({
               borderRadius: 18,
               padding: "18px 16px",
               border: `2px solid ${selectedPlan === "yearly" ? "var(--color-brand)" : "var(--color-border)"}`,
-              background: selectedPlan === "yearly" ? "var(--color-brand-light)" : "var(--color-surface-2)",
+              background:
+                selectedPlan === "yearly" ? "var(--color-brand-light)" : "var(--color-surface-2)",
               cursor: "pointer",
               position: "relative",
               transition: "all 200ms ease",
@@ -285,12 +321,22 @@ export function UpgradeProModal({
             >
               HEMAT RP 120.000
             </div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: "var(--color-text-2)", marginBottom: 4 }}>
+            <div
+              style={{
+                fontSize: 13,
+                fontWeight: 700,
+                color: "var(--color-text-2)",
+                marginBottom: 4,
+              }}
+            >
               Paket Tahunan
             </div>
             <div style={{ fontSize: 22, fontWeight: 900, color: "var(--color-text)" }}>
               Rp 300.000
-              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text-3)" }}> /tahun</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text-3)" }}>
+                {" "}
+                /tahun
+              </span>
             </div>
             <p style={{ fontSize: 12, color: "var(--color-text-3)", margin: "6px 0 0" }}>
               Setara Rp 25.000 /bulan
@@ -308,7 +354,9 @@ export function UpgradeProModal({
             marginBottom: 24,
           }}
         >
-          <div style={{ fontSize: 13, fontWeight: 800, color: "var(--color-text)", marginBottom: 12 }}>
+          <div
+            style={{ fontSize: 13, fontWeight: 800, color: "var(--color-text)", marginBottom: 12 }}
+          >
             Fitur yang Didapatkan di Toku Pro:
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -335,9 +383,7 @@ export function UpgradeProModal({
                     <div style={{ fontSize: 13, fontWeight: 700, color: "var(--color-text)" }}>
                       {f.title}
                     </div>
-                    <div style={{ fontSize: 12, color: "var(--color-text-3)" }}>
-                      {f.desc}
-                    </div>
+                    <div style={{ fontSize: 12, color: "var(--color-text-3)" }}>{f.desc}</div>
                   </div>
                 </div>
               );
@@ -370,7 +416,9 @@ export function UpgradeProModal({
             }}
           >
             <CreditCardIcon size={20} weight="bold" />
-            {isLoading ? "Memproses..." : `Bayar via Midtrans Snap (Rp ${selectedPlan === "yearly" ? "300.000" : "35.000"})`}
+            {isLoading
+              ? "Memproses..."
+              : `Bayar via Midtrans Snap (Rp ${selectedPlan === "yearly" ? "300.000" : "35.000"})`}
           </button>
 
           <button
@@ -411,7 +459,8 @@ export function UpgradeProModal({
           }}
         >
           <ShieldCheckIcon size={14} weight="bold" />
-          Pembayaran terenkripsi & aman dengan Midtrans Snap (QRIS, GoPay, ShopeePay, Virtual Account).
+          Pembayaran terenkripsi & aman dengan Midtrans Snap (QRIS, GoPay, ShopeePay, Virtual
+          Account).
         </div>
       </div>
     </div>

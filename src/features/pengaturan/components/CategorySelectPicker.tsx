@@ -28,8 +28,7 @@ export function CategorySelectPicker({ value, onChange }: CategorySelectPickerPr
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  const activeCategory =
-    UMKM_CATEGORIES.find((c) => c.value === value) || UMKM_CATEGORIES[0];
+  const activeCategory = UMKM_CATEGORIES.find((c) => c.value === value) || UMKM_CATEGORIES[0];
   const ActiveIcon = activeCategory.icon;
 
   const filtered = UMKM_CATEGORIES.filter((c) => {
@@ -59,7 +58,7 @@ export function CategorySelectPicker({ value, onChange }: CategorySelectPickerPr
   }, [isOpen, isMobile]);
 
   const renderCategoryList = () => (
-    <div className="flex flex-col gap-1.5 max-h-[320px] overflow-y-auto pr-1">
+    <div className="flex max-h-[320px] flex-col gap-1.5 overflow-y-auto pr-1">
       {filtered.length > 0 ? (
         filtered.map((cat) => {
           const Icon = cat.icon;
@@ -73,15 +72,15 @@ export function CategorySelectPicker({ value, onChange }: CategorySelectPickerPr
                 setIsOpen(false);
                 setSearch("");
               }}
-              className={`press-tactile w-full text-left p-2.5 rounded-xl flex items-center justify-between gap-3 cursor-pointer transition-all border ${
+              className={`press-tactile flex w-full cursor-pointer items-center justify-between gap-3 rounded-xl border p-2.5 text-left transition-all ${
                 isSelected
-                  ? "bg-[var(--color-brand-light)] border-[var(--color-brand)]"
-                  : "bg-transparent border-transparent hover:bg-[var(--color-surface-2)]"
+                  ? "border-[var(--color-brand)] bg-[var(--color-brand-light)]"
+                  : "border-transparent bg-transparent hover:bg-[var(--color-surface-2)]"
               }`}
             >
-              <div className="flex items-center gap-3 min-w-0">
+              <div className="flex min-w-0 items-center gap-3">
                 <div
-                  className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
                     isSelected
                       ? "bg-[var(--color-brand)] text-white"
                       : "bg-[var(--color-surface-2)] text-[var(--color-text-2)]"
@@ -91,7 +90,7 @@ export function CategorySelectPicker({ value, onChange }: CategorySelectPickerPr
                 </div>
                 <div className="min-w-0">
                   <div
-                    className={`text-xs truncate ${
+                    className={`truncate text-xs ${
                       isSelected
                         ? "font-extrabold text-[var(--color-brand)]"
                         : "font-bold text-[var(--color-text)]"
@@ -99,7 +98,7 @@ export function CategorySelectPicker({ value, onChange }: CategorySelectPickerPr
                   >
                     {cat.label}
                   </div>
-                  <div className="text-[11px] text-[var(--color-text-3)] truncate mt-0.5">
+                  <div className="mt-0.5 truncate text-[11px] text-[var(--color-text-3)]">
                     {cat.desc}
                   </div>
                 </div>
@@ -109,14 +108,14 @@ export function CategorySelectPicker({ value, onChange }: CategorySelectPickerPr
                 <CheckCircleIcon
                   size={20}
                   weight="fill"
-                  className="text-[var(--color-brand)] shrink-0"
+                  className="shrink-0 text-[var(--color-brand)]"
                 />
               )}
             </button>
           );
         })
       ) : (
-        <div className="py-6 px-4 text-center text-xs text-[var(--color-text-3)]">
+        <div className="px-4 py-6 text-center text-xs text-[var(--color-text-3)]">
           Kategori tidak ditemukan.
         </div>
       )}
@@ -129,28 +128,26 @@ export function CategorySelectPicker({ value, onChange }: CategorySelectPickerPr
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className={`press-tactile w-full py-2.5 px-3.5 rounded-xl border bg-[var(--color-surface)] flex items-center justify-between gap-3 cursor-pointer text-left transition-all ${
+        className={`press-tactile flex w-full cursor-pointer items-center justify-between gap-3 rounded-xl border bg-[var(--color-surface)] px-3.5 py-2.5 text-left transition-all ${
           isOpen
-            ? "border-[var(--color-brand)] ring-2 ring-primary-500/20"
+            ? "ring-primary-500/20 border-[var(--color-brand)] ring-2"
             : "border-[var(--color-border)]"
         }`}
       >
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="w-9 h-9 rounded-xl bg-[var(--color-brand-light)] text-[var(--color-brand)] flex items-center justify-center shrink-0">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--color-brand-light)] text-[var(--color-brand)]">
             <ActiveIcon size={20} weight="bold" />
           </div>
           <div className="min-w-0">
-            <div className="text-sm font-extrabold text-[var(--color-text)] truncate">
+            <div className="truncate text-sm font-extrabold text-[var(--color-text)]">
               {activeCategory.label}
             </div>
-            <div className="text-xs text-[var(--color-text-3)] truncate">
-              {activeCategory.desc}
-            </div>
+            <div className="truncate text-xs text-[var(--color-text-3)]">{activeCategory.desc}</div>
           </div>
         </div>
 
         <div
-          className={`text-[var(--color-text-3)] flex items-center shrink-0 transition-transform duration-200 ${
+          className={`flex shrink-0 items-center text-[var(--color-text-3)] transition-transform duration-200 ${
             isOpen ? "rotate-180" : ""
           }`}
         >
@@ -160,13 +157,13 @@ export function CategorySelectPicker({ value, onChange }: CategorySelectPickerPr
 
       {/* Floating Popover on Desktop / Tablet */}
       {isOpen && !isMobile && (
-        <div className="absolute top-[calc(100%+8px)] left-0 right-0 z-50 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl shadow-xl p-3 max-h-[380px] flex flex-col animate-fadeIn">
+        <div className="animate-fadeIn absolute top-[calc(100%+8px)] right-0 left-0 z-50 flex max-h-[380px] flex-col rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3 shadow-xl">
           {/* Search filter */}
           <div className="relative mb-2 flex items-center">
             <MagnifyingGlassIcon
               size={16}
               weight="bold"
-              className="absolute left-3 text-[var(--color-text-3)] pointer-events-none"
+              className="pointer-events-none absolute left-3 text-[var(--color-text-3)]"
             />
             <input
               type="text"
@@ -174,7 +171,7 @@ export function CategorySelectPicker({ value, onChange }: CategorySelectPickerPr
               placeholder="Cari kategori UMKM (bengkel, sembako, laundry...)"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-2)] text-xs text-[var(--color-text)] outline-none focus:ring-1 focus:ring-primary-500"
+              className="focus:ring-primary-500 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-2)] py-2 pr-3 pl-9 text-xs text-[var(--color-text)] outline-none focus:ring-1"
             />
           </div>
 
@@ -186,9 +183,9 @@ export function CategorySelectPicker({ value, onChange }: CategorySelectPickerPr
       {isOpen && isMobile && (
         <Modal onClose={() => setIsOpen(false)} maxWidth={440}>
           <div>
-            <div className="flex items-center gap-2 mb-4">
+            <div className="mb-4 flex items-center gap-2">
               <StorefrontIcon size={22} weight="bold" className="text-[var(--color-brand)]" />
-              <h3 className="text-base font-extrabold text-[var(--color-text)] m-0">
+              <h3 className="m-0 text-base font-extrabold text-[var(--color-text)]">
                 Pilih Kategori Usaha UMKM
               </h3>
             </div>
@@ -197,7 +194,7 @@ export function CategorySelectPicker({ value, onChange }: CategorySelectPickerPr
               <MagnifyingGlassIcon
                 size={16}
                 weight="bold"
-                className="absolute left-3 text-[var(--color-text-3)] pointer-events-none"
+                className="pointer-events-none absolute left-3 text-[var(--color-text-3)]"
               />
               <input
                 type="text"
@@ -205,7 +202,7 @@ export function CategorySelectPicker({ value, onChange }: CategorySelectPickerPr
                 placeholder="Cari kategori..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-2)] text-xs text-[var(--color-text)] outline-none"
+                className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-2)] py-2 pr-3 pl-9 text-xs text-[var(--color-text)] outline-none"
               />
             </div>
 

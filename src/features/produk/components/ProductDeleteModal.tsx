@@ -20,14 +20,14 @@ export function ProductDeleteModal({
   return (
     <Modal onClose={onClose} maxWidth={400}>
       <div className="text-center">
-        <div className="w-14 h-14 rounded-full bg-[var(--color-danger-light)] border border-[var(--color-danger)]/30 text-[var(--color-danger-text)] flex items-center justify-center mx-auto mb-4">
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-[var(--color-danger)]/30 bg-[var(--color-danger-light)] text-[var(--color-danger-text)]">
           <WarningIcon size={32} weight="bold" />
         </div>
 
-        <h3 className="text-lg font-black text-[var(--color-text)] m-0 mb-2">Hapus Produk?</h3>
-        <p className="text-xs text-[var(--color-text-2)] mb-5 leading-relaxed">
+        <h3 className="m-0 mb-2 text-lg font-black text-[var(--color-text)]">Hapus Produk?</h3>
+        <p className="mb-5 text-xs leading-relaxed text-[var(--color-text-2)]">
           Apakah Anda yakin ingin menghapus{" "}
-          <strong className="text-[var(--color-text)] font-extrabold">"{product.name}"</strong> dari
+          <strong className="font-extrabold text-[var(--color-text)]">"{product.name}"</strong> dari
           katalog? Tindakan ini tidak dapat dibatalkan.
         </p>
 
@@ -36,7 +36,7 @@ export function ProductDeleteModal({
             type="button"
             onClick={onClose}
             disabled={deleting}
-            className="press-tactile flex-1 py-3 rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-text)] text-xs font-extrabold cursor-pointer"
+            className="press-tactile flex-1 cursor-pointer rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] py-3 text-xs font-extrabold text-[var(--color-text)]"
           >
             Batal
           </button>
@@ -44,7 +44,7 @@ export function ProductDeleteModal({
             type="button"
             onClick={onConfirm}
             disabled={deleting}
-            className="press-tactile flex-1.2 py-3 rounded-full bg-[var(--color-danger)] text-white text-xs font-extrabold cursor-pointer shadow-md shadow-danger-500/30 disabled:opacity-60"
+            className="press-tactile flex-1.2 shadow-danger-500/30 cursor-pointer rounded-full bg-[var(--color-danger)] py-3 text-xs font-extrabold text-white shadow-md disabled:opacity-60"
           >
             {deleting ? "Menghapus..." : "Ya, Hapus Produk"}
           </button>

@@ -48,12 +48,12 @@ export function CartDrawer({
   onOpenPayment,
 }: CartDrawerProps) {
   const renderCartItems = () => (
-    <div className="flex-1 overflow-y-auto p-4 sm:p-5 flex flex-col gap-2.5">
+    <div className="flex flex-1 flex-col gap-2.5 overflow-y-auto p-4 sm:p-5">
       {cart.length === 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center py-12 text-[var(--color-text-3)]">
-          <ShoppingCartIcon size={48} weight="duotone" className="opacity-30 mb-3" />
-          <p className="text-sm font-bold m-0 text-[var(--color-text-2)]">Keranjang Masih Kosong</p>
-          <span className="text-xs mt-1">Klik produk di katalog untuk menambahkan</span>
+        <div className="flex flex-1 flex-col items-center justify-center py-12 text-[var(--color-text-3)]">
+          <ShoppingCartIcon size={48} weight="duotone" className="mb-3 opacity-30" />
+          <p className="m-0 text-sm font-bold text-[var(--color-text-2)]">Keranjang Masih Kosong</p>
+          <span className="mt-1 text-xs">Klik produk di katalog untuk menambahkan</span>
         </div>
       ) : (
         cart.map((item) => {
@@ -64,7 +64,7 @@ export function CartDrawer({
           return (
             <div
               key={item.productId}
-              className="flex flex-col p-3 rounded-2xl bg-surface-2 border border-[var(--color-border)] gap-2"
+              className="flex flex-col gap-2 rounded-2xl border border-[var(--color-border)] bg-surface-2 p-3"
             >
               <div className="flex items-center gap-3">
                 {/* Thumbnail */}
@@ -72,25 +72,25 @@ export function CartDrawer({
                   <img
                     src={productData?.imageUrl || productData?.imageId}
                     alt={item.name}
-                    className="w-11 h-11 rounded-sm object-cover shrink-0 border border-[var(--color-border)]"
+                    className="h-11 w-11 shrink-0 rounded-sm border border-[var(--color-border)] object-cover"
                   />
                 ) : (
-                  <div className="w-11 h-11 rounded-[10px] bg-[var(--color-surface)] border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-3)] shrink-0">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-3)]">
                     <PackageIcon size={22} weight="duotone" />
                   </div>
                 )}
 
                 {/* Name & Unit Price */}
-                <div className="flex-1 min-w-0">
-                  <div className="text-xs font-extrabold text-[var(--color-text)] truncate">
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-xs font-extrabold text-[var(--color-text)]">
                     {item.name}
                   </div>
-                  <div className="text-[11px] text-[var(--color-text-3)] flex items-center gap-1.5 mt-0.5">
+                  <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-[var(--color-text-3)]">
                     <span>
                       {item.qty} x {formatIDR(disc.unitPrice)}
                     </span>
                     {disc.hasDiscount && (
-                      <span className="text-[10px] line-through text-[var(--color-text-3)]">
+                      <span className="text-[10px] text-[var(--color-text-3)] line-through">
                         {formatIDR(item.price)}
                       </span>
                     )}
@@ -98,7 +98,7 @@ export function CartDrawer({
                 </div>
 
                 {/* Line Total */}
-                <div className="text-right shrink-0">
+                <div className="shrink-0 text-right">
                   <span className="price text-sm font-extrabold text-[var(--color-brand)]">
                     {formatIDR(lineTotal)}
                   </span>
@@ -106,12 +106,12 @@ export function CartDrawer({
               </div>
 
               {/* Actions Row: Line Discount Tag + Stepper */}
-              <div className="flex items-center justify-between pt-1.5 border-t border-dashed border-[var(--color-border)]">
+              <div className="flex items-center justify-between border-t border-dashed border-[var(--color-border)] pt-1.5">
                 {/* Item Discount Trigger */}
                 <button
                   type="button"
                   onClick={() => onOpenItemDiscount(item)}
-                  className={`press-tactile py-0.5 px-2 rounded-full text-[10px] font-extrabold cursor-pointer inline-flex items-center gap-1 border transition-all ${
+                  className={`press-tactile inline-flex cursor-pointer items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-extrabold transition-all ${
                     disc.hasDiscount
                       ? "border-[var(--color-brand)] bg-[var(--color-brand-light)] text-[var(--color-brand)]"
                       : "border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-2)]"
@@ -127,17 +127,17 @@ export function CartDrawer({
                   <button
                     type="button"
                     onClick={() => onUpdateQty(item.productId, -1)}
-                    className="press-tactile w-7 h-7 rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-text)] flex items-center justify-center cursor-pointer"
+                    className="press-tactile flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-text)]"
                   >
                     <MinusIcon size={11} weight="bold" />
                   </button>
-                  <span className="text-xs font-extrabold min-w-[18px] text-center text-[var(--color-text)] font-mono">
+                  <span className="min-w-[18px] text-center font-mono text-xs font-extrabold text-[var(--color-text)]">
                     {item.qty}
                   </span>
                   <button
                     type="button"
                     onClick={() => onUpdateQty(item.productId, 1)}
-                    className="press-tactile w-7 h-7 rounded-full bg-[var(--color-brand)] text-white flex items-center justify-center cursor-pointer shadow-xs"
+                    className="press-tactile flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-[var(--color-brand)] text-white shadow-xs"
                   >
                     <PlusIcon size={11} weight="bold" />
                   </button>
@@ -145,7 +145,7 @@ export function CartDrawer({
                     type="button"
                     onClick={() => onRemoveFromCart(item.productId)}
                     title="Hapus dari keranjang"
-                    className="press-tactile w-7 h-7 rounded-full bg-[var(--color-danger-light)] text-[var(--color-danger-text)] border border-[var(--color-danger)]/20 flex items-center justify-center cursor-pointer ml-0.5"
+                    className="press-tactile ml-0.5 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border border-[var(--color-danger)]/20 bg-[var(--color-danger-light)] text-[var(--color-danger-text)]"
                   >
                     <TrashIcon size={13} />
                   </button>
@@ -159,9 +159,9 @@ export function CartDrawer({
   );
 
   const renderSummaryCheckout = () => (
-    <div className="border-t border-[var(--color-border)] p-4 sm:p-5 bg-[var(--color-surface)] rounded-b-[18px]">
+    <div className="rounded-b-[18px] border-t border-[var(--color-border)] bg-[var(--color-surface)] p-4 sm:p-5">
       <div className="mb-3">
-        <div className="flex justify-between items-center mb-1">
+        <div className="mb-1 flex items-center justify-between">
           <span className="text-xs font-semibold text-[var(--color-text-2)]">
             Subtotal Produk ({totalItems} pcs)
           </span>
@@ -171,13 +171,13 @@ export function CartDrawer({
         </div>
 
         {totalSavings > 0 && (
-          <div className="flex justify-between items-center text-[11px] font-bold text-[var(--color-brand)]">
+          <div className="flex items-center justify-between text-[11px] font-bold text-[var(--color-brand)]">
             <span>Total Berhemat</span>
             <span className="price">-{formatIDR(totalSavings)}</span>
           </div>
         )}
 
-        <div className="flex justify-between items-baseline mt-1.5 pt-1.5 border-t border-[var(--color-border-subtle)]">
+        <div className="mt-1.5 flex items-baseline justify-between border-t border-[var(--color-border-subtle)] pt-1.5">
           <span className="text-xs font-extrabold text-[var(--color-text)]">Total Pembayaran</span>
           <span className="price text-xl font-black text-[var(--color-brand)]">
             {formatIDR(total)}
@@ -189,10 +189,10 @@ export function CartDrawer({
         type="button"
         onClick={onOpenPayment}
         disabled={cart.length === 0}
-        className={`press-tactile w-full py-3 px-4 rounded-full text-white font-extrabold text-sm flex items-center justify-center gap-2 transition-all ${
+        className={`press-tactile flex w-full items-center justify-center gap-2 rounded-full px-4 py-3 text-sm font-extrabold text-white transition-all ${
           cart.length === 0
-            ? "bg-[var(--color-border)] cursor-not-allowed opacity-60"
-            : "bg-[var(--color-brand)] cursor-pointer shadow-lg shadow-primary-500/30"
+            ? "cursor-not-allowed bg-[var(--color-border)] opacity-60"
+            : "shadow-primary-500/30 cursor-pointer bg-[var(--color-brand)] shadow-lg"
         }`}
       >
         <MoneyIcon size={20} weight="bold" />
@@ -205,15 +205,15 @@ export function CartDrawer({
   return (
     <>
       {/* Desktop Sticky Cart Sidebar */}
-      <div className="desktop-only w-[380px] bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[18px] flex flex-col max-h-[calc(100vh-120px)] shadow-xs sticky top-6">
-        <div className="p-4 sm:p-5 border-b border-[var(--color-border)] flex items-center justify-between">
+      <div className="desktop-only sticky top-6 flex max-h-[calc(100vh-120px)] w-[380px] flex-col rounded-[18px] border border-[var(--color-border)] bg-[var(--color-surface)] shadow-xs">
+        <div className="flex items-center justify-between border-b border-[var(--color-border)] p-4 sm:p-5">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-full bg-[var(--color-brand-light)] text-[var(--color-brand)] flex items-center justify-center">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-brand-light)] text-[var(--color-brand)]">
               <ShoppingCartIcon size={20} weight="bold" />
             </div>
             <div>
-              <h2 className="text-sm font-extrabold m-0 text-[var(--color-text)]">Pesanan Kasir</h2>
-              <div className="text-[11px] text-[var(--color-text-3)] mt-0.5">
+              <h2 className="m-0 text-sm font-extrabold text-[var(--color-text)]">Pesanan Kasir</h2>
+              <div className="mt-0.5 text-[11px] text-[var(--color-text-3)]">
                 {totalItems} item barang di keranjang
               </div>
             </div>
@@ -223,7 +223,7 @@ export function CartDrawer({
             <button
               type="button"
               onClick={onClearCart}
-              className="press-tactile bg-[var(--color-danger-light)] text-[var(--color-danger-text)] border border-[var(--color-danger)]/30 rounded-full px-2.5 py-1 text-[11px] font-bold cursor-pointer flex items-center gap-1"
+              className="press-tactile flex cursor-pointer items-center gap-1 rounded-full border border-[var(--color-danger)]/30 bg-[var(--color-danger-light)] px-2.5 py-1 text-[11px] font-bold text-[var(--color-danger-text)]"
             >
               <TrashIcon size={12} weight="bold" />
               <span>Reset</span>
@@ -240,14 +240,14 @@ export function CartDrawer({
         !showPayment &&
         typeof document !== "undefined" &&
         createPortal(
-          <div className="mobile-only animate-float-pill fixed bottom-[calc(78px+env(safe-area-inset-bottom,0px))] left-4 right-4 z-50">
+          <div className="mobile-only animate-float-pill fixed right-4 bottom-[calc(78px+env(safe-area-inset-bottom,0px))] left-4 z-50">
             <button
               type="button"
               onClick={() => setShowMobileCart(true)}
-              className="press-tactile w-full p-3.5 bg-[var(--color-brand)] text-white rounded-full flex items-center justify-between shadow-xl shadow-primary-500/40 cursor-pointer border-none"
+              className="press-tactile shadow-primary-500/40 flex w-full cursor-pointer items-center justify-between rounded-full border-none bg-[var(--color-brand)] p-3.5 text-white shadow-xl"
             >
               <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-xs font-extrabold">
+                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-xs font-extrabold">
                   {totalItems}
                 </div>
                 <span className="text-sm font-extrabold tracking-tight">Lihat Keranjang</span>
@@ -264,8 +264,8 @@ export function CartDrawer({
       {/* Mobile Cart Modal Drawer */}
       {showMobileCart && (
         <Modal onClose={() => setShowMobileCart(false)} maxWidth={480}>
-          <div className="-m-3 flex flex-col max-h-[78vh]">
-            <div className="p-4 border-b border-[var(--color-border)] flex items-center justify-between">
+          <div className="-m-3 flex max-h-[78vh] flex-col">
+            <div className="flex items-center justify-between border-b border-[var(--color-border)] p-4">
               <h2 className="text-base font-extrabold text-[var(--color-text)]">
                 Keranjang Pesanan ({totalItems})
               </h2>
@@ -273,7 +273,7 @@ export function CartDrawer({
                 <button
                   type="button"
                   onClick={onClearCart}
-                  className="text-xs text-rose-600 font-bold cursor-pointer"
+                  className="cursor-pointer text-xs font-bold text-rose-600"
                 >
                   Kosongkan
                 </button>

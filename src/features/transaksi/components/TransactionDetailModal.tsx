@@ -1,10 +1,7 @@
 import { Modal } from "#/components/Modal";
 import { KasirReceipt } from "#/features/kasir";
 import { printReceipt } from "#/lib/print";
-import {
-  PrinterIcon,
-  ArrowCounterClockwiseIcon,
-} from "@phosphor-icons/react";
+import { PrinterIcon, ArrowCounterClockwiseIcon } from "@phosphor-icons/react";
 import type { Transaction } from "../types";
 
 interface TransactionDetailModalProps {
@@ -28,12 +25,12 @@ export function TransactionDetailModal({
         <KasirReceipt tx={transaction} storeName={storeName} />
       </div>
 
-      <div className="no-print flex flex-col gap-2.5 mt-5">
+      <div className="no-print mt-5 flex flex-col gap-2.5">
         <div className="flex gap-2.5">
           <button
             type="button"
             onClick={() => printReceipt("toku-receipt-content-tx")}
-            className="press-tactile flex-1 py-3 px-4 rounded-full bg-[var(--color-brand)] text-white font-extrabold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-primary-500/25"
+            className="press-tactile shadow-primary-500/25 flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-full bg-[var(--color-brand)] px-4 py-3 text-xs font-extrabold text-white shadow-md"
           >
             <PrinterIcon size={16} weight="bold" />
             <span>Cetak Struk</span>
@@ -41,7 +38,7 @@ export function TransactionDetailModal({
           <button
             type="button"
             onClick={onClose}
-            className="press-tactile flex-1 py-3 px-4 rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-text)] font-extrabold text-xs cursor-pointer"
+            className="press-tactile flex-1 cursor-pointer rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] px-4 py-3 text-xs font-extrabold text-[var(--color-text)]"
           >
             Tutup
           </button>
@@ -52,7 +49,7 @@ export function TransactionDetailModal({
           <button
             type="button"
             onClick={() => onOpenCancel(transaction)}
-            className="press-tactile py-2.5 px-4 rounded-[12px] border border-[var(--color-danger)]/30 bg-[var(--color-danger-light)] text-[var(--color-danger-text)] text-xs font-bold flex items-center justify-center gap-2 cursor-pointer transition-colors"
+            className="press-tactile flex cursor-pointer items-center justify-center gap-2 rounded-[12px] border border-[var(--color-danger)]/30 bg-[var(--color-danger-light)] px-4 py-2.5 text-xs font-bold text-[var(--color-danger-text)] transition-colors"
           >
             <ArrowCounterClockwiseIcon size={16} weight="bold" />
             <span>Batalkan Transaksi / Retur Barang (Kembalikan Stok)</span>

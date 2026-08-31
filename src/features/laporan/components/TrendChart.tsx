@@ -1,11 +1,5 @@
 import { useState } from "react";
-import {
-  ChartBarIcon,
-  TrendUpIcon,
-  ReceiptIcon,
-  FireIcon,
-  ClockIcon,
-} from "@phosphor-icons/react";
+import { ChartBarIcon, TrendUpIcon, ReceiptIcon, FireIcon, ClockIcon } from "@phosphor-icons/react";
 import { formatIDR } from "#/lib/utils";
 import type { Range, TrendBucket } from "../types";
 
@@ -15,11 +9,7 @@ interface TrendChartProps {
   totalRevenue: number;
 }
 
-export function TrendChart({
-  txs,
-  range,
-  totalRevenue,
-}: TrendChartProps) {
+export function TrendChart({ txs, range, totalRevenue }: TrendChartProps) {
   const [metric, setMetric] = useState<"revenue" | "count">("revenue");
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
 
@@ -121,24 +111,21 @@ export function TrendChart({
   const activeBucket = activeIdx !== null ? buckets[activeIdx] : null;
 
   return (
-    <section
-      className="doppelrand-shell mb-6"
-      onMouseLeave={() => setActiveIdx(null)}
-    >
+    <section className="doppelrand-shell mb-6" onMouseLeave={() => setActiveIdx(null)}>
       <div className="doppelrand-core">
         {/* Header & Controls */}
-        <div className="flex items-center justify-between flex-wrap gap-3.5 mb-5">
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3.5">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[var(--color-brand-light)] border border-[var(--color-brand)] text-[var(--color-brand)] flex items-center justify-center">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--color-brand)] bg-[var(--color-brand-light)] text-[var(--color-brand)]">
               <ChartBarIcon size={22} weight="duotone" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-lg font-extrabold text-[var(--color-text)] tracking-tight m-0">
+                <h2 className="m-0 text-lg font-extrabold tracking-tight text-[var(--color-text)]">
                   Grafik Tren Penjualan
                 </h2>
                 {peakBucket && (
-                  <span className="text-[11px] font-extrabold text-[var(--color-brand)] bg-[var(--color-brand-light)] border border-[var(--color-brand)] py-0.5 px-2 rounded-full inline-flex items-center gap-1">
+                  <span className="inline-flex items-center gap-1 rounded-full border border-[var(--color-brand)] bg-[var(--color-brand-light)] px-2 py-0.5 text-[11px] font-extrabold text-[var(--color-brand)]">
                     <FireIcon size={12} weight="fill" />
                     <span>
                       Puncak: {peakBucket.shortLabel} (
@@ -150,7 +137,7 @@ export function TrendChart({
                   </span>
                 )}
               </div>
-              <div className="text-xs text-[var(--color-text-3)] mt-0.5">
+              <div className="mt-0.5 text-xs text-[var(--color-text-3)]">
                 {range === "hari"
                   ? "Distribusi penjualan per jam operasional toko hari ini"
                   : range === "minggu"
@@ -161,16 +148,16 @@ export function TrendChart({
           </div>
 
           {/* Metric Switcher Toggle */}
-          <div className="flex gap-1 bg-[var(--color-surface-2)] p-1 rounded-full border border-[var(--color-border)]">
+          <div className="flex gap-1 rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] p-1">
             <button
               type="button"
               onClick={() => {
                 setMetric("revenue");
                 setActiveIdx(null);
               }}
-              className={`press-tactile py-1.5 px-3.5 rounded-full text-xs font-bold cursor-pointer transition-all border-none flex items-center gap-1.5 ${
+              className={`press-tactile flex cursor-pointer items-center gap-1.5 rounded-full border-none px-3.5 py-1.5 text-xs font-bold transition-all ${
                 metric === "revenue"
-                  ? "bg-[var(--color-brand)] text-white shadow-xs shadow-primary-500/35"
+                  ? "shadow-primary-500/35 bg-[var(--color-brand)] text-white shadow-xs"
                   : "bg-transparent text-[var(--color-text-2)]"
               }`}
             >
@@ -183,9 +170,9 @@ export function TrendChart({
                 setMetric("count");
                 setActiveIdx(null);
               }}
-              className={`press-tactile py-1.5 px-3.5 rounded-full text-xs font-bold cursor-pointer transition-all border-none flex items-center gap-1.5 ${
+              className={`press-tactile flex cursor-pointer items-center gap-1.5 rounded-full border-none px-3.5 py-1.5 text-xs font-bold transition-all ${
                 metric === "count"
-                  ? "bg-[var(--color-brand)] text-white shadow-xs shadow-primary-500/35"
+                  ? "shadow-primary-500/35 bg-[var(--color-brand)] text-white shadow-xs"
                   : "bg-transparent text-[var(--color-text-2)]"
               }`}
             >
@@ -197,10 +184,10 @@ export function TrendChart({
 
         {/* Active Insight Banner */}
         <div
-          className={`p-3 rounded-xl mb-5 flex items-center justify-between flex-wrap gap-2.5 transition-all border ${
+          className={`mb-5 flex flex-wrap items-center justify-between gap-2.5 rounded-xl border p-3 transition-all ${
             activeBucket
-              ? "bg-[var(--color-surface-2)] border-[var(--color-border)]"
-              : "bg-[var(--color-brand-light)] border-[var(--color-brand)]"
+              ? "border-[var(--color-border)] bg-[var(--color-surface-2)]"
+              : "border-[var(--color-brand)] bg-[var(--color-brand-light)]"
           }`}
         >
           {activeBucket ? (
@@ -214,18 +201,18 @@ export function TrendChart({
               <div className="flex items-center gap-4 text-xs">
                 <div className="text-[var(--color-text-2)]">
                   Omset:{" "}
-                  <strong className="price text-[var(--color-brand)] font-extrabold">
+                  <strong className="price font-extrabold text-[var(--color-brand)]">
                     {formatIDR(activeBucket.revenue)}
                   </strong>
                 </div>
                 <div className="text-[var(--color-text-2)]">
                   Nota:{" "}
-                  <strong className="text-[var(--color-text)] font-extrabold">
+                  <strong className="font-extrabold text-[var(--color-text)]">
                     {activeBucket.count} transaksi
                   </strong>
                 </div>
                 {totalRevenue > 0 && (
-                  <div className="text-[var(--color-text-3)] text-[11px]">
+                  <div className="text-[11px] text-[var(--color-text-3)]">
                     ({Math.round((activeBucket.revenue / totalRevenue) * 100)}% dari total)
                   </div>
                 )}
@@ -236,20 +223,22 @@ export function TrendChart({
               <div className="flex items-center gap-2">
                 <TrendUpIcon size={16} weight="bold" className="text-[var(--color-brand)]" />
                 <span className="text-xs font-bold text-[var(--color-brand-dark)]">
-                  Ringkasan Tren {range === "hari" ? "Hari Ini" : range === "minggu" ? "Minggu Ini" : "Bulan Ini"}
+                  Ringkasan Tren{" "}
+                  {range === "hari" ? "Hari Ini" : range === "minggu" ? "Minggu Ini" : "Bulan Ini"}
                 </span>
               </div>
               <div className="text-xs text-[var(--color-text-2)]">
-                Arahkan kursor atau sentuh diagram batang di bawah untuk melihat rincian setiap waktu
+                Arahkan kursor atau sentuh diagram batang di bawah untuk melihat rincian setiap
+                waktu
               </div>
             </>
           )}
         </div>
 
         {/* Chart Canvas */}
-        <div className="relative w-full h-52 pt-2.5">
+        <div className="relative h-52 w-full pt-2.5">
           {/* Grid Lines */}
-          <div className="absolute inset-0 flex flex-col justify-between pointer-events-none pb-7">
+          <div className="pointer-events-none absolute inset-0 flex flex-col justify-between pb-7">
             {[100, 50, 0].map((pct) => {
               const val = Math.round((maxVal * pct) / 100);
               const label =
@@ -262,13 +251,15 @@ export function TrendChart({
                   : `${val} nota`;
 
               return (
-                <div key={pct} className="flex items-center gap-2 w-full">
-                  <span className="price text-[10px] font-semibold text-[var(--color-text-3)] min-w-[54px] text-right">
+                <div key={pct} className="flex w-full items-center gap-2">
+                  <span className="price min-w-[54px] text-right text-[10px] font-semibold text-[var(--color-text-3)]">
                     {label}
                   </span>
                   <div
                     className={`flex-1 ${
-                      pct === 0 ? "border-b border-[var(--color-border)]" : "border-b border-dashed border-[var(--color-border-subtle)]"
+                      pct === 0
+                        ? "border-b border-[var(--color-border)]"
+                        : "border-b border-dashed border-[var(--color-border-subtle)]"
                     }`}
                   />
                 </div>
@@ -278,7 +269,7 @@ export function TrendChart({
 
           {/* Bar Columns Container */}
           <div
-            className={`absolute inset-0 pl-16 pb-7 flex items-end ${
+            className={`absolute inset-0 flex items-end pb-7 pl-16 ${
               range === "bulan" ? "gap-0.5" : range === "minggu" ? "gap-3.5" : "gap-1.5"
             }`}
           >
@@ -295,16 +286,20 @@ export function TrendChart({
                   onMouseEnter={() => setActiveIdx(idx)}
                   onTouchStart={() => setActiveIdx(idx)}
                   onClick={() => setActiveIdx(idx)}
-                  className="flex-1 h-full flex flex-col justify-end items-center cursor-pointer relative"
+                  className="relative flex h-full flex-1 cursor-pointer flex-col items-center justify-end"
                 >
                   <div
                     className={`w-full rounded-t-md transition-all duration-200 ${
-                      range === "minggu" ? "max-w-[48px]" : range === "hari" ? "max-w-[26px]" : "max-w-[14px]"
+                      range === "minggu"
+                        ? "max-w-[48px]"
+                        : range === "hari"
+                          ? "max-w-[26px]"
+                          : "max-w-[14px]"
                     } ${
                       isHovered
-                        ? "bg-[var(--color-brand)] shadow-lg shadow-primary-500/50 scale-y-105"
+                        ? "shadow-primary-500/50 scale-y-105 bg-[var(--color-brand)] shadow-lg"
                         : isPeak
-                          ? "bg-[var(--color-brand)] shadow-md shadow-primary-500/30"
+                          ? "shadow-primary-500/30 bg-[var(--color-brand)] shadow-md"
                           : hasData
                             ? "bg-[var(--color-brand)]/70"
                             : "bg-[var(--color-surface-3)]"
@@ -320,22 +315,23 @@ export function TrendChart({
           </div>
 
           {/* X-Axis Labels */}
-          <div className="absolute bottom-0 left-16 right-0 h-6 flex items-center justify-between gap-0.5">
+          <div className="absolute right-0 bottom-0 left-16 flex h-6 items-center justify-between gap-0.5">
             {buckets.map((b, idx) => {
               const showLabel =
                 range === "minggu" ||
                 (range === "hari" && idx % 2 === 0) ||
-                (range === "bulan" && (idx === 0 || (idx + 1) % 5 === 0 || idx === buckets.length - 1));
+                (range === "bulan" &&
+                  (idx === 0 || (idx + 1) % 5 === 0 || idx === buckets.length - 1));
               const isHovered = activeIdx === idx;
 
               return (
                 <div
                   key={b.id}
-                  className={`flex-1 text-center text-[10px] truncate ${
+                  className={`flex-1 truncate text-center text-[10px] ${
                     isHovered
-                      ? "text-[var(--color-brand)] font-extrabold"
+                      ? "font-extrabold text-[var(--color-brand)]"
                       : showLabel
-                        ? "text-[var(--color-text-3)] font-semibold"
+                        ? "font-semibold text-[var(--color-text-3)]"
                         : "text-transparent"
                   }`}
                 >

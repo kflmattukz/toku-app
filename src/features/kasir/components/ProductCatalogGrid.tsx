@@ -38,15 +38,15 @@ export function ProductCatalogGrid({
   });
 
   return (
-    <div className="flex-1 flex flex-col min-w-0">
+    <div className="flex min-w-0 flex-1 flex-col">
       {/* Search & Category Header */}
       <div className="mb-5">
         {/* Pill Search Input with filter icon and clear X button */}
-        <div className="relative w-full mb-4">
+        <div className="relative mb-4 w-full">
           <MagnifyingGlassIcon
             size={18}
             weight="bold"
-            className="absolute left-4.5 top-1/2 -translate-y-1/2 text-[var(--color-text-3)] pointer-events-none"
+            className="pointer-events-none absolute top-1/2 left-4.5 -translate-y-1/2 text-[var(--color-text-3)]"
           />
           <input
             type="text"
@@ -61,19 +61,19 @@ export function ProductCatalogGrid({
               type="button"
               onClick={() => onSearchChange("")}
               aria-label="Hapus pencarian"
-              className="press-tactile absolute right-11.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-[var(--color-surface-2)] border border-[var(--color-border)] text-[var(--color-text-3)] flex items-center justify-center cursor-pointer p-0 hover:text-[var(--color-text)]"
+              className="press-tactile absolute top-1/2 right-11.5 flex h-6 w-6 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] p-0 text-[var(--color-text-3)] hover:text-[var(--color-text)]"
             >
               <XIcon size={12} weight="bold" />
             </button>
           )}
-          <div className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-[var(--color-brand)] text-white flex items-center justify-center shadow-xs">
+          <div className="absolute top-1/2 right-2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-[var(--color-brand)] text-white shadow-xs">
             <FadersIcon size={16} weight="bold" />
           </div>
         </div>
 
         {/* Category Navigation Pills */}
         <div
-          className="flex gap-2.5 overflow-x-auto pb-1 no-scrollbar"
+          className="no-scrollbar flex gap-2.5 overflow-x-auto pb-1"
           style={{
             scrollbarWidth: "none",
             msOverflowStyle: "none",
@@ -87,10 +87,10 @@ export function ProductCatalogGrid({
                 key={cat}
                 type="button"
                 onClick={() => onCategoryFilterChange(cat)}
-                className={`press-tactile py-2.5 px-5 rounded-full text-xs cursor-pointer whitespace-nowrap shrink-0 flex items-center gap-1.5 transition-all border ${
+                className={`press-tactile flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-5 py-2.5 text-xs whitespace-nowrap transition-all ${
                   active
-                    ? "border-[var(--color-brand)] bg-[var(--color-brand)] text-white font-extrabold shadow-md shadow-primary-500/20"
-                    : "border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-2)] font-semibold shadow-xs"
+                    ? "shadow-primary-500/20 border-[var(--color-brand)] bg-[var(--color-brand)] font-extrabold text-white shadow-md"
+                    : "border-[var(--color-border)] bg-[var(--color-surface)] font-semibold text-[var(--color-text-2)] shadow-xs"
                 }`}
               >
                 {cat === "Semua" && (
@@ -108,10 +108,10 @@ export function ProductCatalogGrid({
       </div>
 
       {/* Product Grid */}
-      <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-4 content-start">
+      <div className="grid flex-1 grid-cols-2 content-start gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5">
         {filtered.length === 0 ? (
-          <div className="col-span-full flex flex-col items-center justify-center text-center py-16 px-4 text-[var(--color-text-3)] bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl">
-            <PackageIcon size={52} className="opacity-30 mb-3" />
+          <div className="col-span-full flex flex-col items-center justify-center rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-16 text-center text-[var(--color-text-3)]">
+            <PackageIcon size={52} className="mb-3 opacity-30" />
             <p className="m-0 text-sm font-semibold">
               Tidak ada produk{search ? ` untuk "${search}"` : ""}
             </p>

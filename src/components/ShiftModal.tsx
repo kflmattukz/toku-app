@@ -19,12 +19,7 @@ interface ShiftModalProps {
   currentCashier: ActiveCashier | null;
 }
 
-export function ShiftModal({
-  isOpen,
-  onClose,
-  storeId,
-  currentCashier,
-}: ShiftModalProps) {
+export function ShiftModal({ isOpen, onClose, storeId, currentCashier }: ShiftModalProps) {
   const [mounted, setMounted] = useState(false);
   const activeShift = useQuery(api.shifts.getActive, storeId ? { storeId } : "skip");
   const startShift = useMutation(api.shifts.startShift);
@@ -167,7 +162,14 @@ export function ShiftModal({
               >
                 <CheckCircleIcon size={30} weight="fill" />
               </div>
-              <h3 style={{ fontSize: 20, fontWeight: 800, margin: "0 0 4px", color: "var(--color-text)" }}>
+              <h3
+                style={{
+                  fontSize: 20,
+                  fontWeight: 800,
+                  margin: "0 0 4px",
+                  color: "var(--color-text)",
+                }}
+              >
                 Rekap Tutup Shift Kasir
               </h3>
               <p style={{ fontSize: 13, color: "var(--color-text-3)", margin: 0 }}>
@@ -226,13 +228,23 @@ export function ShiftModal({
                   justifyContent: "space-between",
                   fontSize: 13,
                   fontWeight: 800,
-                  color: summaryResult.difference === 0 ? "#16a34a" : summaryResult.difference > 0 ? "#2563eb" : "#dc2626",
+                  color:
+                    summaryResult.difference === 0
+                      ? "#16a34a"
+                      : summaryResult.difference > 0
+                        ? "#2563eb"
+                        : "#dc2626",
                 }}
               >
                 <span>Selisih Kas:</span>
                 <span>
-                  {summaryResult.difference > 0 ? "+" : ""}Rp {summaryResult.difference.toLocaleString("id-ID")}
-                  {summaryResult.difference === 0 ? " (Pas)" : summaryResult.difference > 0 ? " (Lebih)" : " (Kurang)"}
+                  {summaryResult.difference > 0 ? "+" : ""}Rp{" "}
+                  {summaryResult.difference.toLocaleString("id-ID")}
+                  {summaryResult.difference === 0
+                    ? " (Pas)"
+                    : summaryResult.difference > 0
+                      ? " (Lebih)"
+                      : " (Kurang)"}
                 </span>
               </div>
             </div>
@@ -276,7 +288,14 @@ export function ShiftModal({
               >
                 <MoneyIcon size={24} weight="bold" />
               </div>
-              <h3 style={{ fontSize: 19, fontWeight: 800, margin: "0 0 4px", color: "var(--color-text)" }}>
+              <h3
+                style={{
+                  fontSize: 19,
+                  fontWeight: 800,
+                  margin: "0 0 4px",
+                  color: "var(--color-text)",
+                }}
+              >
                 Buka Shift Kasir
               </h3>
               <p style={{ fontSize: 12, color: "var(--color-text-3)", margin: 0 }}>
@@ -316,7 +335,14 @@ export function ShiftModal({
                   boxSizing: "border-box",
                 }}
               />
-              <span style={{ fontSize: 11, color: "var(--color-text-3)", marginTop: 4, display: "block" }}>
+              <span
+                style={{
+                  fontSize: 11,
+                  color: "var(--color-text-3)",
+                  marginTop: 4,
+                  display: "block",
+                }}
+              >
                 Uang kembalian awal di laci kasir saat toko mulai buka
               </span>
             </div>
@@ -359,11 +385,22 @@ export function ShiftModal({
               >
                 <ClockCounterClockwiseIcon size={24} weight="bold" />
               </div>
-              <h3 style={{ fontSize: 19, fontWeight: 800, margin: "0 0 4px", color: "var(--color-text)" }}>
+              <h3
+                style={{
+                  fontSize: 19,
+                  fontWeight: 800,
+                  margin: "0 0 4px",
+                  color: "var(--color-text)",
+                }}
+              >
                 Tutup Shift Kasir
               </h3>
               <p style={{ fontSize: 12, color: "var(--color-text-3)", margin: 0 }}>
-                Shift dibuka sejak: {new Date(activeShift.startedAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
+                Shift dibuka sejak:{" "}
+                {new Date(activeShift.startedAt).toLocaleTimeString("id-ID", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
               </p>
             </div>
 

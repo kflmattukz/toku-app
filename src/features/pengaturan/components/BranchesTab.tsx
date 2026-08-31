@@ -1,8 +1,4 @@
-import {
-  BuildingsIcon,
-  PlusIcon,
-  CheckCircleIcon,
-} from "@phosphor-icons/react";
+import { BuildingsIcon, PlusIcon, CheckCircleIcon } from "@phosphor-icons/react";
 import type { Id } from "../../../../convex/_generated/dataModel";
 
 interface BranchesTabProps {
@@ -31,16 +27,16 @@ export function BranchesTab({
   return (
     <div className="flex flex-col gap-5">
       {/* Add Branch Form */}
-      <section className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-5 shadow-xs">
-        <h2 className="text-base font-extrabold text-[var(--color-text)] flex items-center gap-2 mb-4">
+      <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-xs">
+        <h2 className="mb-4 flex items-center gap-2 text-base font-extrabold text-[var(--color-text)]">
           <BuildingsIcon size={20} weight="bold" className="text-[var(--color-brand)]" />
           <span>Tambah Cabang Baru</span>
         </h2>
 
         <form onSubmit={onCreateBranch}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+          <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
-              <label className="block text-xs font-bold text-[var(--color-text)] mb-2">
+              <label className="mb-2 block text-xs font-bold text-[var(--color-text)]">
                 Nama Cabang
               </label>
               <input
@@ -49,11 +45,11 @@ export function BranchesTab({
                 onChange={(e) => setNewBranchName(e.target.value)}
                 placeholder="Contoh: Cabang Boulevard"
                 required
-                className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
+                className="focus:ring-primary-500/20 focus:border-primary-500 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 text-sm font-medium text-[var(--color-text)] focus:ring-2 focus:outline-none"
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-[var(--color-text)] mb-2">
+              <label className="mb-2 block text-xs font-bold text-[var(--color-text)]">
                 Alamat Cabang (Opsional)
               </label>
               <input
@@ -61,7 +57,7 @@ export function BranchesTab({
                 value={newBranchAddress}
                 onChange={(e) => setNewBranchAddress(e.target.value)}
                 placeholder="Jl. Boulevard Barat Blok A"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
+                className="focus:ring-primary-500/20 focus:border-primary-500 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 text-sm font-medium text-[var(--color-text)] focus:ring-2 focus:outline-none"
               />
             </div>
           </div>
@@ -69,7 +65,7 @@ export function BranchesTab({
           <button
             type="submit"
             disabled={isAddingBranch}
-            className="press-tactile w-full sm:w-auto px-6 py-2.5 rounded-full bg-[var(--color-brand)] text-white font-extrabold text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-md shadow-primary-500/20 disabled:opacity-60"
+            className="press-tactile shadow-primary-500/20 flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-full bg-[var(--color-brand)] px-6 py-2.5 text-xs font-extrabold text-white shadow-md disabled:opacity-60 sm:w-auto"
           >
             <PlusIcon size={16} weight="bold" />
             <span>{isAddingBranch ? "Menyimpan Cabang..." : "Buat Cabang Baru"}</span>
@@ -78,66 +74,67 @@ export function BranchesTab({
       </section>
 
       {/* Branches List */}
-      <section className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-5 shadow-xs">
-        <h2 className="text-base font-extrabold text-[var(--color-text)] flex items-center gap-2 mb-4">
+      <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-xs">
+        <h2 className="mb-4 flex items-center gap-2 text-base font-extrabold text-[var(--color-text)]">
           <BuildingsIcon size={20} weight="bold" className="text-[var(--color-brand)]" />
           <span>Daftar Cabang Aktif ({userStores?.length ?? 0})</span>
         </h2>
 
         <div className="flex flex-col gap-2.5">
-          {userStores && userStores.length > 0 ? (
-            userStores.map((st) => {
-              const isCurrent = currentStoreId === st._id;
-              return (
-                <div
-                  key={st._id}
-                  className={`flex items-center justify-between p-3.5 rounded-xl gap-3 flex-wrap transition-all border ${
-                    isCurrent
-                      ? "bg-[var(--color-brand-light)] border-[var(--color-brand)]"
-                      : "bg-[var(--color-surface-2)] border-[var(--color-border)]"
-                  }`}
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div
-                      className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border ${
-                        isCurrent
-                          ? "bg-[var(--color-brand)] text-white border-transparent"
-                          : "bg-[var(--color-surface)] text-[var(--color-brand)] border-[var(--color-border)]"
-                      }`}
-                    >
-                      <BuildingsIcon size={20} weight="bold" />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-sm font-extrabold text-[var(--color-text)]">
-                        {st.name} —{" "}
-                        <span className="text-[var(--color-brand)]">
-                          {st.branchName || "Pusat"}
-                        </span>
+          {userStores && userStores.length > 0
+            ? userStores.map((st) => {
+                const isCurrent = currentStoreId === st._id;
+                return (
+                  <div
+                    key={st._id}
+                    className={`flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3.5 transition-all ${
+                      isCurrent
+                        ? "border-[var(--color-brand)] bg-[var(--color-brand-light)]"
+                        : "border-[var(--color-border)] bg-[var(--color-surface-2)]"
+                    }`}
+                  >
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div
+                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border ${
+                          isCurrent
+                            ? "border-transparent bg-[var(--color-brand)] text-white"
+                            : "border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-brand)]"
+                        }`}
+                      >
+                        <BuildingsIcon size={20} weight="bold" />
                       </div>
-                      <div className="text-xs text-[var(--color-text-3)] mt-0.5">
-                        {st.address || "Alamat belum diatur"} {st.isMainBranch && "• (Cabang Utama)"}
+                      <div className="min-w-0">
+                        <div className="text-sm font-extrabold text-[var(--color-text)]">
+                          {st.name} —{" "}
+                          <span className="text-[var(--color-brand)]">
+                            {st.branchName || "Pusat"}
+                          </span>
+                        </div>
+                        <div className="mt-0.5 text-xs text-[var(--color-text-3)]">
+                          {st.address || "Alamat belum diatur"}{" "}
+                          {st.isMainBranch && "• (Cabang Utama)"}
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {isCurrent ? (
-                    <span className="text-[11px] font-extrabold text-[var(--color-brand)] bg-[var(--color-surface)] px-3 py-1 rounded-full border border-[var(--color-brand)] inline-flex items-center gap-1 ml-auto">
-                      <CheckCircleIcon size={14} weight="fill" />
-                      <span>Sedang Digunakan</span>
-                    </span>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => onSelectStore(st._id)}
-                      className="press-tactile py-1.5 px-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] text-xs font-bold cursor-pointer hover:bg-[var(--color-surface-2)] ml-auto"
-                    >
-                      Beralih ke Cabang Ini
-                    </button>
-                  )}
-                </div>
-              );
-            })
-          ) : null}
+                    {isCurrent ? (
+                      <span className="ml-auto inline-flex items-center gap-1 rounded-full border border-[var(--color-brand)] bg-[var(--color-surface)] px-3 py-1 text-[11px] font-extrabold text-[var(--color-brand)]">
+                        <CheckCircleIcon size={14} weight="fill" />
+                        <span>Sedang Digunakan</span>
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => onSelectStore(st._id)}
+                        className="press-tactile ml-auto cursor-pointer rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-xs font-bold text-[var(--color-text)] hover:bg-[var(--color-surface-2)]"
+                      >
+                        Beralih ke Cabang Ini
+                      </button>
+                    )}
+                  </div>
+                );
+              })
+            : null}
         </div>
       </section>
     </div>

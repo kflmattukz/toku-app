@@ -33,10 +33,7 @@ function Laporan() {
   const totalRevenue = summary.total ?? 0;
   const totalTransactions = summary.count ?? 0;
   const txs = summary.transactions ?? [];
-  const totalItems = txs.reduce(
-    (sum, tx) => sum + tx.items.reduce((s, i) => s + i.qty, 0),
-    0,
-  );
+  const totalItems = txs.reduce((sum, tx) => sum + tx.items.reduce((s, i) => s + i.qty, 0), 0);
 
   const productMap: Record<string, TopProduct> = {};
   for (const tx of txs) {
@@ -53,13 +50,13 @@ function Laporan() {
   return (
     <div className="w-full pb-12">
       {/* Header with period toggle pills */}
-      <div className="flex items-center justify-between flex-wrap gap-4 mb-6">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
           <div className="eyebrow-tag">RINGKASAN OMSET & REKAP</div>
-          <h1 className="text-2xl font-black text-[var(--color-text)] tracking-tight mt-0.5">
+          <h1 className="mt-0.5 text-2xl font-black tracking-tight text-[var(--color-text)]">
             Laporan Penjualan
           </h1>
-          <p className="text-xs text-[var(--color-text-2)] mt-1">
+          <p className="mt-1 text-xs text-[var(--color-text-2)]">
             Pantau performa bisnis dan omset toko secara real-time
           </p>
         </div>
@@ -78,11 +75,7 @@ function Laporan() {
       />
 
       {/* Interactive Sales & Revenue Trend Chart */}
-      <TrendChart
-        txs={txs}
-        range={range}
-        totalRevenue={totalRevenue}
-      />
+      <TrendChart txs={txs} range={range} totalRevenue={totalRevenue} />
 
       {/* Top-Selling Products Ranking List */}
       <TopProductsLeaderboard topProducts={topProducts} />
@@ -92,13 +85,13 @@ function Laporan() {
 
 function LaporanLoader() {
   return (
-    <div className="flex flex-col items-center justify-center h-[60vh] gap-3">
+    <div className="flex h-[60vh] flex-col items-center justify-center gap-3">
       <PackageIcon
         size={48}
         weight="duotone"
-        className="text-[var(--color-brand)] opacity-50 animate-pulse"
+        className="animate-pulse text-[var(--color-brand)] opacity-50"
       />
-      <p className="text-[var(--color-text-2)] text-sm font-bold">Memuat laporan...</p>
+      <p className="text-sm font-bold text-[var(--color-text-2)]">Memuat laporan...</p>
     </div>
   );
 }

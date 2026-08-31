@@ -130,10 +130,7 @@ export function KasirReceipt({ tx, storeName }: KasirReceiptProps) {
                 </div>
               </div>
               <div style={{ textAlign: "right" }}>
-                <span
-                  className="price"
-                  style={{ fontSize: 13, fontWeight: 800, color: "#1c1917" }}
-                >
+                <span className="price" style={{ fontSize: 13, fontWeight: 800, color: "#1c1917" }}>
                   {formatIDR(itemTotal)}
                 </span>
                 {disc.hasDiscount && (

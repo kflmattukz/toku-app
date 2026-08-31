@@ -5,11 +5,7 @@ import { useAppStore } from "#/lib/store-context";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ChartBarIcon } from "@phosphor-icons/react";
-import {
-  StockOverviewCards,
-  StockTable,
-  RestockModal,
-} from "#/features/stok";
+import { StockOverviewCards, StockTable, RestockModal } from "#/features/stok";
 import type { Product } from "#/features/produk";
 
 export const Route = createFileRoute("/_app/stok")({ component: Stok });
@@ -62,19 +58,16 @@ function Stok() {
       {/* Header */}
       <div className="mb-6">
         <div className="eyebrow-tag">MANAJEMEN PERSEDIAAN</div>
-        <h1 className="text-2xl font-black text-[var(--color-text)] tracking-tight mt-0.5">
+        <h1 className="mt-0.5 text-2xl font-black tracking-tight text-[var(--color-text)]">
           Kontrol Stok Barang
         </h1>
-        <p className="text-xs text-[var(--color-text-2)] mt-1">
+        <p className="mt-1 text-xs text-[var(--color-text-2)]">
           Pantau dan lakukan restock cepat untuk barang yang hampir habis
         </p>
       </div>
 
       {/* Overview Metric Cards */}
-      <StockOverviewCards
-        lowStockCount={lowStock.length}
-        healthyStockCount={okStock.length}
-      />
+      <StockOverviewCards lowStockCount={lowStock.length} healthyStockCount={okStock.length} />
 
       {/* Stock Table & Urgent Alert List */}
       <StockTable
@@ -100,13 +93,13 @@ function Stok() {
 
 function StokLoader() {
   return (
-    <div className="flex flex-col items-center justify-center h-[60vh] gap-3">
+    <div className="flex h-[60vh] flex-col items-center justify-center gap-3">
       <ChartBarIcon
         size={48}
         weight="duotone"
-        className="text-[var(--color-brand)] opacity-50 animate-pulse"
+        className="animate-pulse text-[var(--color-brand)] opacity-50"
       />
-      <p className="text-[var(--color-text-2)] text-sm font-bold">Memuat data persediaan...</p>
+      <p className="text-sm font-bold text-[var(--color-text-2)]">Memuat data persediaan...</p>
     </div>
   );
 }

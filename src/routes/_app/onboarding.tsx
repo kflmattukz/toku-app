@@ -51,14 +51,14 @@ function Onboarding() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 sm:p-8 bg-[var(--color-surface-2)]">
-      <div className="w-full max-w-xl bg-[var(--color-surface)] rounded-3xl p-6 sm:p-8 shadow-xl border border-[var(--color-border)]">
+    <div className="flex min-h-screen items-center justify-center bg-[var(--color-surface-2)] p-4 sm:p-8">
+      <div className="w-full max-w-xl rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-xl sm:p-8">
         <OnboardingHeader />
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
           {/* Store Name Input */}
           <div>
-            <label className="block text-xs font-bold text-[var(--color-text)] mb-2">
+            <label className="mb-2 block text-xs font-bold text-[var(--color-text)]">
               Nama Toko / Usaha
             </label>
             <input
@@ -67,30 +67,25 @@ function Onboarding() {
               onChange={(e) => setName(e.target.value)}
               placeholder="Contoh: Warung Bu Ani, Toko Berkah..."
               required
-              className="w-full px-4 py-3 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
+              className="focus:ring-primary-500/20 focus:border-primary-500 w-full rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-sm font-semibold text-[var(--color-text)] focus:ring-2 focus:outline-none"
             />
           </div>
 
           {/* Business Category Grid */}
           <div>
-            <label className="block text-xs font-bold text-[var(--color-text)] mb-2.5">
+            <label className="mb-2.5 block text-xs font-bold text-[var(--color-text)]">
               Pilih Jenis Usaha / Toko
             </label>
-            <BusinessCategoryGrid
-              selectedCategory={category}
-              onSelectCategory={setCategory}
-            />
+            <BusinessCategoryGrid selectedCategory={category} onSelectCategory={setCategory} />
           </div>
 
-          {error && (
-            <p className="text-xs font-bold text-rose-600 m-0 text-center">{error}</p>
-          )}
+          {error && <p className="m-0 text-center text-xs font-bold text-rose-600">{error}</p>}
 
           {/* Submit Button */}
           <button
             type="submit"
             disabled={saving || !name.trim() || !category}
-            className="press-tactile w-full py-3.5 px-6 rounded-full bg-[var(--color-brand)] text-white text-xs font-extrabold flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-primary-500/25 disabled:opacity-50"
+            className="press-tactile shadow-primary-500/25 flex w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-[var(--color-brand)] px-6 py-3.5 text-xs font-extrabold text-white shadow-lg disabled:opacity-50"
           >
             <span>{saving ? "Menyiapkan Toko..." : "Mulai Gunakan Toku POS"}</span>
             <ArrowRightIcon size={16} weight="bold" />

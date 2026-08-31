@@ -53,28 +53,28 @@ export function StoreProfileTab({
   return (
     <div className="flex flex-col gap-5">
       {/* Store Information */}
-      <section className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-5 shadow-xs">
-        <h2 className="text-base font-extrabold text-[var(--color-text)] flex items-center gap-2 mb-4">
+      <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-xs">
+        <h2 className="mb-4 flex items-center gap-2 text-base font-extrabold text-[var(--color-text)]">
           <StorefrontIcon size={20} weight="bold" className="text-[var(--color-brand)]" />
           <span>Informasi Usaha</span>
         </h2>
 
         <form onSubmit={onSave}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+          <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-xs font-bold text-[var(--color-text)] mb-2">
+              <label className="mb-2 block text-xs font-bold text-[var(--color-text)]">
                 Nama Toko / Bisnis
               </label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
+                className="focus:ring-primary-500/20 focus:border-primary-500 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 text-sm font-medium text-[var(--color-text)] focus:ring-2 focus:outline-none"
                 required
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-[var(--color-text)] mb-2">
+              <label className="mb-2 block text-xs font-bold text-[var(--color-text)]">
                 Nama Cabang Ini
               </label>
               <input
@@ -82,23 +82,23 @@ export function StoreProfileTab({
                 value={branchName}
                 onChange={(e) => setBranchName(e.target.value)}
                 placeholder="Contoh: Pusat, Cabang Kemang"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
+                className="focus:ring-primary-500/20 focus:border-primary-500 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 text-sm font-medium text-[var(--color-text)] focus:ring-2 focus:outline-none"
               />
             </div>
           </div>
 
           <div className="mb-4">
-            <label className="block text-xs font-bold text-[var(--color-text)] mb-2">
+            <label className="mb-2 block text-xs font-bold text-[var(--color-text)]">
               Kategori Usaha UMKM
             </label>
             <CategorySelectPicker value={category} onChange={setCategory} />
-            <span className="text-[11px] text-[var(--color-text-3)] mt-1.5 block">
+            <span className="mt-1.5 block text-[11px] text-[var(--color-text-3)]">
               Kategori menentukan klasifikasi profil bisnis dan rekomendasi fitur untuk toko Anda.
             </span>
           </div>
 
           <div className="mb-4">
-            <label className="block text-xs font-bold text-[var(--color-text)] mb-2">
+            <label className="mb-2 block text-xs font-bold text-[var(--color-text)]">
               Alamat Toko (Dicetak pada Struk)
             </label>
             <input
@@ -106,12 +106,12 @@ export function StoreProfileTab({
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               placeholder="Jl. Merdeka No. 45, Jakarta"
-              className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
+              className="focus:ring-primary-500/20 focus:border-primary-500 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 text-sm font-medium text-[var(--color-text)] focus:ring-2 focus:outline-none"
             />
           </div>
 
           <div className="mb-6">
-            <label className="block text-xs font-bold text-[var(--color-text)] mb-2 flex items-center gap-1.5">
+            <label className="mb-2 block flex items-center gap-1.5 text-xs font-bold text-[var(--color-text)]">
               <BellRingingIcon size={16} weight="bold" className="text-[var(--color-brand)]" />
               <span>Batas Peringatan Stok Menipis (Auto Restock Alert)</span>
             </label>
@@ -122,23 +122,24 @@ export function StoreProfileTab({
                 max="1000"
                 value={lowStockThreshold}
                 onChange={(e) => setLowStockThreshold(Number(e.target.value))}
-                className="w-36 px-3.5 py-2.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
+                className="focus:ring-primary-500/20 focus:border-primary-500 w-36 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 text-sm font-bold text-[var(--color-text)] focus:ring-2 focus:outline-none"
               />
-              <span className="text-xs text-[var(--color-text-2)] font-semibold">Unit / Pcs</span>
+              <span className="text-xs font-semibold text-[var(--color-text-2)]">Unit / Pcs</span>
             </div>
-            <span className="text-[11px] text-[var(--color-text-3)] mt-1.5 block">
-              Sistem kasir otomatis menandai produk berstatus merah jika sisa stok di bawah angka ini.
+            <span className="mt-1.5 block text-[11px] text-[var(--color-text-3)]">
+              Sistem kasir otomatis menandai produk berstatus merah jika sisa stok di bawah angka
+              ini.
             </span>
           </div>
 
           <button
             type="submit"
             disabled={saving}
-            className={`press-tactile w-full sm:w-auto px-7 py-3 rounded-full text-white font-extrabold text-sm flex items-center justify-center gap-2 cursor-pointer shadow-md transition-all ${
+            className={`press-tactile flex w-full cursor-pointer items-center justify-center gap-2 rounded-full px-7 py-3 text-sm font-extrabold text-white shadow-md transition-all sm:w-auto ${
               saved
                 ? "bg-[var(--color-success)] shadow-emerald-500/20"
-                : "bg-[var(--color-brand)] shadow-primary-500/30"
-            } disabled:opacity-60 disabled:cursor-not-allowed`}
+                : "shadow-primary-500/30 bg-[var(--color-brand)]"
+            } disabled:cursor-not-allowed disabled:opacity-60`}
           >
             {saved ? (
               <>
@@ -155,14 +156,14 @@ export function StoreProfileTab({
       </section>
 
       {/* Appearance */}
-      <section className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-5 shadow-xs">
-        <h2 className="text-base font-extrabold text-[var(--color-text)] flex items-center gap-2 mb-4">
+      <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-xs">
+        <h2 className="mb-4 flex items-center gap-2 text-base font-extrabold text-[var(--color-text)]">
           <PaletteIcon size={20} weight="bold" className="text-[var(--color-brand)]" />
           <span>Tampilan Aplikasi</span>
         </h2>
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-11 h-11 rounded-xl bg-[var(--color-surface-2)] border border-[var(--color-border)] flex items-center justify-center shrink-0">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-2)]">
               {dark ? (
                 <MoonIcon size={22} weight="duotone" className="text-[var(--color-brand)]" />
               ) : (
@@ -173,7 +174,7 @@ export function StoreProfileTab({
               <div className="text-sm font-extrabold text-[var(--color-text)]">
                 Mode Tampilan Gelap (Dark Mode)
               </div>
-              <div className="text-xs text-[var(--color-text-2)] mt-0.5">
+              <div className="mt-0.5 text-xs text-[var(--color-text-2)]">
                 Nuansa OLED gelap kontras tinggi, nyaman di mata saat shift malam
               </div>
             </div>
@@ -182,12 +183,14 @@ export function StoreProfileTab({
             type="button"
             onClick={onToggleDark}
             aria-label="Toggle dark mode"
-            className={`press-tactile w-14 h-8 rounded-full border-none cursor-pointer relative transition-all shrink-0 ${
-              dark ? "bg-[var(--color-brand)] shadow-sm shadow-primary-500/40" : "bg-[var(--color-border)]"
+            className={`press-tactile relative h-8 w-14 shrink-0 cursor-pointer rounded-full border-none transition-all ${
+              dark
+                ? "shadow-primary-500/40 bg-[var(--color-brand)] shadow-sm"
+                : "bg-[var(--color-border)]"
             }`}
           >
             <div
-              className={`w-6.5 h-6.5 rounded-full bg-white absolute top-0.5 transition-all shadow-xs ${
+              className={`absolute top-0.5 h-6.5 w-6.5 rounded-full bg-white shadow-xs transition-all ${
                 dark ? "left-7" : "left-0.5"
               }`}
             />
@@ -196,21 +199,21 @@ export function StoreProfileTab({
       </section>
 
       {/* Account */}
-      <section className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-5 shadow-xs">
-        <h2 className="text-base font-extrabold text-[var(--color-text)] flex items-center gap-2 mb-4">
+      <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-xs">
+        <h2 className="mb-4 flex items-center gap-2 text-base font-extrabold text-[var(--color-text)]">
           <UserIcon size={20} weight="bold" className="text-[var(--color-brand)]" />
           <span>Akun Pengguna & Sesi</span>
         </h2>
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-3.5 min-w-0">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-3.5">
             {session?.user.image ? (
               <img
                 src={session.user.image}
-                className="w-12 h-12 rounded-2xl border-2 border-[var(--color-border)] object-cover shrink-0"
+                className="h-12 w-12 shrink-0 rounded-2xl border-2 border-[var(--color-border)] object-cover"
                 alt="avatar"
               />
             ) : (
-              <div className="w-12 h-12 rounded-2xl bg-[var(--color-brand-light)] text-[var(--color-brand)] flex items-center justify-center shrink-0">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--color-brand-light)] text-[var(--color-brand)]">
                 <UserIcon size={24} weight="duotone" />
               </div>
             )}
@@ -218,7 +221,7 @@ export function StoreProfileTab({
               <div className="text-sm font-extrabold text-[var(--color-text)]">
                 {session?.user.name || "Pemilik Toko"}
               </div>
-              <div className="text-xs text-[var(--color-text-2)] truncate">
+              <div className="truncate text-xs text-[var(--color-text-2)]">
                 {session?.user.email}
               </div>
             </div>
@@ -227,7 +230,7 @@ export function StoreProfileTab({
           <button
             type="button"
             onClick={onLogout}
-            className="press-tactile py-2.5 px-4.5 border border-[var(--color-danger)]/30 bg-[var(--color-danger-light)] text-[var(--color-danger-text)] rounded-full font-extrabold text-xs cursor-pointer inline-flex items-center gap-2"
+            className="press-tactile inline-flex cursor-pointer items-center gap-2 rounded-full border border-[var(--color-danger)]/30 bg-[var(--color-danger-light)] px-4.5 py-2.5 text-xs font-extrabold text-[var(--color-danger-text)]"
           >
             <SignOutIcon size={16} weight="bold" />
             <span>Keluar dari Akun</span>

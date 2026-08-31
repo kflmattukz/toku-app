@@ -13,7 +13,7 @@ const PERIODS: { key: Range; label: string }[] = [
 
 export function ReportPeriodFilter({ range, onRangeChange }: ReportPeriodFilterProps) {
   return (
-    <div className="flex items-center gap-1 bg-[var(--color-surface-3)] p-1 rounded-full border border-[var(--color-border)]">
+    <div className="flex items-center gap-1 rounded-full border border-[var(--color-border)] bg-[var(--color-surface-3)] p-1">
       {PERIODS.map((r) => {
         const active = range === r.key;
         return (
@@ -21,10 +21,10 @@ export function ReportPeriodFilter({ range, onRangeChange }: ReportPeriodFilterP
             key={r.key}
             type="button"
             onClick={() => onRangeChange(r.key)}
-            className={`press-tactile py-1.5 px-4 rounded-full text-xs cursor-pointer transition-all border-none ${
+            className={`press-tactile cursor-pointer rounded-full border-none px-4 py-1.5 text-xs transition-all ${
               active
-                ? "bg-[var(--color-surface)] text-[var(--color-brand-dark)] font-extrabold shadow-xs"
-                : "bg-transparent text-[var(--color-text-2)] font-semibold hover:text-[var(--color-text)]"
+                ? "bg-[var(--color-surface)] font-extrabold text-[var(--color-brand-dark)] shadow-xs"
+                : "bg-transparent font-semibold text-[var(--color-text-2)] hover:text-[var(--color-text)]"
             }`}
           >
             {r.label}

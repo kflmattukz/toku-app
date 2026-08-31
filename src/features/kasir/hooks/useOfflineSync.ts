@@ -6,9 +6,7 @@ import { getOfflineQueue, clearOfflineQueue } from "#/lib/offline-queue";
 import type { Id } from "../../../../convex/_generated/dataModel";
 
 export function useOfflineSync(storeId?: Id<"stores">) {
-  const [isOnline, setIsOnline] = useState(
-    typeof window !== "undefined" ? navigator.onLine : true,
-  );
+  const [isOnline, setIsOnline] = useState(typeof window !== "undefined" ? navigator.onLine : true);
   const createTx = useMutation(api.transactions.create);
 
   const flushOfflineQueue = useCallback(async () => {

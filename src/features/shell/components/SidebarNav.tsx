@@ -72,19 +72,19 @@ export function SidebarNav({
   }, []);
 
   return (
-    <div className="flex flex-col h-full bg-[var(--color-surface)] select-none">
+    <div className="flex h-full flex-col bg-[var(--color-surface)] select-none">
       {/* Brand Header */}
       <div className={`border-b border-[var(--color-border)] ${collapsed ? "p-3" : "p-4"}`}>
         <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2.5 min-w-0">
+          <div className="flex min-w-0 items-center gap-2.5">
             <img
               src="/logo.png"
               alt="Toku POS"
-              className="w-8 h-8 rounded-xl object-contain shrink-0"
+              className="h-8 w-8 shrink-0 rounded-xl object-contain"
             />
             {!collapsed && (
               <div className="min-w-0 flex-1">
-                <div className="text-sm font-extrabold text-[var(--color-text)] truncate leading-tight">
+                <div className="truncate text-sm leading-tight font-extrabold text-[var(--color-text)]">
                   {store ? store.name : "Toku POS"}
                 </div>
                 {userStores && userStores.length > 1 ? (
@@ -92,18 +92,16 @@ export function SidebarNav({
                     <button
                       type="button"
                       onClick={() => setShowStorePicker((prev) => !prev)}
-                      className="press-tactile py-0.5 px-2 rounded-md bg-[var(--color-surface-2)] border border-[var(--color-border)] text-[10px] font-bold text-[var(--color-brand)] inline-flex items-center gap-1 cursor-pointer"
+                      className="press-tactile inline-flex cursor-pointer items-center gap-1 rounded-md border border-[var(--color-border)] bg-[var(--color-surface-2)] px-2 py-0.5 text-[10px] font-bold text-[var(--color-brand)]"
                     >
                       <BuildingsIcon size={12} weight="bold" />
-                      <span className="truncate max-w-[110px]">
-                        {store?.branchName || "Pusat"}
-                      </span>
+                      <span className="max-w-[110px] truncate">{store?.branchName || "Pusat"}</span>
                       <CaretDownIcon size={10} weight="bold" />
                     </button>
 
                     {showStorePicker && (
-                      <div className="absolute left-0 top-full mt-1.5 w-48 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl shadow-lg p-1.5 z-50 flex flex-col gap-1">
-                        <div className="text-[10px] font-bold text-[var(--color-text-3)] px-2 py-1">
+                      <div className="absolute top-full left-0 z-50 mt-1.5 flex w-48 flex-col gap-1 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-1.5 shadow-lg">
+                        <div className="px-2 py-1 text-[10px] font-bold text-[var(--color-text-3)]">
                           PILIH CABANG OUTLET
                         </div>
                         {userStores.map((st) => (
@@ -114,7 +112,7 @@ export function SidebarNav({
                               onSelectStore(st._id);
                               setShowStorePicker(false);
                             }}
-                            className={`w-full text-left py-1.5 px-2.5 rounded-lg text-xs font-bold cursor-pointer transition-colors ${
+                            className={`w-full cursor-pointer rounded-lg px-2.5 py-1.5 text-left text-xs font-bold transition-colors ${
                               store?._id === st._id
                                 ? "bg-[var(--color-brand-light)] text-[var(--color-brand)]"
                                 : "text-[var(--color-text)] hover:bg-[var(--color-surface-2)]"
@@ -128,8 +126,10 @@ export function SidebarNav({
                   </div>
                 ) : (
                   <div className="mt-1">
-                    <span className="bg-[var(--color-brand-light)] border border-[var(--color-border)] px-1.5 py-0.5 rounded-full font-bold text-[var(--color-brand)] text-[9px] inline-block">
-                      {store ? CATEGORY_LABELS[store.category] ?? store.category : "Menyiapkan..."}
+                    <span className="inline-block rounded-full border border-[var(--color-border)] bg-[var(--color-brand-light)] px-1.5 py-0.5 text-[9px] font-bold text-[var(--color-brand)]">
+                      {store
+                        ? (CATEGORY_LABELS[store.category] ?? store.category)
+                        : "Menyiapkan..."}
                     </span>
                   </div>
                 )}
@@ -142,7 +142,7 @@ export function SidebarNav({
             <button
               type="button"
               onClick={onToggleCollapse}
-              className="press-tactile w-6 h-6 rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-text-2)] flex items-center justify-center cursor-pointer shrink-0"
+              className="press-tactile flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-text-2)]"
               title={collapsed ? "Perluas Sidebar" : "Ciutkan Sidebar"}
             >
               {collapsed ? (
@@ -156,12 +156,10 @@ export function SidebarNav({
 
         {/* Staff & Shift Quick Widget in Sidebar */}
         {!collapsed && (
-          <div className="mt-3 bg-[var(--color-surface-2)] rounded-xl p-2 border border-[var(--color-border)] flex items-center justify-between">
+          <div className="mt-3 flex items-center justify-between rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-2)] p-2">
             <div className="min-w-0">
-              <div className="text-[10px] text-[var(--color-text-3)] font-bold">
-                KASIR BERTUGAS
-              </div>
-              <div className="text-xs font-extrabold text-[var(--color-text)] truncate">
+              <div className="text-[10px] font-bold text-[var(--color-text-3)]">KASIR BERTUGAS</div>
+              <div className="truncate text-xs font-extrabold text-[var(--color-text)]">
                 {currentCashier.name}
               </div>
             </div>
@@ -169,7 +167,7 @@ export function SidebarNav({
               <button
                 type="button"
                 onClick={onOpenCashierModal}
-                className="press-tactile bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg p-1.5 cursor-pointer text-[var(--color-text)] hover:bg-[var(--color-surface-3)]"
+                className="press-tactile cursor-pointer rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-1.5 text-[var(--color-text)] hover:bg-[var(--color-surface-3)]"
                 title="Ganti Kasir / PIN"
               >
                 <LockKeyIcon size={13} />
@@ -177,17 +175,14 @@ export function SidebarNav({
               <button
                 type="button"
                 onClick={onOpenShiftModal}
-                className={`press-tactile rounded-lg p-1.5 cursor-pointer flex items-center border ${
+                className={`press-tactile flex cursor-pointer items-center rounded-lg border p-1.5 ${
                   activeShift
-                    ? "bg-emerald-500/15 border-emerald-500 text-emerald-600"
-                    : "bg-[var(--color-surface)] border-[var(--color-border)] text-[var(--color-text-2)]"
+                    ? "border-emerald-500 bg-emerald-500/15 text-emerald-600"
+                    : "border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-2)]"
                 }`}
                 title={activeShift ? "Tutup Shift Kasir" : "Buka Shift Kasir"}
               >
-                <ClockCounterClockwiseIcon
-                  size={13}
-                  weight={activeShift ? "fill" : "regular"}
-                />
+                <ClockCounterClockwiseIcon size={13} weight={activeShift ? "fill" : "regular"} />
               </button>
             </div>
           </div>
@@ -195,7 +190,9 @@ export function SidebarNav({
       </div>
 
       {/* Navigation Links */}
-      <nav className={`flex-1 ${collapsed ? "py-3 px-1.5" : "py-3.5 px-2"} overflow-y-auto space-y-1`}>
+      <nav
+        className={`flex-1 ${collapsed ? "px-1.5 py-3" : "px-2 py-3.5"} space-y-1 overflow-y-auto`}
+      >
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
           const active = currentPath.startsWith(item.to);
@@ -206,10 +203,10 @@ export function SidebarNav({
                 title={collapsed ? item.label : undefined}
                 preload="intent"
                 className={`press-tactile flex items-center ${
-                  collapsed ? "justify-center p-2.5 rounded-xl" : "gap-3 py-2.5 px-3.5 rounded-full"
+                  collapsed ? "justify-center rounded-xl p-2.5" : "gap-3 rounded-full px-3.5 py-2.5"
                 } text-xs font-bold transition-all ${
                   active
-                    ? "bg-[var(--color-brand)] text-white shadow-md shadow-primary-500/25"
+                    ? "shadow-primary-500/25 bg-[var(--color-brand)] text-white shadow-md"
                     : "text-[var(--color-text-2)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-text)]"
                 }`}
               >
@@ -224,17 +221,19 @@ export function SidebarNav({
 
       {/* Account Info Footer */}
       <div className={`border-t border-[var(--color-border)] ${collapsed ? "p-2" : "p-3"}`}>
-        <div className={`flex items-center ${collapsed ? "justify-center" : "justify-between"} gap-2`}>
+        <div
+          className={`flex items-center ${collapsed ? "justify-center" : "justify-between"} gap-2`}
+        >
           {!collapsed && (
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="w-8 h-8 rounded-full bg-[var(--color-surface-2)] border border-[var(--color-border)] flex items-center justify-center text-[var(--color-brand)] shrink-0 font-bold text-xs">
+            <div className="flex min-w-0 items-center gap-2">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] text-xs font-bold text-[var(--color-brand)]">
                 <UserIcon size={16} weight="bold" />
               </div>
               <div className="min-w-0">
-                <div className="text-xs font-bold text-[var(--color-text)] truncate">
+                <div className="truncate text-xs font-bold text-[var(--color-text)]">
                   {session?.user?.name || "Pengguna"}
                 </div>
-                <div className="text-[10px] text-[var(--color-text-3)] truncate">
+                <div className="truncate text-[10px] text-[var(--color-text-3)]">
                   {session?.user?.email}
                 </div>
               </div>
@@ -248,7 +247,7 @@ export function SidebarNav({
                 const next = toggleTheme();
                 setDark(next);
               }}
-              className="press-tactile w-8 h-8 rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-text)] flex items-center justify-center cursor-pointer hover:bg-[var(--color-surface-3)]"
+              className="press-tactile flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-text)] hover:bg-[var(--color-surface-3)]"
               title={dark ? "Mode Terang" : "Mode Gelap"}
             >
               {dark ? <SunIcon size={15} weight="bold" /> : <MoonIcon size={15} weight="bold" />}
@@ -257,7 +256,7 @@ export function SidebarNav({
             <button
               type="button"
               onClick={onSignOut}
-              className="press-tactile w-8 h-8 rounded-full border border-[var(--color-danger)]/30 bg-[var(--color-danger-light)] text-[var(--color-danger-text)] flex items-center justify-center cursor-pointer"
+              className="press-tactile flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-[var(--color-danger)]/30 bg-[var(--color-danger-light)] text-[var(--color-danger-text)]"
               title="Keluar Akun"
             >
               <SignOutIcon size={15} weight="bold" />

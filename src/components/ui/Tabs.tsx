@@ -41,7 +41,7 @@ Tabs.List = function TabsList({ children, className = "" }: TabsListProps) {
   return (
     <div
       role="tablist"
-      className={`flex items-center gap-1.5 p-1.5 bg-[var(--color-surface-2)] rounded-[14px] border border-[var(--color-border)] overflow-x-auto ${className}`}
+      className={`flex items-center gap-1.5 overflow-x-auto rounded-[14px] border border-[var(--color-border)] bg-[var(--color-surface-2)] p-1.5 ${className}`}
     >
       {children}
     </div>
@@ -51,7 +51,11 @@ Tabs.List = function TabsList({ children, className = "" }: TabsListProps) {
 interface TabsTriggerProps {
   value: string;
   children: React.ReactNode;
-  icon?: React.ComponentType<{ className?: string; size?: number | string; weight?: "regular" | "bold" | "fill" | "duotone" }>;
+  icon?: React.ComponentType<{
+    className?: string;
+    size?: number | string;
+    weight?: "regular" | "bold" | "fill" | "duotone";
+  }>;
   className?: string;
   badge?: React.ReactNode;
 }
@@ -76,10 +80,10 @@ Tabs.Trigger = function TabsTrigger({
       aria-selected={isActive}
       aria-controls={panelId}
       onClick={() => onValueChange(value)}
-      className={`press-tactile flex items-center gap-2 px-4 py-2 rounded-[10px] text-xs transition-all whitespace-nowrap select-none cursor-pointer ${
+      className={`press-tactile flex cursor-pointer items-center gap-2 rounded-[10px] px-4 py-2 text-xs whitespace-nowrap transition-all select-none ${
         isActive
-          ? "bg-[var(--color-surface)] text-[var(--color-brand)] shadow-xs font-extrabold border border-[var(--color-border)]"
-          : "text-[var(--color-text-2)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface)]/60 font-bold border border-transparent"
+          ? "border border-[var(--color-border)] bg-[var(--color-surface)] font-extrabold text-[var(--color-brand)] shadow-xs"
+          : "border border-transparent font-bold text-[var(--color-text-2)] hover:bg-[var(--color-surface)]/60 hover:text-[var(--color-text)]"
       } ${className}`}
     >
       {Icon && (

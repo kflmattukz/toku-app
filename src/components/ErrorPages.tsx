@@ -166,15 +166,10 @@ export function NotFoundPage() {
   );
 }
 
-export function ErrorPage({
-  error,
-  reset,
-}: {
-  error?: Error | unknown;
-  reset?: () => void;
-}) {
+export function ErrorPage({ error, reset }: { error?: Error | unknown; reset?: () => void }) {
   const [showDetails, setShowDetails] = useState(false);
-  const errorMessage = error instanceof Error ? error.message : String(error || "Terjadi kesalahan tidak diketahui.");
+  const errorMessage =
+    error instanceof Error ? error.message : String(error || "Terjadi kesalahan tidak diketahui.");
   const errorStack = error instanceof Error ? error.stack : null;
 
   return (
@@ -277,7 +272,8 @@ export function ErrorPage({
             margin: "0 0 24px",
           }}
         >
-          Aplikasi mengalami gangguan tak terduga saat memproses data. Silakan muat ulang atau kembali ke halaman utama.
+          Aplikasi mengalami gangguan tak terduga saat memproses data. Silakan muat ulang atau
+          kembali ke halaman utama.
         </p>
 
         {/* Action Buttons */}
