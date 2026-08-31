@@ -52,9 +52,7 @@ export function CartDrawer({
       {cart.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center py-12 text-[var(--color-text-3)]">
           <ShoppingCartIcon size={48} weight="duotone" className="opacity-30 mb-3" />
-          <p className="text-sm font-bold m-0 text-[var(--color-text-2)]">
-            Keranjang Masih Kosong
-          </p>
+          <p className="text-sm font-bold m-0 text-[var(--color-text-2)]">Keranjang Masih Kosong</p>
           <span className="text-xs mt-1">Klik produk di katalog untuk menambahkan</span>
         </div>
       ) : (
@@ -66,7 +64,7 @@ export function CartDrawer({
           return (
             <div
               key={item.productId}
-              className="flex flex-col p-3 rounded-2xl bg-[var(--color-surface-2)] border border-[var(--color-border)] gap-2"
+              className="flex flex-col p-3 rounded-2xl bg-surface-2 border border-[var(--color-border)] gap-2"
             >
               <div className="flex items-center gap-3">
                 {/* Thumbnail */}
@@ -74,7 +72,7 @@ export function CartDrawer({
                   <img
                     src={productData?.imageUrl || productData?.imageId}
                     alt={item.name}
-                    className="w-11 h-11 rounded-[10px] object-cover shrink-0 border border-[var(--color-border)]"
+                    className="w-11 h-11 rounded-sm object-cover shrink-0 border border-[var(--color-border)]"
                   />
                 ) : (
                   <div className="w-11 h-11 rounded-[10px] bg-[var(--color-surface)] border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-3)] shrink-0">
@@ -180,9 +178,7 @@ export function CartDrawer({
         )}
 
         <div className="flex justify-between items-baseline mt-1.5 pt-1.5 border-t border-[var(--color-border-subtle)]">
-          <span className="text-xs font-extrabold text-[var(--color-text)]">
-            Total Pembayaran
-          </span>
+          <span className="text-xs font-extrabold text-[var(--color-text)]">Total Pembayaran</span>
           <span className="price text-xl font-black text-[var(--color-brand)]">
             {formatIDR(total)}
           </span>
@@ -216,9 +212,7 @@ export function CartDrawer({
               <ShoppingCartIcon size={20} weight="bold" />
             </div>
             <div>
-              <h2 className="text-sm font-extrabold m-0 text-[var(--color-text)]">
-                Pesanan Kasir
-              </h2>
+              <h2 className="text-sm font-extrabold m-0 text-[var(--color-text)]">Pesanan Kasir</h2>
               <div className="text-[11px] text-[var(--color-text-3)] mt-0.5">
                 {totalItems} item barang di keranjang
               </div>
