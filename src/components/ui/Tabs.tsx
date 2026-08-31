@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useId } from "react";
+import React, { createContext, useContext, useId, useMemo } from "react";
 
 type TabsContextType = {
   value: string;
@@ -25,8 +25,13 @@ interface TabsProps {
 
 export function Tabs({ value, onValueChange, children, className = "" }: TabsProps) {
   const baseId = useId();
+  const contextValue = useMemo(
+    () => ({ value, onValueChange, baseId }),
+    [value, onValueChange, baseId],
+  );
+
   return (
-    <TabsContext.Provider value={{ value, onValueChange, baseId }}>
+    <TabsContext.Provider value={contextValue}>
       <div className={`w-full ${className}`}>{children}</div>
     </TabsContext.Provider>
   );

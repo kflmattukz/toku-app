@@ -37,16 +37,17 @@ export const Route = createRootRoute({
   shellComponent: RootDocument,
 });
 
-function getInitialTheme(): boolean {
-  if (typeof window === "undefined") return false;
-  const saved = localStorage.getItem("toku_theme");
-  if (saved === "dark") return true;
-  if (saved === "light") return false;
-  return window.matchMedia("(prefers-color-scheme: dark)").matches;
-}
-
 function RootDocument({ children }: { children: React.ReactNode }) {
-  const [dark, setDark] = useState(getInitialTheme);
+  const [dark, setDark] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("toku_theme");
+    const isDark = saved
+      ? saved === "dark"
+      : window.matchMedia("(prefers-color-scheme: dark)").matches;
+    setDark(isDark);
+    document.documentElement.classList.toggle("dark", isDark);
+  }, []);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark);

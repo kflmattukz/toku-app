@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { authClient } from "#/lib/auth-client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { AppStoreContext, type ActiveCashier } from "#/lib/store-context";
@@ -13,22 +13,6 @@ import type { Id } from "../../convex/_generated/dataModel";
 export const Route = createFileRoute("/_app")({
   component: AppShell,
 });
-
-function getInitialSidebarCollapsed(): boolean {
-  if (typeof window === "undefined") return false;
-  const saved = localStorage.getItem("toku_sidebar_collapsed");
-  if (saved !== null) return saved === "true";
-  return window.innerWidth <= 1024 && window.innerWidth > 768;
-}
-
-function getInitialCashier(): ActiveCashier {
-  if (typeof window === "undefined") return { name: "Kasir Utama", role: "owner" };
-  try {
-    const saved = localStorage.getItem("toku_active_cashier");
-    if (saved) return JSON.parse(saved);
-  } catch {}
-  return { name: "Kasir Utama", role: "owner" };
-}
 
 function AppShell() {
   const { data: session, isPending } = authClient.useSession();
@@ -61,20 +45,41 @@ function AppShell() {
     session ? { userId: session.user.id, userEmail: session.user.email } : "skip",
   );
 
-  const [currentCashier, setCurrentCashierState] = useState<ActiveCashier>(getInitialCashier);
+  const [currentCashier, setCurrentCashierState] = useState<ActiveCashier>({
+    name: "Kasir Utama",
+    role: "owner",
+  });
   const [cashierModalOpen, setCashierModalOpen] = useState(false);
   const [shiftModalOpen, setShiftModalOpen] = useState(false);
 
   const navigate = useNavigate();
-  const [isOnline, setIsOnline] = useState(typeof window !== "undefined" ? navigator.onLine : true);
+  const [isOnline, setIsOnline] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState<boolean>(getInitialSidebarCollapsed);
+  const [collapsed, setCollapsed] = useState<boolean>(false);
   const routerState = useRouterState();
   const currentPath = routerState.location.pathname;
 
   const isPro = true;
 
   const activeShift = useQuery(api.shifts.getActive, store ? { storeId: store._id } : "skip");
+
+  useEffect(() => {
+    try {
+      const savedCashier = localStorage.getItem("toku_active_cashier");
+      if (savedCashier) {
+        setCurrentCashierState(JSON.parse(savedCashier));
+      }
+    } catch {}
+
+    const savedCollapsed = localStorage.getItem("toku_sidebar_collapsed");
+    if (savedCollapsed !== null) {
+      setCollapsed(savedCollapsed === "true");
+    } else if (window.innerWidth <= 1024 && window.innerWidth > 768) {
+      setCollapsed(true);
+    }
+
+    setIsOnline(navigator.onLine);
+  }, []);
 
   const setCurrentCashier = (cashier: ActiveCashier | null) => {
     const next = cashier || { name: "Kasir Utama", role: "owner" };
@@ -115,12 +120,12 @@ function AppShell() {
   const openUpgradeModal = () => {};
 
   const toggleCollapsed = () => {
-    setCollapsed((prev) => {
-      const next = !prev;
-      localStorage.setItem("toku_sidebar_collapsed", String(next));
-      return next;
-    });
+    setCollapsed((prev) => !prev);
   };
+
+  useEffect(() => {
+    localStorage.setItem("toku_sidebar_collapsed", String(collapsed));
+  }, [collapsed]);
 
   useEffect(() => {
     const on = () => setIsOnline(true);
@@ -152,7 +157,21 @@ function AppShell() {
         }
       }
     }
-  }, [store?._id]);
+  }, [store?._id, session?.user, selectedStoreId]);
+
+  const storeContextValue = useMemo(
+    () => ({
+      store,
+      session,
+      currentCashier,
+      setCurrentCashier,
+      selectedStoreId,
+      setSelectedStoreId: handleSelectStore,
+      isPro,
+      openUpgradeModal,
+    }),
+    [store, session, currentCashier, selectedStoreId, isPro],
+  );
 
   return (
     <div className="flex min-h-screen bg-[var(--color-bg)]">
@@ -234,18 +253,7 @@ function AppShell() {
             key={currentPath}
             className="page-enter-animation flex w-full min-w-0 flex-1 flex-col"
           >
-            <AppStoreContext.Provider
-              value={{
-                store,
-                session,
-                currentCashier,
-                setCurrentCashier,
-                selectedStoreId,
-                setSelectedStoreId: handleSelectStore,
-                isPro,
-                openUpgradeModal,
-              }}
-            >
+            <AppStoreContext.Provider value={storeContextValue}>
               <Outlet />
             </AppStoreContext.Provider>
           </div>

@@ -1,18 +1,22 @@
+const idrCurrencyFormatter = new Intl.NumberFormat("id-ID", {
+  style: "currency",
+  currency: "IDR",
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 0,
+});
+
+const idrNumberFormatter = new Intl.NumberFormat("id-ID");
+
 /** Format a number as IDR currency: Rp 15.000 */
 export function formatIDR(amount: number): string {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
+  return idrCurrencyFormatter.format(amount);
 }
 
 /** Format input string or number with IDR thousand separators: "15000" -> "15.000" */
 export function formatIDRInput(value: string | number): string {
   const digits = String(value).replace(/\D/g, "");
   if (!digits) return "";
-  return new Intl.NumberFormat("id-ID").format(Number(digits));
+  return idrNumberFormatter.format(Number(digits));
 }
 
 /** Parse formatted IDR input string back to pure number: "15.000" -> 15000 */
@@ -125,15 +129,17 @@ export function roundIDR(amount: number): number {
   return Math.round(amount / 100) * 100;
 }
 
+const standardDateTimeFormatter = new Intl.DateTimeFormat("id-ID", {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+});
+
 /** Format date for display in BI */
 export function formatDate(ts: number): string {
-  return new Intl.DateTimeFormat("id-ID", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(ts));
+  return standardDateTimeFormatter.format(new Date(ts));
 }
 
 /** Start/end of a day for range queries */
