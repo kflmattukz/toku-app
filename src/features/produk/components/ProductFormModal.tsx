@@ -1,6 +1,14 @@
+import { useState } from "react";
 import { Modal } from "#/components/Modal";
 import { formatIDRInput, parseIDRInput, formatIDR, calculateItemDiscount } from "#/lib/utils";
-import { PackageIcon, CameraIcon, CircleNotchIcon, XIcon } from "@phosphor-icons/react";
+import {
+  PackageIcon,
+  CameraIcon,
+  CircleNotchIcon,
+  XIcon,
+  MagnifyingGlassPlusIcon,
+} from "@phosphor-icons/react";
+import { ImagePreviewModal } from "#/components/ui/ImagePreviewModal";
 import type { ProductFormState } from "../types";
 
 interface ProductFormModalProps {
@@ -28,6 +36,8 @@ export function ProductFormModal({
   saving,
   onSave,
 }: ProductFormModalProps) {
+  const [showImagePreview, setShowImagePreview] = useState(false);
+
   if (!open) return null;
 
   const priceNum = parseIDRInput(form.price);
@@ -53,21 +63,27 @@ export function ProductFormModal({
           <label className="mb-1.5 block text-xs font-bold text-[var(--color-text)]">
             Foto Produk
           </label>
-          <div className="flex items-center gap-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-2)] p-3">
-            <div className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]">
+          <div className="flex items-center gap-4 rounded-2xl border border-border bg-surface-2 p-3">
+            <div className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border bg-surface">
               {imageUploading ? (
-                <div className="flex flex-col items-center justify-center gap-1 text-[var(--color-brand)]">
+                <div className="flex flex-col items-center justify-center gap-1 text-brand">
                   <CircleNotchIcon size={24} className="animate-spin" />
                   <span className="text-[9px] font-extrabold">Upload...</span>
                 </div>
               ) : imagePreview ? (
-                <img src={imagePreview} alt="Preview" className="h-full w-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => setShowImagePreview(true)}
+                  className="group relative h-full w-full cursor-pointer"
+                  title="Klik untuk melihat ukuran penuh"
+                >
+                  <img src={imagePreview} alt="Preview" className="h-full w-full object-cover" />
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/35 opacity-0 transition-opacity group-hover:opacity-100">
+                    <MagnifyingGlassPlusIcon size={20} className="text-white" weight="bold" />
+                  </div>
+                </button>
               ) : (
-                <PackageIcon
-                  size={32}
-                  weight="duotone"
-                  className="text-[var(--color-brand)] opacity-40"
-                />
+                <PackageIcon size={32} weight="duotone" className="text-brand opacity-40" />
               )}
             </div>
 
@@ -284,19 +300,29 @@ export function ProductFormModal({
           <button
             type="button"
             onClick={onClose}
-            className="press-tactile flex-1 cursor-pointer rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] py-3 text-xs font-extrabold text-[var(--color-text)]"
+            className="press-tactile flex-1 cursor-pointer rounded-full border border-border bg-surface-2 py-3 text-xs font-extrabold text-text transition-all hover:bg-surface-3"
           >
             Batal
           </button>
           <button
             type="submit"
             disabled={saving}
-            className="press-tactile flex-1.5 shadow-primary-500/25 cursor-pointer rounded-full bg-[var(--color-brand)] py-3 text-xs font-extrabold text-white shadow-md disabled:opacity-60"
+            className="press-tactile flex-1.5 cursor-pointer rounded-full bg-brand py-3 text-xs font-extrabold text-white shadow-md shadow-brand/25 transition-all hover:bg-brand-dark disabled:opacity-50"
           >
             {saving ? "Menyimpan..." : editId ? "Simpan Perubahan" : "Tambah Produk"}
           </button>
         </div>
       </form>
+
+      {/* Image Preview Lightbox */}
+      <ImagePreviewModal
+        isOpen={showImagePreview}
+        onClose={() => setShowImagePreview(false)}
+        imageUrl={imagePreview}
+        title={form.name || "Preview Foto Produk"}
+        category={form.category}
+        price={priceNum}
+      />
     </Modal>
   );
 }

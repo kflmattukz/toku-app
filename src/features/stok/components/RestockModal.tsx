@@ -134,12 +134,12 @@ export function RestockModal({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-2.5">
+        <div className="flex gap-3">
           <button
             type="button"
             onClick={onClose}
             disabled={saving}
-            className="press-tactile flex-1 cursor-pointer rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] py-3 text-xs font-extrabold text-[var(--color-text)]"
+            className="press-tactile flex-1 cursor-pointer rounded-full border border-border bg-surface-2 px-4 py-3 text-xs font-extrabold text-text transition-all hover:bg-surface-3"
           >
             Batal
           </button>
@@ -147,9 +147,9 @@ export function RestockModal({
             type="button"
             onClick={onConfirm}
             disabled={saving || currentAmt <= 0}
-            className="press-tactile flex-1.3 shadow-primary-500/25 cursor-pointer rounded-full bg-[var(--color-brand)] py-3 text-xs font-extrabold text-white shadow-md disabled:opacity-60"
+            className="press-tactile flex-1 cursor-pointer rounded-full bg-brand px-4 py-3 text-xs font-extrabold text-white shadow-md shadow-brand/25 transition-all hover:bg-brand-dark disabled:opacity-50"
           >
-            {saving ? "Menyimpan..." : "Simpan Tambahan Stok"}
+            {saving ? "Menyimpan..." : "Simpan Stok"}
           </button>
         </div>
       </div>
