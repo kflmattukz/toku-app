@@ -1,6 +1,47 @@
 @import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap");
 @import "tailwindcss";
 
+/* Tailwind CSS v4 class-scoped dark mode */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  --color-brand: var(--color-brand);
+  --color-brand-dark: var(--color-brand-dark);
+  --color-brand-light: var(--color-brand-light);
+
+  --color-surface: var(--color-surface);
+  --color-surface-2: var(--color-surface-2);
+  --color-surface-3: var(--color-surface-3);
+
+  --color-border: var(--color-border);
+  --color-border-subtle: var(--color-border-subtle);
+
+  --color-text-main: var(--color-text);
+  --color-text-muted: var(--color-text-2);
+  --color-text-faint: var(--color-text-3);
+
+  --color-danger: var(--color-danger);
+  --color-danger-light: var(--color-danger-light);
+  --color-danger-text: var(--color-danger-text);
+
+  --color-warning: var(--color-warning);
+  --color-warning-light: var(--color-warning-light);
+  --color-warning-text: var(--color-warning-text);
+
+  --color-success: var(--color-success);
+  --color-success-light: var(--color-success-light);
+  --color-success-text: var(--color-success-text);
+
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+}
+
 * {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
@@ -15,14 +56,7 @@ body,
 
 body {
   margin: 0;
-  font-family:
-    "Plus Jakarta Sans",
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    Roboto,
-    sans-serif;
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   background-color: var(--color-surface-2);
   color: var(--color-text);
@@ -31,13 +65,13 @@ body {
 
 /* Light mode design tokens — Warm Terracotta Dribbble POS Aesthetic */
 :root {
-  --color-brand: #ea580c; /* Vibrant Terracotta Orange (from image) */
+  --color-brand: #ea580c; /* Vibrant Terracotta Orange */
   --color-brand-dark: #c2410c; /* Deep Orange */
   --color-brand-light: #fff7ed; /* Warm Cream Orange 50 */
   --color-accent: #f97316;
 
   --color-surface: #ffffff;
-  --color-surface-2: #f7f4ee; /* Soft warm ivory background (from image) */
+  --color-surface-2: #f7f4ee; /* Soft warm ivory background */
   --color-surface-3: #efeae2; /* Inset search & pill background */
 
   --color-border: #e7e0d5; /* Warm beige border */
@@ -55,7 +89,7 @@ body {
   --color-warning-light: #fffbeb;
   --color-warning-text: #d97706;
 
-  --color-success: #10b981; /* Paid green status pill */
+  --color-success: #10b981; /* Green status pill */
   --color-success-light: #d1fae5;
   --color-success-text: #047857;
 
@@ -68,10 +102,11 @@ body {
   --shadow-dock: 0 12px 32px rgba(234, 88, 12, 0.18), 0 4px 12px rgba(0, 0, 0, 0.05);
   --shadow-inner: inset 0 1px 1px rgba(255, 255, 255, 0.9);
 
-  --radius-sm: 12px;
-  --radius-md: 18px;
-  --radius-lg: 24px;
-  --radius-xl: 32px;
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
 
   /* Custom Easing Curves */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
