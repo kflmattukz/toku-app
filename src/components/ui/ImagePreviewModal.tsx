@@ -81,7 +81,7 @@ export function ImagePreviewModal({
       role="dialog"
       aria-modal="true"
       aria-labelledby="preview-title"
-      className="animate-backdrop fixed inset-0 z-[99999] flex h-screen w-screen items-center justify-center p-4 sm:p-6"
+      className="animate-backdrop fixed inset-0 z-99999 flex h-screen w-screen items-center justify-center p-4 sm:p-6"
       style={{
         background: "rgba(0, 0, 0, 0.75)",
         backdropFilter: "blur(8px)",
@@ -124,7 +124,7 @@ export function ImagePreviewModal({
         </div>
 
         {/* Image Canvas */}
-        <div className="relative flex max-h-[65vh] min-h-[320px] flex-1 items-center justify-center overflow-hidden bg-black/90 p-4 select-none">
+        <div className="relative flex max-h-[65vh] min-h-80 flex-1 items-center justify-center overflow-hidden bg-black/90 p-4 select-none">
           <div
             className="flex items-center justify-center transition-transform duration-200 ease-out"
             style={{
@@ -152,7 +152,7 @@ export function ImagePreviewModal({
               <MagnifyingGlassMinusIcon size={16} weight="bold" />
             </button>
 
-            <span className="min-w-[44px] text-center font-mono text-xs font-bold text-white">
+            <span className="min-w-11 text-center font-mono text-xs font-bold text-white">
               {Math.round(zoom * 100)}%
             </span>
 
