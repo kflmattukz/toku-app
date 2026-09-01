@@ -14,8 +14,8 @@ interface TrendChartProps {
 export function TrendChart({
   txs,
   range,
-  totalRevenue,
-  totalProfit = 0,
+  totalRevenue: _totalRevenue,
+  totalProfit: _totalProfit = 0,
   privacyMode = false,
 }: TrendChartProps) {
   const [metric, setMetric] = useState<"revenue" | "profit" | "count">("revenue");

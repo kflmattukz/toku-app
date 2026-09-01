@@ -1,5 +1,4 @@
 import {
-  CoinsIcon,
   TagIcon,
   ReceiptIcon,
   TrendDownIcon,

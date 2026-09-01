@@ -4,6 +4,7 @@ import { api } from "../../../convex/_generated/api";
 import { useAppStore } from "#/lib/store-context";
 import { PlusIcon, PackageIcon } from "@phosphor-icons/react";
 import { SearchFilter } from "#/components/ui/SearchFilter";
+import { Button } from "#/components/ui";
 import {
   useProductManager,
   ProductTable,
@@ -60,14 +61,15 @@ function Produk() {
           </p>
         </div>
 
-        <button
+        <Button
           type="button"
+          variant="primary"
+          size="md"
+          leftIcon={<PlusIcon size={16} weight="bold" />}
           onClick={openAdd}
-          className="press-tactile shadow-primary-500/25 flex cursor-pointer items-center gap-2 rounded-full bg-[var(--color-brand)] px-5 py-2.5 text-xs font-extrabold text-white shadow-md"
         >
-          <PlusIcon size={16} weight="bold" />
-          <span>Tambah Produk</span>
-        </button>
+          Tambah Produk
+        </Button>
       </div>
 
       {/* Search Input Bar */}

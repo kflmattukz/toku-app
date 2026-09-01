@@ -1,4 +1,5 @@
 import { Modal } from "#/components/Modal";
+import { Button } from "#/components/ui";
 import { formatIDR, formatIDRInput, parseIDRInput, calculateItemDiscount } from "#/lib/utils";
 import type { ItemDiscountModalState } from "../types";
 
@@ -189,21 +190,25 @@ export function ItemDiscountModal({
           </div>
         )}
 
-        <div className="flex gap-2.5 pt-2">
-          <button
+        <div className="grid grid-cols-2 gap-3 pt-2">
+          <Button
             type="button"
+            variant="secondary"
+            size="md"
+            fullWidth
             onClick={onClose}
-            className="press-tactile flex-1 cursor-pointer rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] py-3 text-sm font-bold text-[var(--color-text)]"
           >
             Batal
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="primary"
+            size="md"
+            fullWidth
             onClick={onSave}
-            className="press-tactile shadow-primary-500/20 flex-1 cursor-pointer rounded-full bg-[var(--color-brand)] py-3 text-sm font-extrabold text-white shadow-md"
           >
             Terapkan Diskon
-          </button>
+          </Button>
         </div>
       </div>
     </Modal>

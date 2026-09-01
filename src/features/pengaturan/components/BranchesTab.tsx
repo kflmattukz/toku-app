@@ -1,4 +1,5 @@
 import { BuildingsIcon, PlusIcon, CheckCircleIcon } from "@phosphor-icons/react";
+import { Button } from "#/components/ui";
 import type { Id } from "../../../../convex/_generated/dataModel";
 
 interface BranchesTabProps {
@@ -62,14 +63,17 @@ export function BranchesTab({
             </div>
           </div>
 
-          <button
+          <Button
             type="submit"
-            disabled={isAddingBranch}
-            className="press-tactile shadow-primary-500/20 flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-full bg-[var(--color-brand)] px-6 py-2.5 text-xs font-extrabold text-white shadow-md disabled:opacity-60 sm:w-auto"
+            variant="primary"
+            size="md"
+            loading={isAddingBranch}
+            loadingText="Menyimpan Cabang..."
+            leftIcon={<PlusIcon size={16} weight="bold" />}
+            className="w-full sm:w-auto"
           >
-            <PlusIcon size={16} weight="bold" />
-            <span>{isAddingBranch ? "Menyimpan Cabang..." : "Buat Cabang Baru"}</span>
-          </button>
+            Buat Cabang Baru
+          </Button>
         </form>
       </section>
 
@@ -123,13 +127,15 @@ export function BranchesTab({
                         <span>Sedang Digunakan</span>
                       </span>
                     ) : (
-                      <button
+                      <Button
                         type="button"
+                        variant="secondary"
+                        size="xs"
                         onClick={() => onSelectStore(st._id)}
-                        className="press-tactile ml-auto cursor-pointer rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-xs font-bold text-[var(--color-text)] hover:bg-[var(--color-surface-2)]"
+                        className="ml-auto"
                       >
                         Beralih ke Cabang Ini
-                      </button>
+                      </Button>
                     )}
                   </div>
                 );

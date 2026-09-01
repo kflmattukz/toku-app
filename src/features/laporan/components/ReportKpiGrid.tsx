@@ -52,7 +52,6 @@ export function ReportKpiGrid({
 
   // Status Kesehatan Bisnis
   const isHealthy = netMargin >= 20;
-  const isBreakEvenOrThin = netMargin > 0 && netMargin < 20;
   const isLoss = netMargin <= 0 && (totalRevenue > 0 || totalExpenses > 0);
 
   return (

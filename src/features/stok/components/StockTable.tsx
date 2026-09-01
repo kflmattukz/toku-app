@@ -3,6 +3,7 @@ import { WarningIcon, CheckCircleIcon, PlusIcon, PackageIcon } from "@phosphor-i
 import { formatIDR } from "#/lib/utils";
 import { Pagination } from "#/components/ui/Pagination";
 import { SearchFilter } from "#/components/ui/SearchFilter";
+import { Button } from "#/components/ui";
 import type { Product } from "#/features/produk";
 
 interface StockTableProps {
@@ -181,14 +182,15 @@ export function StockTable({
                             </span>
                           </td>
                           <td className="px-5 py-3.5 text-right">
-                            <button
+                            <Button
                               type="button"
+                              variant="primary"
+                              size="xs"
+                              leftIcon={<PlusIcon size={13} weight="bold" />}
                               onClick={() => onOpenRestock(p)}
-                              className="press-tactile shadow-primary-500/20 inline-flex cursor-pointer items-center gap-1 rounded-full bg-[var(--color-brand)] px-3 py-1 text-xs font-extrabold text-white shadow-xs"
                             >
-                              <PlusIcon size={13} weight="bold" />
-                              <span>Tambah Stok</span>
-                            </button>
+                              Tambah Stok
+                            </Button>
                           </td>
                         </tr>
                       );
@@ -234,14 +236,15 @@ export function StockTable({
                             {p.stock} pcs
                           </span>
                         </div>
-                        <button
+                        <Button
                           type="button"
+                          variant="primary"
+                          size="xs"
+                          leftIcon={<PlusIcon size={13} weight="bold" />}
                           onClick={() => onOpenRestock(p)}
-                          className="press-tactile flex cursor-pointer items-center gap-1 rounded-full bg-[var(--color-brand)] px-3 py-1.5 text-xs font-extrabold text-white shadow-xs"
                         >
-                          <PlusIcon size={13} weight="bold" />
-                          <span>Restock</span>
-                        </button>
+                          Tambah Stok
+                        </Button>
                       </div>
                     </div>
                   );

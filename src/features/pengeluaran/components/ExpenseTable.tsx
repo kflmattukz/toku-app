@@ -6,11 +6,11 @@ import {
   TagIcon,
 } from "@phosphor-icons/react";
 import { formatIDR } from "#/lib/utils";
+import { Button } from "#/components/ui";
 import {
   EXPENSE_CATEGORIES,
   EXPENSE_CATEGORY_LABELS,
   type Expense,
-  type ExpenseCategory,
 } from "../types";
 
 interface ExpenseTableProps {
@@ -152,15 +152,16 @@ export function ExpenseTable({
                         </span>
                       </td>
                       <td className="px-5 py-3">
-                        <button
+                        <Button
                           type="button"
+                          variant="danger-subtle"
+                          size="xs"
+                          leftIcon={<TrashIcon size={14} weight="bold" />}
                           onClick={() => setDeleteTarget(exp)}
-                          className="press-tactile flex cursor-pointer items-center gap-1 rounded-full border border-rose-500/30 bg-rose-500/10 px-2.5 py-1 text-xs font-bold text-rose-600 hover:bg-rose-500/20"
                           title="Hapus pengeluaran"
                         >
-                          <TrashIcon size={14} weight="bold" />
-                          <span>Hapus</span>
-                        </button>
+                          Hapus
+                        </Button>
                       </td>
                     </tr>
                   );
@@ -201,13 +202,15 @@ export function ExpenseTable({
                     <div className="price text-sm font-black text-rose-600">
                       -{formatIDR(exp.amount)}
                     </div>
-                    <button
+                    <Button
                       type="button"
+                      variant="danger-subtle"
+                      size="xs"
                       onClick={() => setDeleteTarget(exp)}
-                      className="press-tactile flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-rose-500/30 bg-rose-500/10 text-rose-600"
+                      className="!h-8 !w-8 !p-0 rounded-full"
                     >
                       <TrashIcon size={14} weight="bold" />
-                    </button>
+                    </Button>
                   </div>
                 </div>
               );
@@ -225,24 +228,28 @@ export function ExpenseTable({
               Apakah Anda yakin ingin menghapus catatan biaya sebesar{" "}
               <strong>{formatIDR(deleteTarget.amount)}</strong> ({deleteTarget.notes || "Tanpa catatan"})?
             </p>
-            <div className="mt-5 flex justify-end gap-2.5">
-              <button
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              <Button
                 type="button"
+                variant="secondary"
+                size="sm"
+                fullWidth
                 onClick={() => setDeleteTarget(null)}
-                className="press-tactile cursor-pointer rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] px-4 py-2 text-xs font-bold text-[var(--color-text)]"
               >
                 Batal
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="danger"
+                size="sm"
+                fullWidth
                 onClick={() => {
                   onDelete(deleteTarget._id);
                   setDeleteTarget(null);
                 }}
-                className="press-tactile cursor-pointer rounded-full bg-rose-600 px-4 py-2 text-xs font-bold text-white hover:bg-rose-700"
               >
                 Hapus
-              </button>
+              </Button>
             </div>
           </div>
         </div>

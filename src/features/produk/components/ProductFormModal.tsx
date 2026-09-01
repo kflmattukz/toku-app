@@ -9,6 +9,7 @@ import {
   MagnifyingGlassPlusIcon,
 } from "@phosphor-icons/react";
 import { ImagePreviewModal } from "#/components/ui/ImagePreviewModal";
+import { Button } from "#/components/ui";
 import type { ProductFormState } from "../types";
 
 interface ProductFormModalProps {
@@ -345,21 +346,27 @@ export function ProductFormModal({
         </div>
 
         {/* Buttons */}
-        <div className="flex gap-2.5 pt-2">
-          <button
+        <div className="grid grid-cols-2 gap-3 pt-2">
+          <Button
             type="button"
+            variant="secondary"
+            size="md"
+            fullWidth
             onClick={onClose}
-            className="press-tactile flex-1 cursor-pointer rounded-full border border-border bg-surface-2 py-3 text-xs font-extrabold text-text transition-all hover:bg-surface-3"
+            disabled={saving}
           >
             Batal
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
-            disabled={saving}
-            className="press-tactile flex-1.5 cursor-pointer rounded-full bg-brand py-3 text-xs font-extrabold text-white shadow-md shadow-brand/25 transition-all hover:bg-brand-dark disabled:opacity-50"
+            variant="primary"
+            size="md"
+            fullWidth
+            loading={saving}
+            loadingText="Menyimpan..."
           >
-            {saving ? "Menyimpan..." : editId ? "Simpan Perubahan" : "Tambah Produk"}
-          </button>
+            {editId ? "Simpan Perubahan" : "Tambah Produk"}
+          </Button>
         </div>
       </form>
 

@@ -10,6 +10,7 @@ import {
 import { formatIDR, calculateItemDiscount } from "#/lib/utils";
 import { Pagination } from "#/components/ui/Pagination";
 import { ImagePreviewModal } from "#/components/ui/ImagePreviewModal";
+import { Button } from "#/components/ui";
 import type { Product } from "../types";
 
 interface ProductTableProps {
@@ -206,22 +207,24 @@ export function ProductTable({
                       </td>
                       <td className="px-5 py-3">
                         <div className="flex gap-2">
-                          <button
+                          <Button
                             type="button"
+                            variant="secondary"
+                            size="xs"
+                            leftIcon={<PencilSimpleIcon size={13} weight="bold" />}
                             onClick={() => onEdit(p)}
-                            className="press-tactile flex cursor-pointer items-center gap-1 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-xs font-bold text-[var(--color-text)] hover:bg-[var(--color-surface-2)]"
                           >
-                            <PencilSimpleIcon size={14} weight="bold" />
-                            <span>Edit</span>
-                          </button>
-                          <button
+                            Edit
+                          </Button>
+                          <Button
                             type="button"
+                            variant="danger-subtle"
+                            size="xs"
+                            leftIcon={<TrashIcon size={13} weight="bold" />}
                             onClick={() => onDelete(p)}
-                            className="press-tactile flex cursor-pointer items-center gap-1 rounded-full border border-[var(--color-danger)]/30 bg-[var(--color-danger-light)] px-3 py-1.5 text-xs font-bold text-[var(--color-danger-text)]"
                           >
-                            <TrashIcon size={14} weight="bold" />
-                            <span>Hapus</span>
-                          </button>
+                            Hapus
+                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -292,22 +295,24 @@ export function ProductTable({
 
 
                   <div className="flex justify-end gap-2 pt-1">
-                    <button
+                    <Button
                       type="button"
+                      variant="secondary"
+                      size="xs"
+                      leftIcon={<PencilSimpleIcon size={13} weight="bold" />}
                       onClick={() => onEdit(p)}
-                      className="press-tactile flex cursor-pointer items-center gap-1 rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-bold text-text hover:bg-surface-2"
                     >
-                      <PencilSimpleIcon size={13} weight="bold" />
-                      <span>Edit</span>
-                    </button>
-                    <button
+                      Edit
+                    </Button>
+                    <Button
                       type="button"
+                      variant="danger-subtle"
+                      size="xs"
+                      leftIcon={<TrashIcon size={13} weight="bold" />}
                       onClick={() => onDelete(p)}
-                      className="press-tactile flex cursor-pointer items-center gap-1 rounded-full border border-danger/30 bg-danger-light px-3 py-1.5 text-xs font-bold text-danger-text hover:opacity-90"
                     >
-                      <TrashIcon size={13} weight="bold" />
-                      <span>Hapus</span>
-                    </button>
+                      Hapus
+                    </Button>
                   </div>
                 </div>
               );

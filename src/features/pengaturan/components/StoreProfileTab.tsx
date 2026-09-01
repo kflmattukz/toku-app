@@ -9,6 +9,7 @@ import {
   UserIcon,
   SignOutIcon,
 } from "@phosphor-icons/react";
+import { Button } from "#/components/ui";
 import { CategorySelectPicker } from "./CategorySelectPicker";
 
 interface StoreProfileTabProps {
@@ -132,26 +133,17 @@ export function StoreProfileTab({
             </span>
           </div>
 
-          <button
+          <Button
             type="submit"
-            disabled={saving}
-            className={`press-tactile flex w-full cursor-pointer items-center justify-center gap-2 rounded-full px-7 py-3 text-sm font-extrabold text-white shadow-md transition-all sm:w-auto ${
-              saved
-                ? "bg-[var(--color-success)] shadow-emerald-500/20"
-                : "shadow-primary-500/30 bg-[var(--color-brand)]"
-            } disabled:cursor-not-allowed disabled:opacity-60`}
+            variant="primary"
+            size="md"
+            loading={saving}
+            loadingText="Menyimpan..."
+            leftIcon={saved ? <CheckIcon size={18} weight="bold" /> : undefined}
+            className={`w-full sm:w-auto ${saved ? "!bg-[var(--color-success)] shadow-emerald-500/20" : ""}`}
           >
-            {saved ? (
-              <>
-                <CheckIcon size={18} weight="bold" />
-                <span>Tersimpan!</span>
-              </>
-            ) : saving ? (
-              "Menyimpan..."
-            ) : (
-              "Simpan Perubahan Toko"
-            )}
-          </button>
+            {saved ? "Tersimpan!" : "Simpan Perubahan Toko"}
+          </Button>
         </form>
       </section>
 
@@ -227,14 +219,15 @@ export function StoreProfileTab({
             </div>
           </div>
 
-          <button
+          <Button
             type="button"
+            variant="danger-subtle"
+            size="sm"
+            leftIcon={<SignOutIcon size={16} weight="bold" />}
             onClick={onLogout}
-            className="press-tactile inline-flex cursor-pointer items-center gap-2 rounded-full border border-[var(--color-danger)]/30 bg-[var(--color-danger-light)] px-4.5 py-2.5 text-xs font-extrabold text-[var(--color-danger-text)]"
           >
-            <SignOutIcon size={16} weight="bold" />
-            <span>Keluar dari Akun</span>
-          </button>
+            Keluar dari Akun
+          </Button>
         </div>
       </section>
     </div>

@@ -1,4 +1,5 @@
 import { ListIcon, LockKeyIcon, WifiSlashIcon, EyeIcon, EyeSlashIcon } from "@phosphor-icons/react";
+import { Button } from "#/components/ui";
 import type { ActiveCashier } from "#/lib/store-context";
 
 interface TopHeaderProps {
@@ -73,15 +74,16 @@ export function TopHeader({
             </button>
           )}
 
-          <button
+          <Button
             type="button"
+            variant="secondary"
+            size="xs"
+            leftIcon={<LockKeyIcon size={14} />}
             onClick={onOpenCashierModal}
-            className="press-tactile flex cursor-pointer items-center gap-1.5 rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] px-2.5 py-1 text-xs font-bold text-[var(--color-text)]"
             title={`Kasir: ${currentCashier.name}`}
           >
-            <LockKeyIcon size={14} />
-            <span>{currentCashier.name.split(" ")[0]}</span>
-          </button>
+            {currentCashier.name.split(" ")[0]}
+          </Button>
         </div>
       </header>
     </>

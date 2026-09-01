@@ -14,6 +14,7 @@ import {
   ReceiptIcon,
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
+import { Button } from "#/components/ui";
 import type { Id } from "../../convex/_generated/dataModel";
 
 declare global {
@@ -393,57 +394,33 @@ export function UpgradeProModal({
 
         {/* Action Buttons */}
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          <button
+          <Button
+            type="button"
+            variant="primary"
+            size="lg"
+            shape="rounded"
+            fullWidth
+            loading={isLoading}
+            loadingText="Memproses..."
+            leftIcon={<CreditCardIcon size={20} weight="bold" />}
             onClick={handleMidtransCheckout}
-            disabled={isLoading}
-            className="press-tactile"
-            style={{
-              width: "100%",
-              padding: "14px 20px",
-              borderRadius: 14,
-              border: "none",
-              background: "var(--color-brand)",
-              color: "#ffffff",
-              fontSize: 15,
-              fontWeight: 800,
-              cursor: isLoading ? "not-allowed" : "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 8,
-              boxShadow: "0 4px 16px rgba(234,88,12,0.35)",
-              opacity: isLoading ? 0.7 : 1,
-            }}
           >
-            <CreditCardIcon size={20} weight="bold" />
-            {isLoading
-              ? "Memproses..."
-              : `Bayar via Midtrans Snap (Rp ${selectedPlan === "yearly" ? "300.000" : "35.000"})`}
-          </button>
+            Bayar via Midtrans Snap (Rp {selectedPlan === "yearly" ? "300.000" : "35.000"})
+          </Button>
 
-          <button
-            onClick={handleSimulateInstant}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            shape="rounded"
+            fullWidth
             disabled={isLoading}
-            className="press-tactile"
-            style={{
-              width: "100%",
-              padding: "11px 16px",
-              borderRadius: 12,
-              border: "1px dashed var(--color-brand)",
-              background: "transparent",
-              color: "var(--color-brand)",
-              fontSize: 13,
-              fontWeight: 700,
-              cursor: isLoading ? "not-allowed" : "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 6,
-            }}
+            leftIcon={<LightningIcon size={16} weight="fill" />}
+            onClick={handleSimulateInstant}
+            className="!border-dashed !border-[var(--color-brand)] !text-[var(--color-brand)] hover:!bg-[var(--color-brand-light)]"
           >
-            <LightningIcon size={16} weight="fill" />
             Simulasi Bayar Instan (Sandbox / Dev Demo)
-          </button>
+          </Button>
         </div>
 
         {/* Security badge */}

@@ -9,6 +9,7 @@ import {
   CheckCircleIcon,
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
+import { Button } from "#/components/ui";
 import type { Id } from "../../convex/_generated/dataModel";
 import type { ActiveCashier } from "#/lib/store-context";
 
@@ -347,24 +348,17 @@ export function ShiftModal({ isOpen, onClose, storeId, currentCashier }: ShiftMo
               </span>
             </div>
 
-            <button
+            <Button
               type="submit"
-              disabled={isLoading}
-              className="press-tactile"
-              style={{
-                width: "100%",
-                padding: "13px",
-                borderRadius: 14,
-                border: "none",
-                background: "var(--color-brand)",
-                color: "#ffffff",
-                fontSize: 15,
-                fontWeight: 800,
-                cursor: isLoading ? "not-allowed" : "pointer",
-              }}
+              variant="primary"
+              size="lg"
+              shape="rounded"
+              fullWidth
+              loading={isLoading}
+              loadingText="Membuka Shift..."
             >
-              {isLoading ? "Membuka Shift..." : "Mulai Shift Kasir"}
-            </button>
+              Mulai Shift Kasir
+            </Button>
           </form>
         ) : (
           /* End Shift Form */
@@ -487,24 +481,17 @@ export function ShiftModal({ isOpen, onClose, storeId, currentCashier }: ShiftMo
               />
             </div>
 
-            <button
+            <Button
               type="submit"
-              disabled={isLoading}
-              className="press-tactile"
-              style={{
-                width: "100%",
-                padding: "13px",
-                borderRadius: 14,
-                border: "none",
-                background: "var(--color-danger, #dc2626)",
-                color: "#ffffff",
-                fontSize: 14,
-                fontWeight: 800,
-                cursor: isLoading ? "not-allowed" : "pointer",
-              }}
+              variant="danger"
+              size="lg"
+              shape="rounded"
+              fullWidth
+              loading={isLoading}
+              loadingText="Menghitung Rekap..."
             >
-              {isLoading ? "Menghitung Rekap..." : "Tutup Shift & Rekap Kas"}
-            </button>
+              Tutup Shift & Rekap Kas
+            </Button>
           </form>
         )}
       </div>

@@ -1,3 +1,4 @@
+import { Button } from "#/components/ui";
 import { Modal } from "#/components/Modal";
 import { formatIDR, formatIDRInput, parseIDRInput } from "#/lib/utils";
 import { MoneyIcon, QrCodeIcon, TagIcon } from "@phosphor-icons/react";
@@ -292,18 +293,16 @@ export function PaymentModal({
               </div>
             )}
 
-            <button
+            <Button
               type="button"
-              onClick={onConfirm}
+              variant="primary"
+              size="lg"
+              fullWidth
               disabled={cashPaid < total}
-              className={`press-tactile w-full cursor-pointer rounded-full px-5 py-3.5 text-sm font-extrabold text-white shadow-lg transition-all ${
-                cashPaid >= total
-                  ? "shadow-primary-500/30 bg-[var(--color-brand)]"
-                  : "cursor-not-allowed bg-[var(--color-border)] opacity-60"
-              }`}
+              onClick={onConfirm}
             >
               Selesaikan Pembayaran Tunai
-            </button>
+            </Button>
           </>
         ) : (
           <>
@@ -320,13 +319,15 @@ export function PaymentModal({
                 Mendukung GoPay, OVO, Dana, ShopeePay, BCA & LinkAja
               </p>
             </div>
-            <button
+            <Button
               type="button"
+              variant="primary"
+              size="lg"
+              fullWidth
               onClick={onConfirm}
-              className="press-tactile shadow-primary-500/30 w-full cursor-pointer rounded-full bg-[var(--color-brand)] px-5 py-3.5 text-sm font-extrabold text-white shadow-lg"
             >
               Konfirmasi Pembayaran QRIS Lunas
-            </button>
+            </Button>
           </>
         )}
       </div>

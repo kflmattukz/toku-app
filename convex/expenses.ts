@@ -12,10 +12,17 @@ export const list = query({
     let q = ctx.db
       .query("expenses")
       .withIndex("by_storeId_date", (q) => {
-        let builder = q.eq("storeId", storeId);
-        if (startDate !== undefined) builder = builder.gte("date", startDate);
-        if (endDate !== undefined) builder = builder.lte("date", endDate);
-        return builder;
+        const query = q.eq("storeId", storeId);
+        if (startDate !== undefined && endDate !== undefined) {
+          return query.gte("date", startDate).lte("date", endDate);
+        }
+        if (startDate !== undefined) {
+          return query.gte("date", startDate);
+        }
+        if (endDate !== undefined) {
+          return query.lte("date", endDate);
+        }
+        return query;
       })
       .order("desc");
 

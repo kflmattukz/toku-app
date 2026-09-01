@@ -1,4 +1,5 @@
 import { CaretLeftIcon, CaretRightIcon } from "@phosphor-icons/react";
+import { Select, type SelectOption } from "./Select";
 
 interface PaginationProps {
   currentPage: number;
@@ -28,6 +29,11 @@ export function Pagination({
 
   if (totalCount === 0) return null;
 
+  const sizeOptions: SelectOption<number>[] = pageSizeOptions.map((opt) => ({
+    value: opt,
+    label: `${opt} baris`,
+  }));
+
   return (
     <div
       className={`flex flex-wrap items-center justify-between gap-3 border-t border-[var(--color-border)] bg-[var(--color-surface)] p-4 ${className}`}
@@ -38,17 +44,15 @@ export function Pagination({
 
       <div className="flex items-center gap-2">
         {onPageSizeChange && (
-          <select
-            value={pageSize}
-            onChange={(e) => onPageSizeChange(Number(e.target.value))}
-            className="cursor-pointer rounded-[10px] border border-[var(--color-border)] bg-[var(--color-surface-2)] px-2.5 py-1.5 text-xs font-bold text-[var(--color-text)] focus:ring-2 focus:ring-[var(--color-brand)]/20 focus:outline-none"
-          >
-            {pageSizeOptions.map((opt) => (
-              <option key={opt} value={opt}>
-                {opt} baris
-              </option>
-            ))}
-          </select>
+          <div className="w-28">
+            <Select<number>
+              value={pageSize}
+              onChange={(val) => onPageSizeChange(val)}
+              options={sizeOptions}
+              variant="form"
+              size="sm"
+            />
+          </div>
         )}
 
         <button

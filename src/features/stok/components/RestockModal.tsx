@@ -1,5 +1,6 @@
 import { Modal } from "#/components/Modal";
 import { PlusIcon, MinusIcon } from "@phosphor-icons/react";
+import { Button } from "#/components/ui";
 import type { Product } from "#/features/produk";
 
 interface RestockModalProps {
@@ -24,104 +25,98 @@ export function RestockModal({
   if (!product) return null;
 
   const currentAmt = parseInt(restockAmt, 10) || 0;
-  const isLow = product.stock <= threshold;
+
+  const handleStep = (delta: number) => {
+    const next = Math.max(1, currentAmt + delta);
+    onChangeRestockAmt(String(next));
+  };
+
+  const handlePreset = (val: number) => {
+    onChangeRestockAmt(String(currentAmt + val));
+  };
 
   return (
     <Modal onClose={onClose} maxWidth={440}>
       <div>
-        <div className="mb-4">
-          <div className="eyebrow-tag mb-1">RESTOCK BARANG</div>
-          <h2 className="text-xl font-black tracking-tight text-[var(--color-text)]">
-            Tambah Stok: {product.name}
-          </h2>
-          <p className="mt-0.5 text-xs text-[var(--color-text-3)]">Kategori: {product.category}</p>
-        </div>
+        <div className="eyebrow-tag mb-1">RESTOCK BARANG</div>
+        <h2 className="text-xl font-black tracking-tight text-[var(--color-text)]">
+          Tambah Stok Produk
+        </h2>
+        <p className="mt-1 text-xs text-[var(--color-text-2)]">
+          Perbarui jumlah stok fisik yang masuk ke toko Anda.
+        </p>
 
-        {/* Before / After Comparison Card */}
-        <div className="mb-5 grid grid-cols-[1fr_auto_1fr] items-center gap-3 rounded-[14px] border border-[var(--color-border)] bg-[var(--color-surface-2)] p-3.5 text-center">
-          <div>
-            <div className="text-[10px] font-extrabold tracking-wider text-[var(--color-text-3)] uppercase">
-              Stok Saat Ini
-            </div>
-            <div
-              className={`price mt-0.5 text-xl font-black ${
-                isLow ? "text-[var(--color-danger-text)]" : "text-[var(--color-text)]"
-              }`}
-            >
-              {product.stock} pcs
-            </div>
-          </div>
-
-          <div className="text-base font-black text-[var(--color-text-3)] opacity-60">➔</div>
-
-          <div>
-            <div className="text-[10px] font-extrabold tracking-wider text-[var(--color-brand)] uppercase">
-              Stok Baru
-            </div>
-            <div className="price mt-0.5 text-xl font-black text-[var(--color-brand)]">
-              {product.stock + currentAmt} pcs
-            </div>
+        {/* Product Info Banner */}
+        <div className="my-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-2)] p-3">
+          <div className="text-sm font-extrabold text-[var(--color-text)]">{product.name}</div>
+          <div className="mt-1 flex items-center justify-between text-xs text-[var(--color-text-2)]">
+            <span>
+              Stok Saat Ini:{" "}
+              <strong className="font-extrabold text-[var(--color-text)]">{product.stock}</strong>
+            </span>
+            <span>
+              Batas Menipis:{" "}
+              <strong className="font-extrabold text-[var(--color-warning-text)]">{threshold}</strong>
+            </span>
           </div>
         </div>
 
-        {/* Stepper Input */}
+        {/* Restock Counter */}
         <div className="mb-4">
-          <label className="mb-2 block text-xs font-bold text-[var(--color-text)]">
-            Jumlah Tambahan Stok (pcs)
+          <label className="mb-1.5 block text-xs font-bold text-[var(--color-text)]">
+            Jumlah Stok Masuk (Pcs)
           </label>
-          <div className="flex items-center gap-2.5 rounded-[14px] border-2 border-[var(--color-brand)] bg-[var(--color-surface)] p-2 shadow-xs">
+          <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => onChangeRestockAmt(String(Math.max(1, currentAmt - 1)))}
-              disabled={currentAmt <= 1 || saving}
-              className="press-tactile flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-[10px] border border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-text)] disabled:opacity-40"
+              onClick={() => handleStep(-10)}
+              disabled={currentAmt <= 1}
+              className="press-tactile flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] hover:bg-[var(--color-surface-2)] disabled:cursor-not-allowed disabled:opacity-40"
+              title="Kurang 10"
+            >
+              <span className="text-xs font-black">-10</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleStep(-1)}
+              disabled={currentAmt <= 1}
+              className="press-tactile flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] hover:bg-[var(--color-surface-2)] disabled:cursor-not-allowed disabled:opacity-40"
             >
               <MinusIcon size={16} weight="bold" />
             </button>
-
             <input
-              type="text"
-              inputMode="numeric"
+              type="number"
+              min="1"
               value={restockAmt}
-              onChange={(e) => {
-                const raw = e.target.value.replace(/\D/g, "");
-                const num = parseInt(raw, 10);
-                onChangeRestockAmt(num > 0 ? String(num) : "");
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && currentAmt > 0 && !saving) {
-                  e.preventDefault();
-                  onConfirm();
-                }
-              }}
-              autoFocus
-              placeholder="0"
-              className="w-full border-none bg-transparent text-center font-mono text-2xl font-black text-[var(--color-text)] outline-none"
+              onChange={(e) => onChangeRestockAmt(e.target.value)}
+              className="h-11 flex-1 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-center text-lg font-black text-[var(--color-text)] focus:border-[var(--color-brand)] focus:ring-2 focus:ring-[var(--color-brand)]/20 focus:outline-none"
             />
-
             <button
               type="button"
-              onClick={() => onChangeRestockAmt(String(currentAmt + 1))}
-              disabled={saving}
-              className="press-tactile shadow-primary-500/25 flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-[10px] bg-[var(--color-brand)] text-white shadow-md"
+              onClick={() => handleStep(1)}
+              className="press-tactile flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] hover:bg-[var(--color-surface-2)]"
             >
               <PlusIcon size={16} weight="bold" />
             </button>
+            <button
+              type="button"
+              onClick={() => handleStep(10)}
+              className="press-tactile flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] hover:bg-[var(--color-surface-2)]"
+              title="Tambah 10"
+            >
+              <span className="text-xs font-black">+10</span>
+            </button>
           </div>
-        </div>
 
-        {/* Quick Presets */}
-        <div className="mb-5">
-          <div className="mb-1.5 text-[11px] font-bold text-[var(--color-text-3)]">
-            Pilihan Cepat Tambahan:
-          </div>
-          <div className="flex gap-2">
-            {[5, 10, 25, 50].map((preset) => (
+          {/* Quick Presets */}
+          <div className="mt-2.5 flex items-center gap-2">
+            <span className="text-[10px] font-bold text-[var(--color-text-3)]">Cepat:</span>
+            {[10, 25, 50, 100].map((preset) => (
               <button
                 key={preset}
                 type="button"
-                onClick={() => onChangeRestockAmt(String(preset))}
-                className={`press-tactile flex-1 cursor-pointer rounded-full border py-1.5 text-xs font-extrabold transition-all ${
+                onClick={() => handlePreset(preset)}
+                className={`press-tactile cursor-pointer rounded-full border px-2.5 py-1 text-[11px] font-bold transition-all ${
                   currentAmt === preset
                     ? "border-[var(--color-brand)] bg-[var(--color-brand)] text-white shadow-sm"
                     : "border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-text)]"
@@ -134,23 +129,29 @@ export function RestockModal({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-3">
-          <button
+        <div className="grid grid-cols-2 gap-3 pt-1">
+          <Button
             type="button"
+            variant="secondary"
+            size="md"
+            fullWidth
             onClick={onClose}
             disabled={saving}
-            className="press-tactile flex-1 cursor-pointer rounded-full border border-border bg-surface-2 px-4 py-3 text-xs font-extrabold text-text transition-all hover:bg-surface-3"
           >
             Batal
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="primary"
+            size="md"
+            fullWidth
             onClick={onConfirm}
-            disabled={saving || currentAmt <= 0}
-            className="press-tactile flex-1 cursor-pointer rounded-full bg-brand px-4 py-3 text-xs font-extrabold text-white shadow-md shadow-brand/25 transition-all hover:bg-brand-dark disabled:opacity-50"
+            loading={saving}
+            loadingText="Menyimpan..."
+            disabled={currentAmt <= 0}
           >
-            {saving ? "Menyimpan..." : "Simpan Stok"}
-          </button>
+            Simpan Stok
+          </Button>
         </div>
       </div>
     </Modal>

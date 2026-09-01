@@ -2,6 +2,7 @@ import { Modal } from "#/components/Modal";
 import { KasirReceipt } from "./KasirReceipt";
 import { printReceipt } from "#/lib/print";
 import { PrinterIcon, CheckCircleIcon } from "@phosphor-icons/react";
+import { Button } from "#/components/ui";
 
 interface ReceiptModalProps {
   open: boolean;
@@ -19,24 +20,28 @@ export function ReceiptModal({ open, onClose, tx, storeName }: ReceiptModalProps
         <KasirReceipt tx={tx} storeName={storeName} />
       </div>
 
-      <div className="no-print mt-5 flex gap-2.5">
-        <button
+      <div className="no-print mt-5 grid grid-cols-2 gap-3">
+        <Button
           type="button"
+          variant="primary"
+          size="md"
+          fullWidth
+          leftIcon={<PrinterIcon size={18} weight="bold" />}
           onClick={() => printReceipt("toku-receipt-content")}
-          className="press-tactile shadow-primary-500/20 flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-full bg-[var(--color-brand)] px-4 py-3 text-sm font-extrabold text-white shadow-md"
         >
-          <PrinterIcon size={18} weight="bold" />
-          <span>Cetak Struk</span>
-        </button>
+          Cetak Struk
+        </Button>
 
-        <button
+        <Button
           type="button"
+          variant="secondary"
+          size="md"
+          fullWidth
+          leftIcon={<CheckCircleIcon size={18} weight="bold" />}
           onClick={onClose}
-          className="press-tactile flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] px-4 py-3 text-sm font-extrabold text-[var(--color-text)]"
         >
-          <CheckCircleIcon size={18} weight="bold" />
-          <span>Selesai</span>
-        </button>
+          Selesai
+        </Button>
       </div>
     </Modal>
   );

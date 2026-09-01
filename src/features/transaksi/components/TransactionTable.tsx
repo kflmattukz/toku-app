@@ -8,6 +8,7 @@ import {
 } from "@phosphor-icons/react";
 import { formatDate, formatIDR } from "#/lib/utils";
 import { Pagination } from "#/components/ui/Pagination";
+import { Button } from "#/components/ui";
 import type { Transaction } from "../types";
 
 interface TransactionTableProps {
@@ -152,17 +153,18 @@ export function TransactionTable({
                         )}
                       </td>
                       <td className="px-5 py-3.5 text-right">
-                        <button
+                        <Button
                           type="button"
+                          variant="secondary"
+                          size="xs"
+                          leftIcon={<PrinterIcon size={14} />}
                           onClick={(e) => {
                             e.stopPropagation();
                             onSelect(tx);
                           }}
-                          className="press-tactile inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] px-3 py-1.5 text-xs font-bold text-[var(--color-text)] hover:bg-[var(--color-surface)]"
                         >
-                          <PrinterIcon size={14} />
-                          <span>Rincian</span>
-                        </button>
+                          Rincian
+                        </Button>
                       </td>
                     </tr>
                   );

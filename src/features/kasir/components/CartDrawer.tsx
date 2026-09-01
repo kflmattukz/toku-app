@@ -12,6 +12,7 @@ import {
   PackageIcon,
 } from "@phosphor-icons/react";
 import { formatIDR, calculateItemDiscount } from "#/lib/utils";
+import { Button } from "#/components/ui";
 import type { CartItem, Product } from "../types";
 
 interface CartDrawerProps {
@@ -185,49 +186,46 @@ export function CartDrawer({
         </div>
       </div>
 
-      <button
+      <Button
         type="button"
-        onClick={onOpenPayment}
+        variant="primary"
+        size="lg"
+        fullWidth
         disabled={cart.length === 0}
-        className={`press-tactile flex w-full items-center justify-center gap-2 rounded-full px-4 py-3 text-sm font-extrabold text-white transition-all ${
-          cart.length === 0
-            ? "cursor-not-allowed bg-[var(--color-border)] opacity-60"
-            : "shadow-primary-500/30 cursor-pointer bg-[var(--color-brand)] shadow-lg"
-        }`}
+        leftIcon={<MoneyIcon size={20} weight="bold" />}
+        rightIcon={<ArrowRightIcon size={16} weight="bold" />}
+        onClick={onOpenPayment}
       >
-        <MoneyIcon size={20} weight="bold" />
-        <span>Bayar Transaksi</span>
-        <ArrowRightIcon size={16} weight="bold" />
-      </button>
+        Bayar Transaksi
+      </Button>
     </div>
   );
 
   return (
     <>
-      {/* Desktop Sticky Cart Sidebar */}
-      <div className="desktop-only sticky top-6 flex max-h-[calc(100vh-120px)] w-[380px] flex-col rounded-[18px] border border-[var(--color-border)] bg-[var(--color-surface)] shadow-xs">
-        <div className="flex items-center justify-between border-b border-[var(--color-border)] p-4 sm:p-5">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-brand-light)] text-[var(--color-brand)]">
-              <ShoppingCartIcon size={20} weight="bold" />
-            </div>
-            <div>
-              <h2 className="m-0 text-sm font-extrabold text-[var(--color-text)]">Pesanan Kasir</h2>
-              <div className="mt-0.5 text-[11px] text-[var(--color-text-3)]">
-                {totalItems} item barang di keranjang
-              </div>
-            </div>
+      {/* Desktop Persistent Sidebar Cart */}
+      <div className="desktop-only sticky top-20 flex h-[calc(100vh-100px)] w-[360px] shrink-0 flex-col overflow-hidden rounded-[18px] border border-[var(--color-border)] bg-[var(--color-surface)] shadow-xs">
+        <div className="flex items-center justify-between border-b border-[var(--color-border)] p-4">
+          <div className="flex items-center gap-2">
+            <ShoppingCartIcon size={20} weight="bold" className="text-[var(--color-brand)]" />
+            <h2 className="text-sm font-extrabold text-[var(--color-text)]">Keranjang Kasir</h2>
+            {totalItems > 0 && (
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--color-brand)] text-[10px] font-extrabold text-white">
+                {totalItems}
+              </span>
+            )}
           </div>
 
           {cart.length > 0 && (
-            <button
+            <Button
               type="button"
+              variant="danger-subtle"
+              size="xs"
+              leftIcon={<TrashIcon size={12} weight="bold" />}
               onClick={onClearCart}
-              className="press-tactile flex cursor-pointer items-center gap-1 rounded-full border border-[var(--color-danger)]/30 bg-[var(--color-danger-light)] px-2.5 py-1 text-[11px] font-bold text-[var(--color-danger-text)]"
             >
-              <TrashIcon size={12} weight="bold" />
-              <span>Reset</span>
-            </button>
+              Reset
+            </Button>
           )}
         </div>
 

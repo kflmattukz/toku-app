@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { dayRange, weekRange, monthRange, parseIDRInput } from "#/lib/utils";
 import { PlusIcon, CoinsIcon } from "@phosphor-icons/react";
 import { ReportPeriodFilter, type Range } from "#/features/laporan";
+import { Button } from "#/components/ui";
 import {
   ExpenseOverviewCards,
   ExpenseTable,
@@ -127,14 +128,15 @@ function Pengeluaran() {
         <div className="flex flex-wrap items-center gap-3">
           <ReportPeriodFilter range={range} onRangeChange={setRange} />
 
-          <button
+          <Button
             type="button"
+            variant="primary"
+            size="sm"
+            leftIcon={<PlusIcon size={16} weight="bold" />}
             onClick={() => setModalOpen(true)}
-            className="press-tactile flex cursor-pointer items-center gap-1.5 rounded-full bg-[var(--color-brand)] px-4 py-2 text-xs font-bold text-white shadow-md shadow-[var(--color-brand)]/20 transition-all hover:bg-[var(--color-brand-dark)]"
           >
-            <PlusIcon size={16} weight="bold" />
-            <span>Catat Pengeluaran</span>
-          </button>
+            Catat Pengeluaran
+          </Button>
         </div>
       </div>
 

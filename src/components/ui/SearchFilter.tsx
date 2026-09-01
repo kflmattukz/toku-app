@@ -1,5 +1,6 @@
 import React from "react";
-import { MagnifyingGlassIcon, XIcon } from "@phosphor-icons/react";
+import { MagnifyingGlassIcon, XIcon, TagIcon } from "@phosphor-icons/react";
+import { Select, type SelectOption } from "./Select";
 
 interface SearchFilterProps {
   search: string;
@@ -22,6 +23,25 @@ export function SearchFilter({
   className = "",
   extraActions,
 }: SearchFilterProps) {
+  const categoryOptions: SelectOption<string>[] = (categories || []).map((cat) => ({
+    value: cat,
+    label: cat === "Semua" ? "Semua Kategori" : cat,
+    icon: <TagIcon size={14} weight="bold" />,
+  }));
+
+  // Ensure "Semua" option is included if not in categories
+  if (
+    categories &&
+    categories.length > 0 &&
+    !categoryOptions.some((opt) => opt.value === "Semua")
+  ) {
+    categoryOptions.unshift({
+      value: "Semua",
+      label: "Semua Kategori",
+      icon: <TagIcon size={14} weight="bold" />,
+    });
+  }
+
   return (
     <div className={`flex flex-col items-stretch gap-3 sm:flex-row sm:items-center ${className}`}>
       {/* Search Input Box */}
@@ -49,23 +69,17 @@ export function SearchFilter({
         )}
       </div>
 
-      {/* Optional Category Dropdown or Pills */}
+      {/* Category Dropdown Pill */}
       {categories && categories.length > 0 && onCategoryChange && (
-        <div className="flex items-center gap-2">
-          <select
+        <div className="w-full sm:w-48">
+          <Select
             value={selectedCategory || "Semua"}
-            onChange={(e) => onCategoryChange(e.target.value)}
-            className="cursor-pointer rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 text-xs font-semibold text-[var(--color-text)] focus:border-[var(--color-brand)] focus:ring-2 focus:ring-[var(--color-brand)]/20 focus:outline-none"
-          >
-            <option value="Semua">Semua Kategori</option>
-            {categories
-              .filter((cat) => cat !== "Semua")
-              .map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-          </select>
+            onChange={onCategoryChange}
+            options={categoryOptions}
+            variant="pill"
+            size="md"
+            placeholder="Pilih Kategori"
+          />
         </div>
       )}
 

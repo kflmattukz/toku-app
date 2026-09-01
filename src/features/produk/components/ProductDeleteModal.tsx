@@ -1,5 +1,6 @@
 import { Modal } from "#/components/Modal";
 import { WarningIcon } from "@phosphor-icons/react";
+import { Button } from "#/components/ui";
 import type { Product } from "../types";
 
 interface ProductDeleteModalProps {
@@ -31,23 +32,28 @@ export function ProductDeleteModal({
           katalog? Tindakan ini tidak dapat dibatalkan.
         </p>
 
-        <div className="flex gap-2.5">
-          <button
+        <div className="grid grid-cols-2 gap-3">
+          <Button
             type="button"
+            variant="secondary"
+            size="md"
+            fullWidth
             onClick={onClose}
             disabled={deleting}
-            className="press-tactile flex-1 cursor-pointer rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] py-3 text-xs font-extrabold text-[var(--color-text)]"
           >
             Batal
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="danger"
+            size="md"
+            fullWidth
             onClick={onConfirm}
-            disabled={deleting}
-            className="press-tactile flex-1.2 shadow-danger-500/30 cursor-pointer rounded-full bg-[var(--color-danger)] py-3 text-xs font-extrabold text-white shadow-md disabled:opacity-60"
+            loading={deleting}
+            loadingText="Menghapus..."
           >
-            {deleting ? "Menghapus..." : "Ya, Hapus Produk"}
-          </button>
+            Ya, Hapus Produk
+          </Button>
         </div>
       </div>
     </Modal>

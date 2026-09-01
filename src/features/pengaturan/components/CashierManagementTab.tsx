@@ -13,7 +13,44 @@ import {
   UserIcon,
   WarningCircleIcon,
 } from "@phosphor-icons/react";
+import { Select, Button, type SelectOption } from "#/components/ui";
 import type { Id } from "../../../../convex/_generated/dataModel";
+
+const ROLE_OPTIONS: SelectOption<"cashier" | "manager" | "owner">[] = [
+  {
+    value: "cashier",
+    label: "Kasir",
+    description: "Buka/Tutup Kasir & Transaksi POS",
+    icon: <UserIcon size={16} weight="duotone" className="text-emerald-600" />,
+    badge: (
+      <span className="rounded-md bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-extrabold text-emerald-600">
+        Kasir
+      </span>
+    ),
+  },
+  {
+    value: "manager",
+    label: "Manager",
+    description: "Kelola Produk, Stok & Laporan",
+    icon: <ShieldCheckIcon size={16} weight="duotone" className="text-blue-600" />,
+    badge: (
+      <span className="rounded-md bg-blue-500/10 px-1.5 py-0.5 text-[10px] font-extrabold text-blue-600">
+        Manager
+      </span>
+    ),
+  },
+  {
+    value: "owner",
+    label: "Owner",
+    description: "Hak Akses Penuh & Pengaturan Toko",
+    icon: <CrownIcon size={16} weight="duotone" className="text-amber-600" />,
+    badge: (
+      <span className="rounded-md bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-extrabold text-amber-600">
+        Owner
+      </span>
+    ),
+  },
+];
 
 interface CashierManagementTabProps {
   isOwner: boolean;
@@ -196,26 +233,27 @@ export function CashierManagementTab({
               <label className="mb-2 block text-xs font-bold text-[var(--color-text)]">
                 Peran (Role)
               </label>
-              <select
+              <Select<"cashier" | "manager" | "owner">
                 value={newCashierRole}
-                onChange={(e) => setNewCashierRole(e.target.value as any)}
-                className="focus:ring-primary-500/20 focus:border-primary-500 w-full cursor-pointer rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 text-sm font-medium text-[var(--color-text)] focus:ring-2 focus:outline-none"
-              >
-                <option value="cashier">Kasir (Buka/Tutup Kasir)</option>
-                <option value="manager">Manager (Kelola Produk/Stok)</option>
-                <option value="owner">Owner (Hak Akses Penuh)</option>
-              </select>
+                onChange={(val) => setNewCashierRole(val)}
+                options={ROLE_OPTIONS}
+                variant="form"
+                size="md"
+              />
             </div>
           </div>
 
-          <button
+          <Button
             type="submit"
-            disabled={isAddingCashier}
-            className="press-tactile shadow-primary-500/20 flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-full bg-[var(--color-brand)] px-6 py-2.5 text-xs font-extrabold text-white shadow-md disabled:opacity-60 sm:w-auto"
+            variant="primary"
+            size="md"
+            loading={isAddingCashier}
+            loadingText="Menyimpan Staf..."
+            leftIcon={<PlusIcon size={16} weight="bold" />}
+            className="w-full sm:w-auto"
           >
-            <PlusIcon size={16} weight="bold" />
-            <span>{isAddingCashier ? "Menyimpan Staf..." : "Tambahkan Staf"}</span>
-          </button>
+            Tambahkan Staf
+          </Button>
         </form>
       </section>
 
@@ -372,33 +410,36 @@ export function CashierManagementTab({
                 <label className="mb-2 block text-xs font-bold text-[var(--color-text)]">
                   Peran (Role)
                 </label>
-                <select
+                <Select<"cashier" | "manager" | "owner">
                   value={editRole}
-                  onChange={(e) => setEditRole(e.target.value as any)}
-                  className="focus:ring-primary-500/20 focus:border-primary-500 w-full cursor-pointer rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 text-sm font-medium text-[var(--color-text)] focus:ring-2 focus:outline-none"
-                >
-                  <option value="cashier">Kasir (Buka/Tutup Kasir)</option>
-                  <option value="manager">Manager (Kelola Produk/Stok)</option>
-                  <option value="owner">Owner (Hak Akses Penuh)</option>
-                </select>
+                  onChange={(val) => setEditRole(val)}
+                  options={ROLE_OPTIONS}
+                  variant="form"
+                  size="md"
+                />
               </div>
 
-              <div className="flex gap-2.5">
-                <button
+              <div className="grid grid-cols-2 gap-3">
+                <Button
                   type="button"
+                  variant="secondary"
+                  size="md"
+                  fullWidth
                   onClick={() => setEditingCashier(null)}
                   disabled={isUpdatingCashier}
-                  className="press-tactile flex-1 cursor-pointer rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] py-3 text-xs font-extrabold text-[var(--color-text)]"
                 >
                   Batal
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
-                  disabled={isUpdatingCashier}
-                  className="press-tactile flex-1.5 shadow-primary-500/20 cursor-pointer rounded-full bg-[var(--color-brand)] py-3 text-xs font-extrabold text-white shadow-md disabled:opacity-60"
+                  variant="primary"
+                  size="md"
+                  fullWidth
+                  loading={isUpdatingCashier}
+                  loadingText="Menyimpan..."
                 >
-                  {isUpdatingCashier ? "Menyimpan..." : "Simpan Perubahan"}
-                </button>
+                  Simpan Perubahan
+                </Button>
               </div>
             </form>
           </div>
@@ -424,23 +465,28 @@ export function CashierManagementTab({
               ? Staf ini tidak akan dapat login lagi menggunakan PIN sebelumnya.
             </p>
 
-            <div className="flex gap-2.5">
-              <button
+            <div className="grid grid-cols-2 gap-3">
+              <Button
                 type="button"
+                variant="secondary"
+                size="md"
+                fullWidth
                 onClick={() => setDeletingCashier(null)}
                 disabled={isDeletingCashier}
-                className="press-tactile flex-1 cursor-pointer rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] py-3 text-xs font-extrabold text-[var(--color-text)]"
               >
                 Batal
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="danger"
+                size="md"
+                fullWidth
                 onClick={onConfirmDeleteCashier}
-                disabled={isDeletingCashier}
-                className="press-tactile flex-1.2 shadow-danger-500/30 cursor-pointer rounded-full bg-[var(--color-danger)] py-3 text-xs font-extrabold text-white shadow-md disabled:opacity-60"
+                loading={isDeletingCashier}
+                loadingText="Menghapus..."
               >
-                {isDeletingCashier ? "Menghapus..." : "Ya, Hapus Staf"}
-              </button>
+                Ya, Hapus Staf
+              </Button>
             </div>
           </div>
         </Modal>

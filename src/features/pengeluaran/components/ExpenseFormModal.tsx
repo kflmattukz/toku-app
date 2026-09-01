@@ -2,12 +2,15 @@ import { useState } from "react";
 import { Modal } from "#/components/Modal";
 import { formatIDRInput, parseIDRInput } from "#/lib/utils";
 import {
-  ReceiptIcon,
   CalendarBlankIcon,
   WalletIcon,
   TagIcon,
   NotePencilIcon,
+  BankIcon,
+  UserIcon,
+  MoneyIcon,
 } from "@phosphor-icons/react";
+import { Select, Button, type SelectOption } from "#/components/ui";
 import {
   EXPENSE_CATEGORIES,
   type ExpenseCategory,
@@ -23,6 +26,27 @@ interface ExpenseFormModalProps {
   activeShift?: any;
 }
 
+const SOURCE_OPTIONS: SelectOption<ExpenseSource>[] = [
+  {
+    value: "cash_drawer",
+    label: "Laci Kasir (Cash)",
+    description: "Dipotong langsung dari kas laci kasir",
+    icon: <MoneyIcon size={16} weight="duotone" className="text-emerald-600" />,
+  },
+  {
+    value: "bank",
+    label: "Rekening Bank / Transfer",
+    description: "Transfer via rekening operasional toko",
+    icon: <BankIcon size={16} weight="duotone" className="text-blue-600" />,
+  },
+  {
+    value: "owner",
+    label: "Modal / Kas Pribadi Owner",
+    description: "Dana talangan / kas pribadi pemilik",
+    icon: <UserIcon size={16} weight="duotone" className="text-amber-600" />,
+  },
+];
+
 export function ExpenseFormModal({
   open,
   onClose,
@@ -37,39 +61,38 @@ export function ExpenseFormModal({
   const [date, setDate] = useState<string>(todayStr);
   const [notes, setNotes] = useState<string>("");
   const [source, setSource] = useState<ExpenseSource>("cash_drawer");
-  const [deductFromDrawer, setDeductFromDrawer] = useState<boolean>(true);
 
   if (!open) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const amountNum = parseIDRInput(amount);
+    if (!amountNum || amountNum <= 0) return;
+
     onSave({
       category,
       amount,
       date,
       notes,
       source,
-      deductFromDrawer: source === "cash_drawer" ? deductFromDrawer : false,
+      deductFromDrawer: source === "cash_drawer",
     });
   };
 
   return (
     <Modal onClose={onClose} maxWidth={500}>
       <div className="mb-4">
-        <div className="eyebrow-tag mb-1">CATAT PENGELUARAN</div>
+        <div className="eyebrow-tag mb-1">PENGELUARAN BARU</div>
         <h2 className="text-xl font-black tracking-tight text-[var(--color-text)]">
-          Catat Biaya & Beban Toko
+          Catat Pengeluaran Operasional
         </h2>
-        <p className="mt-1 text-xs text-[var(--color-text-2)]">
-          Pencatatan pengeluaran agar laba bersih toko terhitung akurat.
-        </p>
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         {/* Nominal Pengeluaran */}
         <div>
           <label className="mb-1.5 block text-xs font-bold text-[var(--color-text)]">
-            Nominal Biaya (IDR)
+            Nominal Pengeluaran (IDR)
           </label>
           <div className="relative flex items-center">
             <span className="absolute left-3.5 text-xs font-extrabold text-[var(--color-brand)]">
@@ -136,15 +159,14 @@ export function ExpenseFormModal({
               <WalletIcon size={14} weight="bold" />
               <span>Sumber Dana</span>
             </label>
-            <select
+            <Select<ExpenseSource>
               value={source}
-              onChange={(e) => setSource(e.target.value as ExpenseSource)}
-              className="focus:ring-primary-500/20 focus:border-primary-500 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 text-xs font-bold text-[var(--color-text)] focus:ring-2 focus:outline-none"
-            >
-              <option value="cash_drawer">Laci Kasir (Cash)</option>
-              <option value="bank">Rekening Bank / Transfer</option>
-              <option value="owner">Modal / Kas Pribadi Owner</option>
-            </select>
+              onChange={(val) => setSource(val)}
+              options={SOURCE_OPTIONS}
+              variant="form"
+              size="md"
+              placeholder="Pilih Sumber Dana"
+            />
           </div>
         </div>
 
@@ -174,21 +196,28 @@ export function ExpenseFormModal({
         )}
 
         {/* Submit Buttons */}
-        <div className="flex gap-2.5 pt-2">
-          <button
+        <div className="grid grid-cols-2 gap-3 pt-2">
+          <Button
             type="button"
+            variant="secondary"
+            size="md"
+            fullWidth
             onClick={onClose}
-            className="press-tactile flex-1 cursor-pointer rounded-full border border-border bg-surface-2 py-3 text-xs font-extrabold text-text transition-all hover:bg-surface-3"
+            disabled={saving}
           >
             Batal
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
-            disabled={saving || parseIDRInput(amount) <= 0}
-            className="press-tactile flex-1.5 cursor-pointer rounded-full bg-brand py-3 text-xs font-extrabold text-white shadow-md shadow-brand/25 transition-all hover:bg-brand-dark disabled:opacity-50"
+            variant="primary"
+            size="md"
+            fullWidth
+            loading={saving}
+            loadingText="Menyimpan..."
+            disabled={parseIDRInput(amount) <= 0}
           >
-            {saving ? "Menyimpan..." : "Simpan Pengeluaran"}
-          </button>
+            Simpan Pengeluaran
+          </Button>
         </div>
       </form>
     </Modal>
