@@ -129,6 +129,149 @@ export function printReceipt(
   }, 150);
 }
 
+// Code 39 character patterns (9 elements: 5 bars & 4 spaces; 1 = wide, 0 = narrow)
+const CODE39_MAP: Record<string, string> = {
+  "0": "000110100",
+  "1": "100100001",
+  "2": "001100001",
+  "3": "101100000",
+  "4": "000110001",
+  "5": "100110000",
+  "6": "001110000",
+  "7": "000100101",
+  "8": "100100100",
+  "9": "001100100",
+  "A": "100001001",
+  "B": "001001001",
+  "C": "101001000",
+  "D": "000011001",
+  "E": "100011000",
+  "F": "001011000",
+  "G": "000001101",
+  "H": "100001100",
+  "I": "001001100",
+  "J": "000011100",
+  "K": "100000011",
+  "L": "001000011",
+  "M": "101000010",
+  "N": "000010011",
+  "O": "100010010",
+  "P": "001010010",
+  "Q": "000000111",
+  "R": "100000110",
+  "S": "001000110",
+  "T": "000010110",
+  "U": "110000001",
+  "V": "011000001",
+  "W": "111000000",
+  "X": "010010001",
+  "Y": "110010000",
+  "Z": "011010000",
+  "-": "010000101",
+  ".": "110000100",
+  " ": "011000100",
+  "$": "010101000",
+  "/": "010100010",
+  "+": "010001010",
+  "%": "000101010",
+  "*": "010010100",
+};
+
+export interface BarcodeBar {
+  isBar: boolean;
+  width: number;
+}
+
+/**
+ * Encodes text into standard Code 39 barcode bar definitions
+ */
+export function generateBarcodeBars(
+  text: string,
+  narrowWidth = 1.25,
+  wideWidth = 3.0,
+): { bars: BarcodeBar[]; totalWidth: number; displayValue: string } {
+  const sanitized = `*${text.toUpperCase().replace(/[^0-9A-Z\-. $/+%]/g, "")}*`;
+  const bars: BarcodeBar[] = [];
+
+  for (let i = 0; i < sanitized.length; i++) {
+    const char = sanitized[i];
+    const pattern = CODE39_MAP[char] || CODE39_MAP["*"];
+
+    for (let p = 0; p < 9; p++) {
+      const isBar = p % 2 === 0; // Even indices = bars, Odd indices = spaces
+      const isWide = pattern[p] === "1";
+      bars.push({
+        isBar,
+        width: isWide ? wideWidth : narrowWidth,
+      });
+    }
+
+    // Inter-character narrow gap
+    if (i < sanitized.length - 1) {
+      bars.push({
+        isBar: false,
+        width: narrowWidth,
+      });
+    }
+  }
+
+  const totalWidth = bars.reduce((acc, b) => acc + b.width, 0);
+  return { bars, totalWidth, displayValue: text.toUpperCase() };
+}
+
+/**
+ * Draws a real, sharp Code 39 barcode onto a 2D canvas context
+ */
+export function drawBarcodeToCanvas(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  centerX: number,
+  startY: number,
+  options: {
+    narrowWidth?: number;
+    wideWidth?: number;
+    height?: number;
+    color?: string;
+    showText?: boolean;
+  } = {},
+): number {
+  const {
+    narrowWidth = 1.25,
+    wideWidth = 3.0,
+    height = 28,
+    color = "#292524",
+    showText = true,
+  } = options;
+
+  const { bars, totalWidth, displayValue } = generateBarcodeBars(
+    text,
+    narrowWidth,
+    wideWidth,
+  );
+  let curX = centerX - totalWidth / 2;
+
+  ctx.fillStyle = color;
+  for (const bar of bars) {
+    if (bar.isBar) {
+      ctx.fillRect(curX, startY, bar.width, height);
+    }
+    curX += bar.width;
+  }
+
+  let nextY = startY + height + 5;
+
+  if (showText) {
+    ctx.fillStyle = "#78716c";
+    ctx.font = `600 10px "JetBrains Mono", Consolas, monospace`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.fillText(displayValue, centerX, nextY);
+    nextY += 14;
+  }
+
+  return nextY;
+}
+
 /**
  * Helper to wrap text into multiple lines for canvas rendering
  */
@@ -148,8 +291,8 @@ function wrapText(
       currentLine += " " + word;
     } else {
       lines.push(currentLine);
-      currentLine = word;
     }
+    currentLine = word;
   }
   lines.push(currentLine);
   return lines;
@@ -439,18 +582,25 @@ export async function renderReceiptCanvas(
 
   curY += totalBoxHeight + 16;
 
-  // 7. Barcode Lines Graphic
-  ctx.fillStyle = "#78716c";
-  ctx.font = `400 ${is58mm ? 15 : 17}px monospace`;
-  ctx.textAlign = "center";
-  ctx.letterSpacing = "4px";
-  ctx.fillText("||| | ||||| | |||| | ||| || ||||", canvasWidth / 2, curY);
-  ctx.letterSpacing = "0px";
-  curY += 18;
+  // 7. Authentic Code 39 Barcode
+  const barcodeHeight = is58mm ? 26 : 30;
+  const barcodeNarrowWidth = is58mm ? 1.15 : 1.3;
+  const barcodeWideWidth = is58mm ? 2.8 : 3.2;
+
+  curY = drawBarcodeToCanvas(ctx, txId, canvasWidth / 2, curY, {
+    narrowWidth: barcodeNarrowWidth,
+    wideWidth: barcodeWideWidth,
+    height: barcodeHeight,
+    color: "#292524",
+    showText: true,
+  });
+  curY += 8;
 
   // Footer text
   ctx.fillStyle = "#78716c";
   ctx.font = `600 ${is58mm ? 10 : 10.5}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "alphabetic";
   ctx.fillText("Terima kasih atas kunjungan Anda!", canvasWidth / 2, curY);
   curY += 14;
 

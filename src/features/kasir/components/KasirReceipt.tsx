@@ -1,13 +1,76 @@
 import { formatIDR, calculateItemDiscount } from "#/lib/utils";
+import { generateBarcodeBars } from "#/lib/print";
 
 export interface KasirReceiptProps {
+  id?: string;
   tx: any;
   storeName: string;
   storeAddress?: string;
   paperWidth?: "58mm" | "80mm";
 }
 
+function ReceiptBarcode({ value, is58mm }: { value: string; is58mm: boolean }) {
+  const narrowWidth = is58mm ? 1.15 : 1.3;
+  const wideWidth = is58mm ? 2.8 : 3.2;
+  const height = is58mm ? 26 : 30;
+  const { bars, totalWidth, displayValue } = generateBarcodeBars(
+    value,
+    narrowWidth,
+    wideWidth,
+  );
+
+  let curX = 0;
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        marginBottom: 8,
+      }}
+    >
+      <svg
+        width={totalWidth}
+        height={height}
+        viewBox={`0 0 ${totalWidth} ${height}`}
+        style={{ display: "block" }}
+      >
+        {bars.map((bar, idx) => {
+          const x = curX;
+          curX += bar.width;
+          if (!bar.isBar) return null;
+          return (
+            <rect
+              key={idx}
+              x={x}
+              y={0}
+              width={bar.width}
+              height={height}
+              fill="#292524"
+            />
+          );
+        })}
+      </svg>
+      <span
+        style={{
+          fontFamily: '"JetBrains Mono", Consolas, monospace',
+          fontSize: is58mm ? 9.5 : 10.5,
+          fontWeight: 600,
+          color: "#78716c",
+          marginTop: 4,
+          letterSpacing: "0.08em",
+        }}
+      >
+        {displayValue}
+      </span>
+    </div>
+  );
+}
+
 export function KasirReceipt({
+  id,
   tx,
   storeName,
   storeAddress,
@@ -24,6 +87,7 @@ export function KasirReceipt({
 
   return (
     <div
+      id={id || "toku-receipt-content"}
       className="receipt-paper"
       style={{
         width: "100%",
@@ -362,25 +426,13 @@ export function KasirReceipt({
         </span>
       </div>
 
-      {/* Thermal Barcode Graphic & Footer */}
-      <div style={{ textAlign: "center", paddingTop: 2 }}>
-        <div
-          style={{
-            fontFamily: "monospace",
-            fontSize: is58mm ? 14 : 16,
-            letterSpacing: "3px",
-            color: "#78716c",
-            marginBottom: 6,
-            lineHeight: 1,
-            userSelect: "none",
-          }}
-        >
-          ||| | ||||| | |||| | ||| || ||||
-        </div>
+      {/* Authentic Barcode Graphic & Footer */}
+      <div style={{ textAlign: "center", paddingTop: 4 }}>
+        <ReceiptBarcode value={txId} is58mm={is58mm} />
         <div style={{ fontSize: 10, color: "#78716c", fontWeight: 600 }}>
           Terima kasih atas kunjungan Anda!
         </div>
-        <div style={{ fontSize: 9.5, color: "#ea580c", fontWeight: 800, marginTop: 2 }}>
+        <div style={{ fontSize: 9.5, color: "#ea580c", fontWeight: 800, marginTop: 3 }}>
           Toku POS · Kasir Digital UMKM
         </div>
       </div>
