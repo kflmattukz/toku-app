@@ -16,6 +16,7 @@ import { Route as AppKasirRouteImport } from './routes/_app/kasir'
 import { Route as AppLaporanRouteImport } from './routes/_app/laporan'
 import { Route as AppOnboardingRouteImport } from './routes/_app/onboarding'
 import { Route as AppPengaturanRouteImport } from './routes/_app/pengaturan'
+import { Route as AppPengeluaranRouteImport } from './routes/_app/pengeluaran'
 import { Route as AppProdukRouteImport } from './routes/_app/produk'
 import { Route as AppStokRouteImport } from './routes/_app/stok'
 import { Route as AppTransaksiRouteImport } from './routes/_app/transaksi'
@@ -55,6 +56,11 @@ const AppPengaturanRoute = AppPengaturanRouteImport.update({
   path: '/pengaturan',
   getParentRoute: () => AppRoute,
 } as any)
+const AppPengeluaranRoute = AppPengeluaranRouteImport.update({
+  id: '/pengeluaran',
+  path: '/pengeluaran',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppProdukRoute = AppProdukRouteImport.update({
   id: '/produk',
   path: '/produk',
@@ -83,6 +89,7 @@ export interface FileRoutesByFullPath {
   '/laporan': typeof AppLaporanRoute
   '/onboarding': typeof AppOnboardingRoute
   '/pengaturan': typeof AppPengaturanRoute
+  '/pengeluaran': typeof AppPengeluaranRoute
   '/produk': typeof AppProdukRoute
   '/stok': typeof AppStokRoute
   '/transaksi': typeof AppTransaksiRoute
@@ -95,6 +102,7 @@ export interface FileRoutesByTo {
   '/laporan': typeof AppLaporanRoute
   '/onboarding': typeof AppOnboardingRoute
   '/pengaturan': typeof AppPengaturanRoute
+  '/pengeluaran': typeof AppPengeluaranRoute
   '/produk': typeof AppProdukRoute
   '/stok': typeof AppStokRoute
   '/transaksi': typeof AppTransaksiRoute
@@ -109,6 +117,7 @@ export interface FileRoutesById {
   '/_app/laporan': typeof AppLaporanRoute
   '/_app/onboarding': typeof AppOnboardingRoute
   '/_app/pengaturan': typeof AppPengaturanRoute
+  '/_app/pengeluaran': typeof AppPengeluaranRoute
   '/_app/produk': typeof AppProdukRoute
   '/_app/stok': typeof AppStokRoute
   '/_app/transaksi': typeof AppTransaksiRoute
@@ -123,6 +132,7 @@ export interface FileRouteTypes {
     | '/laporan'
     | '/onboarding'
     | '/pengaturan'
+    | '/pengeluaran'
     | '/produk'
     | '/stok'
     | '/transaksi'
@@ -135,6 +145,7 @@ export interface FileRouteTypes {
     | '/laporan'
     | '/onboarding'
     | '/pengaturan'
+    | '/pengeluaran'
     | '/produk'
     | '/stok'
     | '/transaksi'
@@ -148,6 +159,7 @@ export interface FileRouteTypes {
     | '/_app/laporan'
     | '/_app/onboarding'
     | '/_app/pengaturan'
+    | '/_app/pengeluaran'
     | '/_app/produk'
     | '/_app/stok'
     | '/_app/transaksi'
@@ -211,6 +223,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPengaturanRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/pengeluaran': {
+      id: '/_app/pengeluaran'
+      path: '/pengeluaran'
+      fullPath: '/pengeluaran'
+      preLoaderRoute: typeof AppPengeluaranRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/produk': {
       id: '/_app/produk'
       path: '/produk'
@@ -248,6 +267,7 @@ interface AppRouteChildren {
   AppLaporanRoute: typeof AppLaporanRoute
   AppOnboardingRoute: typeof AppOnboardingRoute
   AppPengaturanRoute: typeof AppPengaturanRoute
+  AppPengeluaranRoute: typeof AppPengeluaranRoute
   AppProdukRoute: typeof AppProdukRoute
   AppStokRoute: typeof AppStokRoute
   AppTransaksiRoute: typeof AppTransaksiRoute
@@ -259,6 +279,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppLaporanRoute: AppLaporanRoute,
   AppOnboardingRoute: AppOnboardingRoute,
   AppPengaturanRoute: AppPengaturanRoute,
+  AppPengeluaranRoute: AppPengeluaranRoute,
   AppProdukRoute: AppProdukRoute,
   AppStokRoute: AppStokRoute,
   AppTransaksiRoute: AppTransaksiRoute,

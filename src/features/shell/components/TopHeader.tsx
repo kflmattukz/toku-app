@@ -1,4 +1,4 @@
-import { ListIcon, LockKeyIcon, WifiSlashIcon } from "@phosphor-icons/react";
+import { ListIcon, LockKeyIcon, WifiSlashIcon, EyeIcon, EyeSlashIcon } from "@phosphor-icons/react";
 import type { ActiveCashier } from "#/lib/store-context";
 
 interface TopHeaderProps {
@@ -7,6 +7,8 @@ interface TopHeaderProps {
   isOnline: boolean;
   onOpenSidebar: () => void;
   onOpenCashierModal: () => void;
+  privacyMode?: boolean;
+  onTogglePrivacy?: () => void;
 }
 
 export function TopHeader({
@@ -15,6 +17,8 @@ export function TopHeader({
   isOnline,
   onOpenSidebar,
   onOpenCashierModal,
+  privacyMode,
+  onTogglePrivacy,
 }: TopHeaderProps) {
   return (
     <>
@@ -50,6 +54,25 @@ export function TopHeader({
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
+          {onTogglePrivacy && (
+            <button
+              type="button"
+              onClick={onTogglePrivacy}
+              className={`press-tactile flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border transition-all ${
+                privacyMode
+                  ? "border-[var(--color-brand)] bg-[var(--color-brand-light)] text-[var(--color-brand)]"
+                  : "border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-text-2)]"
+              }`}
+              title={privacyMode ? "Tampilkan Angka Omset & Cuan" : "Sensor Angka Privasi"}
+            >
+              {privacyMode ? (
+                <EyeSlashIcon size={16} weight="bold" />
+              ) : (
+                <EyeIcon size={16} weight="bold" />
+              )}
+            </button>
+          )}
+
           <button
             type="button"
             onClick={onOpenCashierModal}
@@ -64,3 +87,4 @@ export function TopHeader({
     </>
   );
 }
+

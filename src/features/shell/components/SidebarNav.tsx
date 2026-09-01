@@ -5,6 +5,7 @@ import {
   ChartBarIcon,
   ReceiptIcon,
   ChartLineUpIcon,
+  CoinsIcon,
   GearIcon,
   CaretLeftIcon,
   CaretRightIcon,
@@ -17,6 +18,7 @@ import {
   MoonIcon,
   UserIcon,
 } from "@phosphor-icons/react";
+
 import { useState, useEffect } from "react";
 import { isDarkMode, toggleTheme } from "#/lib/utils";
 import { CATEGORY_LABELS } from "#/features/pengaturan";
@@ -28,9 +30,11 @@ export const NAV_ITEMS = [
   { to: "/produk", icon: PackageIcon, label: "Produk" },
   { to: "/stok", icon: ChartBarIcon, label: "Stok" },
   { to: "/transaksi", icon: ReceiptIcon, label: "Transaksi" },
+  { to: "/pengeluaran", icon: CoinsIcon, label: "Pengeluaran" },
   { to: "/laporan", icon: ChartLineUpIcon, label: "Laporan" },
   { to: "/pengaturan", icon: GearIcon, label: "Pengaturan" },
 ];
+
 
 interface SidebarNavProps {
   currentPath: string;

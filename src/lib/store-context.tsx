@@ -16,6 +16,8 @@ export interface AppStoreContextType {
   setSelectedStoreId: (id: Id<"stores"> | null) => void;
   isPro: boolean;
   openUpgradeModal: (defaultPlan?: "monthly" | "yearly") => void;
+  privacyMode: boolean;
+  togglePrivacyMode: () => void;
 }
 
 export const AppStoreContext = createContext<AppStoreContextType>({
@@ -27,8 +29,11 @@ export const AppStoreContext = createContext<AppStoreContextType>({
   setSelectedStoreId: () => {},
   isPro: false,
   openUpgradeModal: () => {},
+  privacyMode: false,
+  togglePrivacyMode: () => {},
 });
 
 export function useAppStore() {
   return useContext(AppStoreContext);
 }
+

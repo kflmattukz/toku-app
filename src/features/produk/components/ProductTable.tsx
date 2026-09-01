@@ -66,7 +66,7 @@ export function ProductTable({
             <table className="w-full border-collapse">
               <thead>
                 <tr className="border-b border-border bg-surface-2">
-                  {["Foto", "Nama Produk", "Kategori", "Harga Jual", "Stok Barang", "Aksi"].map(
+                  {["Foto", "Nama Produk", "Kategori", "Harga Modal", "Harga Jual", "Stok Barang", "Aksi"].map(
                     (h) => (
                       <th
                         key={h}
@@ -81,6 +81,14 @@ export function ProductTable({
               <tbody>
                 {pagedProducts.map((p) => {
                   const disc = calculateItemDiscount(p.price, p.discountType, p.discountValue);
+                  const effectivePrice = disc.unitPrice;
+                  const hasCost = p.costPrice !== undefined && p.costPrice > 0;
+                  const profitPerUnit = hasCost ? effectivePrice - (p.costPrice || 0) : null;
+                  const marginPct =
+                    hasCost && effectivePrice > 0
+                      ? (((profitPerUnit || 0) / effectivePrice) * 100).toFixed(0)
+                      : null;
+
                   return (
                     <tr
                       key={p._id}
@@ -126,28 +134,57 @@ export function ProductTable({
                           {p.category}
                         </span>
                       </td>
+                      {/* Harga Modal (HPP) */}
                       <td className="px-5 py-3">
-                        {disc.hasDiscount ? (
-                          <div>
-                            <div className="flex items-center gap-1.5">
-                              <span className="price text-sm font-extrabold text-[var(--color-brand)]">
-                                {formatIDR(disc.unitPrice)}
-                              </span>
-                              <span className="rounded-full border border-[var(--color-brand)] bg-[var(--color-brand-light)] px-1.5 py-0.5 text-[10px] font-extrabold text-[var(--color-brand)]">
-                                {p.discountType === "percentage"
-                                  ? `${p.discountValue}% OFF`
-                                  : `-${formatIDR(p.discountValue || 0)}`}
-                              </span>
-                            </div>
-                            <div className="price mt-0.5 text-[11px] text-[var(--color-text-3)] line-through">
-                              {formatIDR(p.price)}
-                            </div>
+                        {hasCost ? (
+                          <div className="text-xs font-bold text-[var(--color-text-2)]">
+                            <span className="price">{formatIDR(p.costPrice || 0)}</span>
                           </div>
                         ) : (
-                          <span className="price text-sm font-extrabold text-[var(--color-text)]">
-                            {formatIDR(p.price)}
+                          <span className="text-[11px] font-medium text-[var(--color-text-3)] italic">
+                            Belum diset
                           </span>
                         )}
+                      </td>
+                      {/* Harga Jual & Margin */}
+                      <td className="px-5 py-3">
+                        <div>
+                          {disc.hasDiscount ? (
+                            <div>
+                              <div className="flex items-center gap-1.5">
+                                <span className="price text-sm font-extrabold text-[var(--color-brand)]">
+                                  {formatIDR(disc.unitPrice)}
+                                </span>
+                                <span className="rounded-full border border-[var(--color-brand)] bg-[var(--color-brand-light)] px-1.5 py-0.5 text-[10px] font-extrabold text-[var(--color-brand)]">
+                                  {p.discountType === "percentage"
+                                    ? `${p.discountValue}% OFF`
+                                    : `-${formatIDR(p.discountValue || 0)}`}
+                                </span>
+                              </div>
+                              <div className="price mt-0.5 text-[11px] text-[var(--color-text-3)] line-through">
+                                {formatIDR(p.price)}
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="price text-sm font-extrabold text-[var(--color-text)]">
+                              {formatIDR(p.price)}
+                            </span>
+                          )}
+
+                          {marginPct !== null && (
+                            <div className="mt-1">
+                              <span
+                                className={`inline-block rounded-full px-1.5 py-0.2 text-[10px] font-extrabold ${
+                                  (profitPerUnit || 0) >= 0
+                                    ? "bg-emerald-500/10 text-emerald-600"
+                                    : "bg-rose-500/10 text-rose-600"
+                                }`}
+                              >
+                                {(profitPerUnit || 0) >= 0 ? `+${marginPct}% margin` : `${marginPct}% rugi`}
+                              </span>
+                            </div>
+                          )}
+                        </div>
                       </td>
                       <td className="px-5 py-3">
                         <span
@@ -198,6 +235,13 @@ export function ProductTable({
           <div className="mobile-only flex flex-col divide-y divide-border">
             {pagedProducts.map((p) => {
               const disc = calculateItemDiscount(p.price, p.discountType, p.discountValue);
+              const hasCost = p.costPrice !== undefined && p.costPrice > 0;
+              const profitPerUnit = hasCost ? disc.unitPrice - (p.costPrice || 0) : null;
+              const marginPct =
+                hasCost && disc.unitPrice > 0
+                  ? (((profitPerUnit || 0) / disc.unitPrice) * 100).toFixed(0)
+                  : null;
+
               return (
                 <div key={p._id} className="flex flex-col gap-3 p-4">
                   <div className="flex items-center gap-3">
@@ -230,6 +274,14 @@ export function ProductTable({
                           Stok: {p.stock} pcs
                         </span>
                       </div>
+                      {hasCost && (
+                        <div className="mt-0.5 text-[11px] text-text-3">
+                          Modal: {formatIDR(p.costPrice || 0)}{" "}
+                          {marginPct !== null && (
+                            <span className="font-bold text-emerald-600">(+{marginPct}%)</span>
+                          )}
+                        </div>
+                      )}
                     </div>
                     <div className="shrink-0 text-right">
                       <div className="price text-sm font-black text-brand">
@@ -237,6 +289,7 @@ export function ProductTable({
                       </div>
                     </div>
                   </div>
+
 
                   <div className="flex justify-end gap-2 pt-1">
                     <button

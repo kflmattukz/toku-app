@@ -4,6 +4,7 @@ export type CartItem = {
   productId: string;
   name: string;
   price: number;
+  costPrice?: number;
   qty: number;
   discountType?: "percentage" | "nominal";
   discountValue?: number;
@@ -24,6 +25,7 @@ export type Product = {
   name: string;
   category: string;
   price: number;
+  costPrice?: number;
   stock: number;
   barcode?: string;
   imageId?: string;
@@ -31,3 +33,4 @@ export type Product = {
   discountType?: "percentage" | "nominal";
   discountValue?: number;
 };
+

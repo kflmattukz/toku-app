@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChartBarIcon, TrendUpIcon, ReceiptIcon, FireIcon, ClockIcon } from "@phosphor-icons/react";
+import { ChartBarIcon, TrendUpIcon, ReceiptIcon, FireIcon, ClockIcon, ScalesIcon } from "@phosphor-icons/react";
 import { formatIDR } from "#/lib/utils";
 import type { Range, TrendBucket } from "../types";
 
@@ -7,11 +7,24 @@ interface TrendChartProps {
   txs: Array<{ createdAt: number; total: number; items: Array<any> }>;
   range: Range;
   totalRevenue: number;
+  totalProfit?: number;
+  privacyMode?: boolean;
 }
 
-export function TrendChart({ txs, range, totalRevenue }: TrendChartProps) {
-  const [metric, setMetric] = useState<"revenue" | "count">("revenue");
+export function TrendChart({
+  txs,
+  range,
+  totalRevenue,
+  totalProfit = 0,
+  privacyMode = false,
+}: TrendChartProps) {
+  const [metric, setMetric] = useState<"revenue" | "profit" | "count">("revenue");
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
+
+  const renderMoney = (amount: number) => {
+    if (privacyMode) return "Rp ••••••";
+    return formatIDR(amount);
+  };
 
   // 1. Build Time Buckets based on selected range
   const buckets: TrendBucket[] = (() => {
@@ -24,6 +37,8 @@ export function TrendChart({ txs, range, totalRevenue }: TrendChartProps) {
         shortLabel: `${String(h).padStart(2, "0")}:00`,
         subLabel: `${String(h).padStart(2, "0")}:00`,
         revenue: 0,
+        cogs: 0,
+        profit: 0,
         count: 0,
       }));
 
@@ -32,6 +47,9 @@ export function TrendChart({ txs, range, totalRevenue }: TrendChartProps) {
         const target = b.find((item) => item.id === `h-${txHour}`);
         if (target) {
           target.revenue += tx.total;
+          const txCogs = tx.items.reduce((s, i) => s + (i.costPrice ?? 0) * i.qty, 0);
+          target.cogs += txCogs;
+          target.profit += tx.total - txCogs;
           target.count += 1;
         }
       }
@@ -58,6 +76,8 @@ export function TrendChart({ txs, range, totalRevenue }: TrendChartProps) {
           shortLabel: shortDayNames[idx],
           subLabel: `${dayOfMonth} ${monthShort}`,
           revenue: 0,
+          cogs: 0,
+          profit: 0,
           count: 0,
         };
       });
@@ -68,6 +88,9 @@ export function TrendChart({ txs, range, totalRevenue }: TrendChartProps) {
         const target = b[txDay - 1];
         if (target) {
           target.revenue += tx.total;
+          const txCogs = tx.items.reduce((s, i) => s + (i.costPrice ?? 0) * i.qty, 0);
+          target.cogs += txCogs;
+          target.profit += tx.total - txCogs;
           target.count += 1;
         }
       }
@@ -87,6 +110,8 @@ export function TrendChart({ txs, range, totalRevenue }: TrendChartProps) {
         shortLabel: String(dayNum),
         subLabel: `${dayNum} ${monthName}`,
         revenue: 0,
+        cogs: 0,
+        profit: 0,
         count: 0,
       };
     });
@@ -96,6 +121,9 @@ export function TrendChart({ txs, range, totalRevenue }: TrendChartProps) {
       const target = b[txDay - 1];
       if (target) {
         target.revenue += tx.total;
+        const txCogs = tx.items.reduce((s, i) => s + (i.costPrice ?? 0) * i.qty, 0);
+        target.cogs += txCogs;
+        target.profit += tx.total - txCogs;
         target.count += 1;
       }
     }
@@ -103,7 +131,9 @@ export function TrendChart({ txs, range, totalRevenue }: TrendChartProps) {
   })();
 
   // 2. Computed Metrics & Peak detection
-  const values = buckets.map((b) => (metric === "revenue" ? b.revenue : b.count));
+  const values = buckets.map((b) =>
+    metric === "revenue" ? b.revenue : metric === "profit" ? b.profit : b.count,
+  );
   const maxVal = Math.max(...values, 1);
   const peakVal = Math.max(...values, 0);
   const peakIdx = values.findIndex((v) => v === peakVal && v > 0);
@@ -122,7 +152,7 @@ export function TrendChart({ txs, range, totalRevenue }: TrendChartProps) {
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="m-0 text-lg font-extrabold tracking-tight text-[var(--color-text)]">
-                  Grafik Tren Penjualan
+                  Grafik Tren & Pertumbuhan
                 </h2>
                 {peakBucket && (
                   <span className="inline-flex items-center gap-1 rounded-full border border-[var(--color-brand)] bg-[var(--color-brand-light)] px-2 py-0.5 text-[11px] font-extrabold text-[var(--color-brand)]">
@@ -130,8 +160,10 @@ export function TrendChart({ txs, range, totalRevenue }: TrendChartProps) {
                     <span>
                       Puncak: {peakBucket.shortLabel} (
                       {metric === "revenue"
-                        ? formatIDR(peakBucket.revenue)
-                        : `${peakBucket.count} Nota`}
+                        ? renderMoney(peakBucket.revenue)
+                        : metric === "profit"
+                          ? renderMoney(peakBucket.profit)
+                          : `${peakBucket.count} Nota`}
                       )
                     </span>
                   </span>
@@ -139,10 +171,10 @@ export function TrendChart({ txs, range, totalRevenue }: TrendChartProps) {
               </div>
               <div className="mt-0.5 text-xs text-[var(--color-text-3)]">
                 {range === "hari"
-                  ? "Distribusi penjualan per jam operasional toko hari ini"
+                  ? "Distribusi performa per jam operasional toko hari ini"
                   : range === "minggu"
-                    ? "Performa penjualan harian sepanjang minggu ini"
-                    : "Akumulasi tren penjualan harian bulan ini"}
+                    ? "Performa harian sepanjang minggu ini"
+                    : "Akumulasi tren harian sepanjang bulan ini"}
               </div>
             </div>
           </div>
@@ -162,7 +194,22 @@ export function TrendChart({ txs, range, totalRevenue }: TrendChartProps) {
               }`}
             >
               <TrendUpIcon size={14} weight="bold" />
-              <span>Omset (Rp)</span>
+              <span>Omset</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setMetric("profit");
+                setActiveIdx(null);
+              }}
+              className={`press-tactile flex cursor-pointer items-center gap-1.5 rounded-full border-none px-3.5 py-1.5 text-xs font-bold transition-all ${
+                metric === "profit"
+                  ? "bg-emerald-600 text-white shadow-xs"
+                  : "bg-transparent text-[var(--color-text-2)]"
+              }`}
+            >
+              <ScalesIcon size={14} weight="bold" />
+              <span>Laba Kotor</span>
             </button>
             <button
               type="button"
@@ -177,7 +224,7 @@ export function TrendChart({ txs, range, totalRevenue }: TrendChartProps) {
               }`}
             >
               <ReceiptIcon size={14} weight="bold" />
-              <span>Transaksi (Nota)</span>
+              <span>Transaksi</span>
             </button>
           </div>
         </div>
@@ -202,7 +249,13 @@ export function TrendChart({ txs, range, totalRevenue }: TrendChartProps) {
                 <div className="text-[var(--color-text-2)]">
                   Omset:{" "}
                   <strong className="price font-extrabold text-[var(--color-brand)]">
-                    {formatIDR(activeBucket.revenue)}
+                    {renderMoney(activeBucket.revenue)}
+                  </strong>
+                </div>
+                <div className="text-[var(--color-text-2)]">
+                  Laba Kotor:{" "}
+                  <strong className="price font-extrabold text-emerald-600">
+                    {renderMoney(activeBucket.profit)}
                   </strong>
                 </div>
                 <div className="text-[var(--color-text-2)]">
@@ -211,11 +264,6 @@ export function TrendChart({ txs, range, totalRevenue }: TrendChartProps) {
                     {activeBucket.count} transaksi
                   </strong>
                 </div>
-                {totalRevenue > 0 && (
-                  <div className="text-[11px] text-[var(--color-text-3)]">
-                    ({Math.round((activeBucket.revenue / totalRevenue) * 100)}% dari total)
-                  </div>
-                )}
               </div>
             </>
           ) : (
@@ -228,8 +276,7 @@ export function TrendChart({ txs, range, totalRevenue }: TrendChartProps) {
                 </span>
               </div>
               <div className="text-xs text-[var(--color-text-2)]">
-                Arahkan kursor atau sentuh diagram batang di bawah untuk melihat rincian setiap
-                waktu
+                Arahkan kursor atau sentuh diagram batang untuk melihat rincian omset dan laba setiap waktu
               </div>
             </>
           )}
@@ -242,7 +289,7 @@ export function TrendChart({ txs, range, totalRevenue }: TrendChartProps) {
             {[100, 50, 0].map((pct) => {
               const val = Math.round((maxVal * pct) / 100);
               const label =
-                metric === "revenue"
+                metric !== "count"
                   ? val === 0
                     ? "Rp 0"
                     : val >= 1000000
@@ -274,11 +321,29 @@ export function TrendChart({ txs, range, totalRevenue }: TrendChartProps) {
             }`}
           >
             {buckets.map((b, idx) => {
-              const val = metric === "revenue" ? b.revenue : b.count;
+              const val =
+                metric === "revenue" ? b.revenue : metric === "profit" ? b.profit : b.count;
               const heightPct = maxVal > 0 ? (val / maxVal) * 100 : 0;
               const isPeak = idx === peakIdx && val > 0;
               const isHovered = activeIdx === idx;
               const hasData = val > 0;
+
+              const barColor =
+                metric === "profit"
+                  ? isHovered
+                    ? "bg-emerald-500 shadow-emerald-500/50"
+                    : isPeak
+                      ? "bg-emerald-600 shadow-emerald-500/30"
+                      : hasData
+                        ? "bg-emerald-500/70"
+                        : "bg-[var(--color-surface-3)]"
+                  : isHovered
+                    ? "shadow-primary-500/50 scale-y-105 bg-[var(--color-brand)] shadow-lg"
+                    : isPeak
+                      ? "shadow-primary-500/30 bg-[var(--color-brand)] shadow-md"
+                      : hasData
+                        ? "bg-[var(--color-brand)]/70"
+                        : "bg-[var(--color-surface-3)]";
 
               return (
                 <div
@@ -295,15 +360,7 @@ export function TrendChart({ txs, range, totalRevenue }: TrendChartProps) {
                         : range === "hari"
                           ? "max-w-[26px]"
                           : "max-w-[14px]"
-                    } ${
-                      isHovered
-                        ? "shadow-primary-500/50 scale-y-105 bg-[var(--color-brand)] shadow-lg"
-                        : isPeak
-                          ? "shadow-primary-500/30 bg-[var(--color-brand)] shadow-md"
-                          : hasData
-                            ? "bg-[var(--color-brand)]/70"
-                            : "bg-[var(--color-surface-3)]"
-                    }`}
+                    } ${barColor}`}
                     style={{
                       height: hasData ? `${Math.max(6, heightPct)}%` : "4px",
                       transformOrigin: "bottom",

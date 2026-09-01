@@ -43,6 +43,7 @@ export function useProductManager({ storeId }: UseProductManagerProps) {
       name: p.name,
       category: p.category,
       price: formatIDRInput(p.price),
+      costPrice: p.costPrice !== undefined ? formatIDRInput(p.costPrice) : "",
       stock: String(p.stock),
       barcode: p.barcode ?? "",
       imageId: p.imageId ?? "",
@@ -93,6 +94,7 @@ export function useProductManager({ storeId }: UseProductManagerProps) {
       return;
     }
     const priceNum = parseIDRInput(form.price);
+    const costPriceNum = form.costPrice.trim() ? parseIDRInput(form.costPrice) : undefined;
     const stockNum = parseInt(form.stock, 10) || 0;
     if (!form.name.trim() || !form.category.trim() || priceNum <= 0) {
       toast.error("Mohon lengkapi nama, kategori, dan harga yang valid");
@@ -124,6 +126,7 @@ export function useProductManager({ storeId }: UseProductManagerProps) {
           name: form.name.trim(),
           category: form.category.trim(),
           price: priceNum,
+          costPrice: costPriceNum,
           stock: stockNum,
           barcode: form.barcode.trim() || undefined,
           imageId: form.imageId.trim() || undefined,
@@ -137,6 +140,7 @@ export function useProductManager({ storeId }: UseProductManagerProps) {
           name: form.name.trim(),
           category: form.category.trim(),
           price: priceNum,
+          costPrice: costPriceNum,
           stock: stockNum,
           barcode: form.barcode.trim() || undefined,
           imageId: form.imageId.trim() || undefined,
@@ -152,6 +156,7 @@ export function useProductManager({ storeId }: UseProductManagerProps) {
       setSaving(false);
     }
   };
+
 
   const handleConfirmDelete = async () => {
     if (!deleteTarget) return;

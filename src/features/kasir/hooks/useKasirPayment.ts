@@ -57,12 +57,14 @@ export function useKasirPayment({
           productId: i.productId,
           name: i.name,
           price: i.price,
+          costPrice: i.costPrice,
           qty: i.qty,
           discountType: i.discountType,
           discountValue: i.discountValue,
           subtotal: disc.unitPrice * i.qty,
         };
       }),
+
       subtotal,
       discountType: basketDiscountType === "none" ? undefined : basketDiscountType,
       discountValue: basketDiscountValNum > 0 ? basketDiscountValNum : undefined,

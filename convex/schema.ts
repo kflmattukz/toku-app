@@ -84,6 +84,7 @@ export default defineSchema({
     name: v.string(),
     category: v.string(), // custom per store, e.g. "Minuman", "Makanan"
     price: v.number(), // IDR integer
+    costPrice: v.optional(v.number()), // Modal / HPP per unit (IDR)
     stock: v.number(),
     barcode: v.optional(v.string()),
     imageId: v.optional(v.string()),
@@ -92,6 +93,28 @@ export default defineSchema({
     minStockAlert: v.optional(v.number()),
   }).index("by_storeId", ["storeId"]),
 
+  expenses: defineTable({
+    storeId: v.id("stores"),
+    category: v.union(
+      v.literal("operasional"),
+      v.literal("gaji"),
+      v.literal("sewa"),
+      v.literal("utilitas"),
+      v.literal("bahan_baku"),
+      v.literal("lainnya"),
+    ),
+    amount: v.number(), // IDR integer
+    date: v.number(), // timestamp ms
+    notes: v.optional(v.string()),
+    source: v.optional(v.union(v.literal("cash_drawer"), v.literal("bank"), v.literal("owner"))),
+    shiftId: v.optional(v.string()),
+    createdBy: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_storeId", ["storeId"])
+    .index("by_storeId_date", ["storeId", "date"])
+    .index("by_storeId_category", ["storeId", "category"]),
+
   transactions: defineTable({
     storeId: v.id("stores"),
     items: v.array(
@@ -99,6 +122,7 @@ export default defineSchema({
         productId: v.string(),
         name: v.string(),
         price: v.number(),
+        costPrice: v.optional(v.number()), // Snapshot HPP at time of sale
         qty: v.number(),
         discountType: v.optional(v.union(v.literal("percentage"), v.literal("nominal"))),
         discountValue: v.optional(v.number()),
@@ -126,3 +150,4 @@ export default defineSchema({
     .index("by_storeId", ["storeId"])
     .index("by_storeId_createdAt", ["storeId", "createdAt"]),
 });
+

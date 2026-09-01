@@ -167,7 +167,7 @@ export function ProductFormModal({
           </div>
         </div>
 
-        {/* Harga Jual & Stok Grid */}
+        {/* Harga Jual, Modal (HPP), dan Stok */}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
             <label className="mb-1.5 block text-xs font-bold text-[var(--color-text)]">
@@ -192,20 +192,69 @@ export function ProductFormModal({
           </div>
 
           <div>
-            <label className="mb-1.5 block text-xs font-bold text-[var(--color-text)]">
-              Jumlah Stok Tersedia
+            <label className="mb-1.5 flex items-center justify-between text-xs font-bold text-[var(--color-text)]">
+              <span>Harga Modal / Beli (HPP)</span>
+              <span className="text-[10px] font-normal text-[var(--color-text-3)]">Opsional</span>
             </label>
-            <input
-              type="number"
-              min="0"
-              placeholder="Contoh: 50"
-              value={form.stock}
-              onChange={(e) => onChangeForm((p) => ({ ...p, stock: e.target.value }))}
-              required
-              className="focus:ring-primary-500/20 focus:border-primary-500 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 text-sm font-bold text-[var(--color-text)] focus:ring-2 focus:outline-none"
-            />
+            <div className="relative flex items-center">
+              <span className="absolute left-3.5 text-xs font-extrabold text-[var(--color-text-3)]">
+                Rp
+              </span>
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder="Contoh: 10.000"
+                value={form.costPrice}
+                onChange={(e) =>
+                  onChangeForm((p) => ({ ...p, costPrice: formatIDRInput(e.target.value) }))
+                }
+                className="focus:ring-primary-500/20 focus:border-primary-500 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] py-2.5 pr-3.5 pl-10 text-sm font-bold text-[var(--color-text)] focus:ring-2 focus:outline-none"
+              />
+            </div>
           </div>
         </div>
+
+        {/* Live Estimasi Cuan/Margin per pcs */}
+        {(() => {
+          const costNum = parseIDRInput(form.costPrice);
+          if (priceNum > 0 && costNum > 0) {
+            const profitPerPcs = priceNum - costNum;
+            const marginPct = ((profitPerPcs / priceNum) * 100).toFixed(1);
+            const isLoss = profitPerPcs < 0;
+            return (
+              <div
+                className={`flex items-center justify-between rounded-xl border p-2.5 text-xs font-bold ${
+                  isLoss
+                    ? "border-rose-500/30 bg-rose-500/10 text-rose-600"
+                    : "border-emerald-500/30 bg-emerald-500/10 text-emerald-600"
+                }`}
+              >
+                <span>{isLoss ? "⚠️ Peringatan Rugi:" : "💡 Estimasi Laba Kotor per pcs:"}</span>
+                <span className="price font-black">
+                  {formatIDR(profitPerPcs)} ({marginPct}%)
+                </span>
+              </div>
+            );
+          }
+          return null;
+        })()}
+
+        {/* Stok Barang */}
+        <div>
+          <label className="mb-1.5 block text-xs font-bold text-[var(--color-text)]">
+            Jumlah Stok Tersedia
+          </label>
+          <input
+            type="number"
+            min="0"
+            placeholder="Contoh: 50"
+            value={form.stock}
+            onChange={(e) => onChangeForm((p) => ({ ...p, stock: e.target.value }))}
+            required
+            className="focus:ring-primary-500/20 focus:border-primary-500 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 text-sm font-bold text-[var(--color-text)] focus:ring-2 focus:outline-none"
+          />
+        </div>
+
 
         {/* Diskon Produk Section */}
         <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-2)] p-3.5">

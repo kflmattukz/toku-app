@@ -17,7 +17,7 @@ import {
 export const Route = createFileRoute("/_app/laporan")({ component: Laporan });
 
 function Laporan() {
-  const { store } = useAppStore();
+  const { store, privacyMode } = useAppStore();
   const [range, setRange] = useState<Range>("hari");
 
   const { startOfDay, endOfDay } =
@@ -32,56 +32,89 @@ function Laporan() {
 
   const totalRevenue = summary.total ?? 0;
   const totalTransactions = summary.count ?? 0;
+  const totalCogs = summary.totalCogs ?? 0;
+  const grossProfit = summary.grossProfit ?? 0;
+  const grossMargin = summary.grossMargin ?? 0;
+  const totalExpenses = summary.totalExpenses ?? 0;
+  const netProfit = summary.netProfit ?? 0;
+  const netMargin = summary.netMargin ?? 0;
+
   const txs = summary.transactions ?? [];
   const totalItems = txs.reduce((sum, tx) => sum + tx.items.reduce((s, i) => s + i.qty, 0), 0);
 
   const productMap: Record<string, TopProduct> = {};
   for (const tx of txs) {
     for (const item of tx.items) {
+      const itemCost = (item.costPrice ?? 0) * item.qty;
+      const itemRev = item.price * item.qty;
+      const itemProfit = itemRev - itemCost;
+
       if (!productMap[item.name]) {
-        productMap[item.name] = { name: item.name, totalQty: 0, totalRevenue: 0 };
+        productMap[item.name] = {
+          name: item.name,
+          totalQty: 0,
+          totalRevenue: 0,
+          totalCost: 0,
+          totalProfit: 0,
+        };
       }
       productMap[item.name].totalQty += item.qty;
-      productMap[item.name].totalRevenue += item.price * item.qty;
+      productMap[item.name].totalRevenue += itemRev;
+      productMap[item.name].totalCost += itemCost;
+      productMap[item.name].totalProfit += itemProfit;
     }
   }
-  const topProducts = Object.values(productMap).sort((a, b) => b.totalQty - a.totalQty);
+  const topProducts = Object.values(productMap);
 
   return (
     <div className="w-full pb-12">
       {/* Header with period toggle pills */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <div className="eyebrow-tag">RINGKASAN OMSET & REKAP</div>
+          <div className="eyebrow-tag">RINGKASAN OMSET, HPP & LABA BERSIH</div>
           <h1 className="mt-0.5 text-2xl font-black tracking-tight text-[var(--color-text)]">
-            Laporan Penjualan
+            Laporan Keuangan & Profit
           </h1>
           <p className="mt-1 text-xs text-[var(--color-text-2)]">
-            Pantau performa bisnis dan omset toko secara real-time
+            Pantau performa bisnis, HPP, pengeluaran, dan laba riil toko secara real-time
           </p>
         </div>
 
         <ReportPeriodFilter range={range} onRangeChange={setRange} />
       </div>
 
-      {/* Main KPI Stat Cards */}
+      {/* Main KPI Stat Cards (P&L Breakdown) */}
       <ReportKpiGrid
         range={range}
         totalRevenue={totalRevenue}
+        totalCogs={totalCogs}
+        grossProfit={grossProfit}
+        grossMargin={grossMargin}
+        totalExpenses={totalExpenses}
+        netProfit={netProfit}
+        netMargin={netMargin}
         totalTransactions={totalTransactions}
         totalItems={totalItems}
         cancelledCount={summary.cancelledCount ?? 0}
         cancelledTotal={summary.cancelledTotal ?? 0}
+        privacyMode={privacyMode}
       />
 
-      {/* Interactive Sales & Revenue Trend Chart */}
-      <TrendChart txs={txs} range={range} totalRevenue={totalRevenue} />
+      {/* Interactive Sales & Profit Trend Chart */}
+      <TrendChart
+        txs={txs}
+        range={range}
+        totalRevenue={totalRevenue}
+        totalProfit={grossProfit}
+        privacyMode={privacyMode}
+      />
 
-      {/* Top-Selling Products Ranking List */}
-      <TopProductsLeaderboard topProducts={topProducts} />
+      {/* Top-Selling & Most Profitable Products Ranking List */}
+      <TopProductsLeaderboard topProducts={topProducts} privacyMode={privacyMode} />
     </div>
   );
 }
+
 
 function LaporanLoader() {
   return (

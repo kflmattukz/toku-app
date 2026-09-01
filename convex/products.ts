@@ -45,6 +45,7 @@ export const create = mutation({
     name: v.string(),
     category: v.string(),
     price: v.number(),
+    costPrice: v.optional(v.number()),
     stock: v.number(),
     barcode: v.optional(v.string()),
     imageId: v.optional(v.string()),
@@ -63,6 +64,7 @@ export const update = mutation({
     name: v.optional(v.string()),
     category: v.optional(v.string()),
     price: v.optional(v.number()),
+    costPrice: v.optional(v.number()),
     stock: v.optional(v.number()),
     barcode: v.optional(v.string()),
     imageId: v.optional(v.string()),
@@ -71,6 +73,7 @@ export const update = mutation({
     minStockAlert: v.optional(v.number()),
   },
   handler: async (ctx, { id, ...patch }) => {
+
     if (patch.imageId !== undefined) {
       const existing = await ctx.db.get(id);
       if (

@@ -37,11 +37,13 @@ export function useKasirCart() {
           productId: product._id,
           name: product.name,
           price: product.price,
+          costPrice: product.costPrice,
           qty: 1,
           discountType: product.discountType,
           discountValue: product.discountValue,
         },
       ];
+
     });
 
     const disc = calculateItemDiscount(product.price, product.discountType, product.discountValue);

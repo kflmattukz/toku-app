@@ -7,6 +7,7 @@ export type Product = {
   name: string;
   category: string;
   price: number;
+  costPrice?: number;
   stock: number;
   barcode?: string;
   imageId?: string;
@@ -19,6 +20,7 @@ export type ProductFormState = {
   name: string;
   category: string;
   price: string;
+  costPrice: string;
   stock: string;
   barcode: string;
   imageId: string;
@@ -30,9 +32,11 @@ export const emptyProductForm: ProductFormState = {
   name: "",
   category: "",
   price: "",
+  costPrice: "",
   stock: "",
   barcode: "",
   imageId: "",
   discountType: "none",
   discountValue: "",
 };
+

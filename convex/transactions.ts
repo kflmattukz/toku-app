@@ -21,6 +21,7 @@ export const create = mutation({
         productId: v.string(),
         name: v.string(),
         price: v.number(),
+        costPrice: v.optional(v.number()),
         qty: v.number(),
         discountType: v.optional(v.union(v.literal("percentage"), v.literal("nominal"))),
         discountValue: v.optional(v.number()),
@@ -42,11 +43,31 @@ export const create = mutation({
     syncedFromOffline: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
+    // Populate costPrice for items if not present
+    const enrichedItems = await Promise.all(
+      args.items.map(async (item) => {
+        if (item.costPrice !== undefined) return item;
+        try {
+          const productId = ctx.db.normalizeId("products", item.productId);
+          if (productId) {
+            const product = await ctx.db.get(productId);
+            return {
+              ...item,
+              costPrice: product?.costPrice ?? 0,
+            };
+          }
+        } catch {}
+        return { ...item, costPrice: 0 };
+      }),
+    );
+
     // Insert transaction with status completed by default
     const txId = await ctx.db.insert("transactions", {
       ...args,
+      items: enrichedItems,
       status: "completed",
     });
+
     // Deduct stock for each item
     for (const item of args.items) {
       try {
@@ -123,6 +144,29 @@ export const dailySummary = query({
     const total = validTxs.reduce((sum, t) => sum + t.total, 0);
     const cancelledTotal = cancelledTxs.reduce((sum, t) => sum + t.total, 0);
 
+    // Hitung Total HPP (Cost of Goods Sold)
+    let totalCogs = 0;
+    for (const t of validTxs) {
+      for (const item of t.items) {
+        totalCogs += (item.costPrice ?? 0) * item.qty;
+      }
+    }
+
+    const grossProfit = total - totalCogs;
+    const grossMargin = total > 0 ? (grossProfit / total) * 100 : 0;
+
+    // Ambil Pengeluaran Operasional dalam periode ini
+    const expenses = await ctx.db
+      .query("expenses")
+      .withIndex("by_storeId_date", (q) =>
+        q.eq("storeId", storeId).gte("date", startOfDay).lte("date", endOfDay),
+      )
+      .collect();
+
+    const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
+    const netProfit = grossProfit - totalExpenses;
+    const netMargin = total > 0 ? (netProfit / total) * 100 : 0;
+
     return {
       total,
       count: validTxs.length,
@@ -131,6 +175,14 @@ export const dailySummary = query({
       cancelledTotal,
       cancelledCount: cancelledTxs.length,
       cancelledTransactions: cancelledTxs,
+      totalCogs,
+      grossProfit,
+      grossMargin,
+      totalExpenses,
+      netProfit,
+      netMargin,
+      expenses,
     };
   },
 });
+

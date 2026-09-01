@@ -159,6 +159,23 @@ function AppShell() {
     }
   }, [store?._id, session?.user, selectedStoreId]);
 
+  const [privacyMode, setPrivacyMode] = useState<boolean>(false);
+
+  useEffect(() => {
+    const savedPrivacy = localStorage.getItem("toku_privacy_mode");
+    if (savedPrivacy !== null) {
+      setPrivacyMode(savedPrivacy === "true");
+    }
+  }, []);
+
+  const togglePrivacyMode = () => {
+    setPrivacyMode((prev) => {
+      const next = !prev;
+      localStorage.setItem("toku_privacy_mode", String(next));
+      return next;
+    });
+  };
+
   const storeContextValue = useMemo(
     () => ({
       store,
@@ -169,8 +186,10 @@ function AppShell() {
       setSelectedStoreId: handleSelectStore,
       isPro,
       openUpgradeModal,
+      privacyMode,
+      togglePrivacyMode,
     }),
-    [store, session, currentCashier, selectedStoreId, isPro],
+    [store, session, currentCashier, selectedStoreId, isPro, privacyMode],
   );
 
   return (
@@ -245,7 +264,10 @@ function AppShell() {
           isOnline={isOnline}
           onOpenSidebar={() => setSidebarOpen(true)}
           onOpenCashierModal={() => setCashierModalOpen(true)}
+          privacyMode={privacyMode}
+          onTogglePrivacy={togglePrivacyMode}
         />
+
 
         {/* Route Content */}
         <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col p-4 pb-28 sm:p-6">
