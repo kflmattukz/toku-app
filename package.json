@@ -10,9 +10,9 @@
     "generate-routes": "tsr generate",
     "build": "vite build",
     "preview": "vite preview",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
-    "doctor": "npx react-doctor@latest"
+    "format": "prettier --write \"src/**/*.{ts,tsx,css}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,css}\"",
+    "doctor": "pnpm dlx react-doctor@latest"
   },
   "dependencies": {
     "@convex-dev/react-query": "0.1.0",
