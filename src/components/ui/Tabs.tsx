@@ -1,4 +1,31 @@
 import React, { createContext, useContext, useId, useMemo } from "react";
+import { cva, type VariantProps } from "class-variance-authority";
+import { cn } from "#/lib/utils";
+
+// ============================================================================
+// CVA Tabs Variants
+// ============================================================================
+
+export const tabListVariants = cva(
+  "flex items-center gap-1.5 overflow-x-auto rounded-[14px] border border-[var(--color-border)] bg-[var(--color-surface-2)] p-1.5",
+);
+
+export const tabTriggerVariants = cva(
+  "press-tactile flex cursor-pointer items-center gap-2 rounded-[10px] px-4 py-2 text-xs whitespace-nowrap transition-all select-none",
+  {
+    variants: {
+      isActive: {
+        true: "border border-[var(--color-border)] bg-[var(--color-surface)] font-extrabold text-[var(--color-brand)] shadow-xs",
+        false: "border border-transparent font-bold text-[var(--color-text-2)] hover:bg-[var(--color-surface)]/60 hover:text-[var(--color-text)]",
+      },
+    },
+    defaultVariants: {
+      isActive: false,
+    },
+  },
+);
+
+export type TabTriggerVariants = VariantProps<typeof tabTriggerVariants>;
 
 type TabsContextType = {
   value: string;
@@ -32,7 +59,7 @@ export function Tabs({ value, onValueChange, children, className = "" }: TabsPro
 
   return (
     <TabsContext.Provider value={contextValue}>
-      <div className={`w-full ${className}`}>{children}</div>
+      <div className={cn("w-full", className)}>{children}</div>
     </TabsContext.Provider>
   );
 }
@@ -46,7 +73,7 @@ Tabs.List = function TabsList({ children, className = "" }: TabsListProps) {
   return (
     <div
       role="tablist"
-      className={`flex items-center gap-1.5 overflow-x-auto rounded-[14px] border border-[var(--color-border)] bg-[var(--color-surface-2)] p-1.5 ${className}`}
+      className={cn(tabListVariants(), className)}
     >
       {children}
     </div>
@@ -85,17 +112,13 @@ Tabs.Trigger = function TabsTrigger({
       aria-selected={isActive}
       aria-controls={panelId}
       onClick={() => onValueChange(value)}
-      className={`press-tactile flex cursor-pointer items-center gap-2 rounded-[10px] px-4 py-2 text-xs whitespace-nowrap transition-all select-none ${
-        isActive
-          ? "border border-[var(--color-border)] bg-[var(--color-surface)] font-extrabold text-[var(--color-brand)] shadow-xs"
-          : "border border-transparent font-bold text-[var(--color-text-2)] hover:bg-[var(--color-surface)]/60 hover:text-[var(--color-text)]"
-      } ${className}`}
+      className={cn(tabTriggerVariants({ isActive }), className)}
     >
       {Icon && (
         <Icon
           size={16}
           weight={isActive ? "fill" : "regular"}
-          className={isActive ? "text-[var(--color-brand)]" : "text-[var(--color-text-3)]"}
+          className={cn(isActive ? "text-[var(--color-brand)]" : "text-[var(--color-text-3)]")}
         />
       )}
       <span>{children}</span>
@@ -118,19 +141,21 @@ Tabs.Content = function TabsContent({
   forceMount = false,
 }: TabsContentProps) {
   const { value: activeValue, baseId } = useTabsContext();
-  const isActive = activeValue === value;
+  const isSelected = activeValue === value;
   const tabId = `${baseId}-tab-${value}`;
   const panelId = `${baseId}-panel-${value}`;
 
-  if (!isActive && !forceMount) return null;
+  if (!isSelected && !forceMount) {
+    return null;
+  }
 
   return (
     <div
       role="tabpanel"
       id={panelId}
       aria-labelledby={tabId}
-      hidden={!isActive}
-      className={`mt-4 focus:outline-none ${className}`}
+      hidden={!isSelected}
+      className={cn("w-full", className)}
     >
       {children}
     </div>

@@ -1,3 +1,16 @@
+import { cx } from "class-variance-authority";
+import type { ClassValue } from "class-variance-authority/types";
+import { twMerge } from "tailwind-merge";
+
+/**
+ * Merge multiple class names conditionally using class-variance-authority and tailwind-merge
+ */
+export function cn(...inputs: ClassValue[]): string {
+  return twMerge(cx(inputs));
+}
+
+export type { ClassValue };
+
 const idrCurrencyFormatter = new Intl.NumberFormat("id-ID", {
   style: "currency",
   currency: "IDR",

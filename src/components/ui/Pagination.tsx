@@ -1,5 +1,7 @@
 import { CaretLeftIcon, CaretRightIcon } from "@phosphor-icons/react";
 import { Select, type SelectOption } from "./Select";
+import { Button } from "./Button";
+import { cn } from "#/lib/utils";
 
 interface PaginationProps {
   currentPage: number;
@@ -36,7 +38,10 @@ export function Pagination({
 
   return (
     <div
-      className={`flex flex-wrap items-center justify-between gap-3 border-t border-[var(--color-border)] bg-[var(--color-surface)] p-4 ${className}`}
+      className={cn(
+        "flex flex-wrap items-center justify-between gap-3 border-t border-[var(--color-border)] bg-[var(--color-surface)] p-4",
+        className,
+      )}
     >
       <div className="text-xs font-semibold text-[var(--color-text-3)] sm:text-sm">
         Menampilkan {startIndex + 1} - {endIndex} dari {totalCount} {itemLabel}
@@ -55,31 +60,33 @@ export function Pagination({
           </div>
         )}
 
-        <button
+        <Button
           type="button"
+          variant="secondary"
+          size="xs"
           disabled={currentPage <= 1}
           onClick={() => onPageChange(Math.max(1, currentPage - 1))}
-          className="press-tactile flex cursor-pointer items-center gap-1 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-xs font-bold text-[var(--color-text)] transition-all hover:bg-[var(--color-surface-2)] disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm"
+          leftIcon={<CaretLeftIcon size={14} weight="bold" />}
           title="Halaman Sebelumnya"
         >
-          <CaretLeftIcon size={14} weight="bold" />
           <span className="hidden sm:inline">Sebelumnya</span>
-        </button>
+        </Button>
 
         <span className="px-1 text-xs font-bold text-[var(--color-text)] sm:text-sm">
           {currentPage} / {Math.max(1, totalPages)}
         </span>
 
-        <button
+        <Button
           type="button"
+          variant="secondary"
+          size="xs"
           disabled={currentPage >= totalPages}
           onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
-          className="press-tactile flex cursor-pointer items-center gap-1 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-xs font-bold text-[var(--color-text)] transition-all hover:bg-[var(--color-surface-2)] disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm"
+          rightIcon={<CaretRightIcon size={14} weight="bold" />}
           title="Halaman Selanjutnya"
         >
           <span className="hidden sm:inline">Selanjutnya</span>
-          <CaretRightIcon size={14} weight="bold" />
-        </button>
+        </Button>
       </div>
     </div>
   );

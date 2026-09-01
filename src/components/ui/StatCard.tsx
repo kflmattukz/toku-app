@@ -1,6 +1,14 @@
 import React from "react";
+import { cva, type VariantProps } from "class-variance-authority";
+import { cn } from "#/lib/utils";
 
-interface StatCardProps {
+export const statCardVariants = cva(
+  "rounded-[18px] border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-xs transition-all hover:border-[var(--color-brand)] sm:p-5",
+);
+
+export type StatCardVariants = VariantProps<typeof statCardVariants>;
+
+export interface StatCardProps extends StatCardVariants {
   title: string;
   value: string | number;
   subtitle?: string;
@@ -25,9 +33,7 @@ export function StatCard({
   className = "",
 }: StatCardProps) {
   return (
-    <div
-      className={`rounded-[18px] border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-xs transition-all hover:border-[var(--color-brand)] sm:p-5 ${className}`}
-    >
+    <div className={cn(statCardVariants(), className)}>
       <div className="flex items-center justify-between gap-3">
         <span className="text-xs font-bold tracking-wider text-[var(--color-text-3)] uppercase">
           {title}
@@ -47,11 +53,12 @@ export function StatCard({
         <div className="mt-1 flex items-center gap-2 text-xs font-medium text-[var(--color-text-2)]">
           {trend && (
             <span
-              className={`font-bold ${
+              className={cn(
+                "font-bold",
                 trend.isPositive
                   ? "text-[var(--color-success-text)]"
-                  : "text-[var(--color-danger-text)]"
-              }`}
+                  : "text-[var(--color-danger-text)]",
+              )}
             >
               {trend.isPositive ? "+" : ""}
               {trend.value}

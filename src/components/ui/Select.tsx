@@ -9,19 +9,89 @@ import React, {
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
+import { cva, type VariantProps } from "class-variance-authority";
 import {
   CaretDownIcon,
   CheckIcon,
   MagnifyingGlassIcon,
   XIcon,
 } from "@phosphor-icons/react";
+import { cn } from "#/lib/utils";
 
 // ============================================================================
-// Types
+// CVA Select Variants
 // ============================================================================
 
-export type SelectSize = "sm" | "md" | "lg";
-export type SelectVariant = "form" | "pill";
+export const selectTriggerVariants = cva(
+  "group flex w-full cursor-pointer items-center justify-between border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] transition-all select-none hover:border-[var(--color-brand)] focus:border-[var(--color-brand)] focus:ring-2 focus:ring-[var(--color-brand)]/20 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50",
+  {
+    variants: {
+      variant: {
+        form: "rounded-xl font-medium",
+        pill: "rounded-full font-bold",
+      },
+      size: {
+        sm: "min-h-[32px] px-2.5 py-1 text-xs gap-1.5",
+        md: "min-h-[40px] px-3.5 py-2 text-xs gap-2",
+        lg: "min-h-[48px] px-4 py-2.5 text-sm gap-2.5",
+      },
+      isOpen: {
+        true: "border-[var(--color-brand)] ring-2 ring-[var(--color-brand)]/20",
+        false: "",
+      },
+      hasError: {
+        true: "border-rose-500 ring-rose-500/20 focus:border-rose-500 focus:ring-rose-500/20",
+        false: "",
+      },
+    },
+    defaultVariants: {
+      variant: "form",
+      size: "md",
+      isOpen: false,
+      hasError: false,
+    },
+  },
+);
+
+export const selectContentVariants = cva(
+  "animate-in fade-in-0 zoom-in-95 flex flex-col overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-1.5 shadow-2xl transition-all duration-150",
+);
+
+export const selectItemVariants = cva(
+  "group relative flex cursor-pointer items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold transition-all select-none",
+  {
+    variants: {
+      isSelected: {
+        true: "bg-[var(--color-brand-light)] font-bold text-[var(--color-brand-dark)]",
+        false: "text-[var(--color-text)] hover:bg-[var(--color-surface-2)]",
+      },
+      isHighlighted: {
+        true: "bg-[var(--color-surface-2)] text-[var(--color-text)]",
+        false: "",
+      },
+      disabled: {
+        true: "cursor-not-allowed opacity-40",
+        false: "",
+      },
+    },
+    compoundVariants: [
+      {
+        isSelected: true,
+        isHighlighted: true,
+        className: "bg-[var(--color-brand-light)] text-[var(--color-brand-dark)]",
+      },
+    ],
+    defaultVariants: {
+      isSelected: false,
+      isHighlighted: false,
+      disabled: false,
+    },
+  },
+);
+
+export type SelectTriggerVariants = VariantProps<typeof selectTriggerVariants>;
+export type SelectSize = NonNullable<SelectTriggerVariants["size"]>;
+export type SelectVariant = NonNullable<SelectTriggerVariants["variant"]>;
 
 export interface SelectOption<T extends string | number = string> {
   value: T;
@@ -157,10 +227,13 @@ export function Select<T extends string | number = string>({
   const toggleOpen = useCallback(() => {
     if (!disabled) {
       setIsOpen((prev) => !prev);
-      setSearchQuery("");
+      if (!isOpen) {
+        setSearchQuery("");
+      }
     }
-  }, [disabled]);
+  }, [disabled, isOpen]);
 
+  // Context value
   const contextValue: SelectContextValue<T> = {
     value: rawValue,
     onValueChange: handleValueChange,
@@ -181,59 +254,81 @@ export function Select<T extends string | number = string>({
     selectId,
   };
 
+  // Find selected label for shorthand rendering
+  const renderShorthandLabel = () => {
+    if (!options) return null;
+    if (multiple && Array.isArray(rawValue)) {
+      if (rawValue.length === 0) return <span className="text-[var(--color-text-3)]">{placeholder}</span>;
+      return (
+        <div className="flex flex-wrap items-center gap-1">
+          {rawValue.map((v) => {
+            const opt = options.find((o) => o.value === v);
+            return (
+              <span
+                key={String(v)}
+                className="inline-flex items-center gap-1 rounded-md bg-[var(--color-surface-2)] px-2 py-0.5 text-xs font-semibold text-[var(--color-text)]"
+              >
+                {opt?.icon && <span className="text-xs">{opt.icon}</span>}
+                <span>{opt?.label ?? String(v)}</span>
+                <span
+                  role="button"
+                  tabIndex={0}
+                  className="cursor-pointer text-[var(--color-text-3)] hover:text-rose-500"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleValueChange(v);
+                  }}
+                >
+                  <XIcon size={12} weight="bold" />
+                </span>
+              </span>
+            );
+          })}
+        </div>
+      );
+    }
+
+    const selectedOption = options.find((o) => o.value === rawValue);
+    if (!selectedOption) {
+      return <span className="text-[var(--color-text-3)]">{placeholder}</span>;
+    }
+
+    return (
+      <div className="flex items-center gap-2 truncate">
+        {selectedOption.icon && <span className="shrink-0 text-sm">{selectedOption.icon}</span>}
+        <span className="truncate font-semibold">{selectedOption.label}</span>
+        {selectedOption.badge && <span className="shrink-0">{selectedOption.badge}</span>}
+      </div>
+    );
+  };
+
+  // Filter options if searchable is enabled
+  const filteredOptions = options
+    ? options.filter((opt) => {
+        if (!searchQuery.trim()) return true;
+        const text = String(opt.label).toLowerCase();
+        const desc = opt.description ? String(opt.description).toLowerCase() : "";
+        const query = searchQuery.toLowerCase();
+        return text.includes(query) || desc.includes(query);
+      })
+    : [];
+
   return (
     <SelectContext.Provider value={contextValue}>
-      <div className={`relative inline-block w-full text-left ${className}`}>
-        {/* Shorthand rendering if options prop is supplied */}
+      <div className={cn("relative inline-block w-full text-left", className)}>
         {options ? (
           <>
             <SelectTrigger placeholder={placeholder}>
-              <SelectValue placeholder={placeholder}>
-                {(() => {
-                  if (multiple && Array.isArray(rawValue)) {
-                    if (rawValue.length === 0) return null;
-                    return (
-                      <div className="flex flex-wrap items-center gap-1">
-                        {rawValue.map((val) => {
-                          const matched = options.find((o) => o.value === val);
-                          return (
-                            <span
-                              key={String(val)}
-                              className="inline-flex items-center gap-1 rounded-md bg-[var(--color-brand-light)] px-2 py-0.5 text-xs font-bold text-[var(--color-brand-dark)]"
-                            >
-                              {matched?.label ?? String(val)}
-                            </span>
-                          );
-                        })}
-                      </div>
-                    );
-                  }
-                  const matched = options.find((o) => o.value === rawValue);
-                  if (!matched) return null;
-                  return (
-                    <div className="flex items-center gap-2 truncate">
-                      {matched.icon && <span className="shrink-0">{matched.icon}</span>}
-                      <span className="truncate">{matched.label}</span>
-                      {matched.badge && <span className="ml-auto shrink-0">{matched.badge}</span>}
-                    </div>
-                  );
-                })()}
-              </SelectValue>
+              {renderShorthandLabel()}
             </SelectTrigger>
-
             <SelectContent>
               {searchable && <SelectSearchInput placeholder={searchPlaceholder} />}
-              {options
-                .filter((opt) => {
-                  if (!searchQuery.trim()) return true;
-                  const labelStr = typeof opt.label === "string" ? opt.label : String(opt.value);
-                  const descStr = typeof opt.description === "string" ? opt.description : "";
-                  return (
-                    labelStr.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    descStr.toLowerCase().includes(searchQuery.toLowerCase())
-                  );
-                })
-                .map((opt) => (
+              {filteredOptions.length === 0 ? (
+                <div className="py-6 text-center text-xs font-medium text-[var(--color-text-3)]">
+                  Tidak ada opsi yang sesuai
+                </div>
+              ) : (
+                filteredOptions.map((opt) => (
                   <SelectItem
                     key={String(opt.value)}
                     value={opt.value}
@@ -244,7 +339,8 @@ export function Select<T extends string | number = string>({
                   >
                     {opt.label}
                   </SelectItem>
-                ))}
+                ))
+              )}
             </SelectContent>
           </>
         ) : (
@@ -260,17 +356,19 @@ export function Select<T extends string | number = string>({
 // ============================================================================
 
 export interface SelectTriggerProps {
+  id?: string;
   placeholder?: string;
   className?: string;
   children?: ReactNode;
-  id?: string;
+  hasError?: boolean;
 }
 
 export function SelectTrigger({
-  placeholder,
+  id,
+  placeholder = "Pilih...",
   className = "",
   children,
-  id,
+  hasError = false,
 }: SelectTriggerProps) {
   const {
     isOpen,
@@ -282,17 +380,6 @@ export function SelectTrigger({
     selectId,
     activeDescendant,
   } = useSelectContext();
-
-  const sizeClasses = {
-    sm: "px-2.5 py-1 text-xs font-semibold min-h-[30px] gap-1.5",
-    md: "px-3.5 py-2.5 text-xs font-semibold min-h-[42px] gap-2",
-    lg: "px-4 py-3 text-sm font-semibold min-h-[48px] gap-2.5",
-  }[size];
-
-  const variantClasses = {
-    form: "rounded-xl",
-    pill: "rounded-full",
-  }[variant];
 
   return (
     <button
@@ -306,9 +393,15 @@ export function SelectTrigger({
       aria-activedescendant={activeDescendant || undefined}
       disabled={disabled}
       onClick={toggleOpen}
-      className={`group flex w-full cursor-pointer items-center justify-between border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] transition-all select-none hover:border-[var(--color-brand)] focus:border-[var(--color-brand)] focus:ring-2 focus:ring-[var(--color-brand)]/20 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${sizeClasses} ${variantClasses} ${
-        isOpen ? "border-[var(--color-brand)] ring-2 ring-[var(--color-brand)]/20" : ""
-      } ${className}`}
+      className={cn(
+        selectTriggerVariants({
+          variant,
+          size,
+          isOpen,
+          hasError,
+        }),
+        className,
+      )}
     >
       <div className="flex min-w-0 flex-1 items-center gap-2 text-left">
         {children || (
@@ -318,9 +411,10 @@ export function SelectTrigger({
       <CaretDownIcon
         size={size === "sm" ? 13 : 16}
         weight="bold"
-        className={`shrink-0 text-[var(--color-text-3)] transition-transform duration-200 group-hover:text-[var(--color-text)] ${
-          isOpen ? "rotate-180 text-[var(--color-brand)]" : ""
-        }`}
+        className={cn(
+          "shrink-0 text-[var(--color-text-3)] transition-transform duration-200 group-hover:text-[var(--color-text)]",
+          isOpen && "rotate-180 text-[var(--color-brand)]",
+        )}
       />
     </button>
   );
@@ -350,7 +444,7 @@ export function SelectValue({
     (isMultiple && Array.isArray(value) && value.length === 0);
 
   return (
-    <div className={`min-w-0 flex-1 truncate ${className}`}>
+    <div className={cn("min-w-0 flex-1 truncate", className)}>
       {children ? (
         children
       ) : isEmpty ? (
@@ -451,48 +545,54 @@ export function SelectContent({
     if (!isOpen) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (!contentRef.current) return;
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setIsOpen(false);
+        triggerRef.current?.focus();
+        return;
+      }
 
-      const items = Array.from(
-        contentRef.current.querySelectorAll<HTMLElement>('[role="option"]:not([aria-disabled="true"])'),
-      );
-      if (items.length === 0) return;
+      if (e.key === "Tab") {
+        setIsOpen(false);
+        return;
+      }
 
-      const currentIndex = items.findIndex((el) => el.id === activeDescendant);
+      const items = contentRef.current?.querySelectorAll<HTMLElement>('[role="option"]:not([aria-disabled="true"])');
+      if (!items || items.length === 0) return;
+
+      const itemArray = Array.from(items);
+      const currentIndex = itemArray.findIndex((el) => el.id === activeDescendant);
 
       if (e.key === "ArrowDown") {
         e.preventDefault();
-        const nextIndex = currentIndex < items.length - 1 ? currentIndex + 1 : 0;
-        const target = items[nextIndex];
-        setActiveDescendant(target.id);
-        target.scrollIntoView({ block: "nearest" });
+        const nextIndex = currentIndex < itemArray.length - 1 ? currentIndex + 1 : 0;
+        const nextItem = itemArray[nextIndex];
+        setActiveDescendant(nextItem.id);
+        nextItem.scrollIntoView({ block: "nearest" });
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
-        const prevIndex = currentIndex > 0 ? currentIndex - 1 : items.length - 1;
-        const target = items[prevIndex];
-        setActiveDescendant(target.id);
-        target.scrollIntoView({ block: "nearest" });
-      } else if (e.key === "Home") {
-        e.preventDefault();
-        const target = items[0];
-        setActiveDescendant(target.id);
-        target.scrollIntoView({ block: "nearest" });
-      } else if (e.key === "End") {
-        e.preventDefault();
-        const target = items[items.length - 1];
-        setActiveDescendant(target.id);
-        target.scrollIntoView({ block: "nearest" });
+        const prevIndex = currentIndex > 0 ? currentIndex - 1 : itemArray.length - 1;
+        const prevItem = itemArray[prevIndex];
+        setActiveDescendant(prevItem.id);
+        prevItem.scrollIntoView({ block: "nearest" });
       } else if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
         if (activeDescendant) {
-          e.preventDefault();
           const activeEl = document.getElementById(activeDescendant);
           if (activeEl) {
             activeEl.click();
           }
         }
-      } else if (e.key === "Escape" || e.key === "Tab") {
-        setIsOpen(false);
-        triggerRef.current?.focus();
+      } else if (e.key === "Home") {
+        e.preventDefault();
+        const firstItem = itemArray[0];
+        setActiveDescendant(firstItem.id);
+        firstItem.scrollIntoView({ block: "nearest" });
+      } else if (e.key === "End") {
+        e.preventDefault();
+        const lastItem = itemArray[itemArray.length - 1];
+        setActiveDescendant(lastItem.id);
+        lastItem.scrollIntoView({ block: "nearest" });
       }
     };
 
@@ -518,9 +618,9 @@ export function SelectContent({
         maxHeight: `${maxHeight}px`,
         zIndex: 99999,
       }}
-      className={`animate-in fade-in-0 zoom-in-95 flex flex-col overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-1.5 shadow-2xl transition-all duration-150 ${className}`}
+      className={cn(selectContentVariants(), className)}
     >
-      <div className="flex-1 overflow-y-auto overscroll-contain pr-1 custom-scrollbar">
+      <div className="custom-scrollbar flex-1 overflow-y-auto overscroll-contain pr-1">
         {children}
       </div>
     </div>,
@@ -545,7 +645,6 @@ export function SelectSearchInput({
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
-    // Focus search input automatically when popup opens
     const timer = setTimeout(() => {
       inputRef.current?.focus();
     }, 50);
@@ -553,7 +652,7 @@ export function SelectSearchInput({
   }, []);
 
   return (
-    <div className={`relative mb-1.5 px-1 ${className}`}>
+    <div className={cn("relative mb-1.5 px-1", className)}>
       <div className="relative flex items-center">
         <MagnifyingGlassIcon
           size={14}
@@ -653,22 +752,24 @@ export function SelectItem<T extends string | number = string>({
           setActiveDescendant(itemId);
         }
       }}
-      className={`group relative flex cursor-pointer items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold transition-all select-none ${
-        disabled
-          ? "cursor-not-allowed opacity-40"
-          : isSelected
-            ? "bg-[var(--color-brand-light)] font-bold text-[var(--color-brand-dark)]"
-            : isHighlighted
-              ? "bg-[var(--color-surface-2)] text-[var(--color-text)]"
-              : "text-[var(--color-text)] hover:bg-[var(--color-surface-2)]"
-      } ${className}`}
+      className={cn(
+        selectItemVariants({
+          isSelected,
+          isHighlighted,
+          disabled,
+        }),
+        className,
+      )}
     >
       <div className="flex min-w-0 flex-1 items-start gap-2.5">
         {icon && (
           <span
-            className={`mt-0.5 shrink-0 text-sm ${
-              isSelected ? "text-[var(--color-brand)]" : "text-[var(--color-text-3)] group-hover:text-[var(--color-text)]"
-            }`}
+            className={cn(
+              "mt-0.5 shrink-0 text-sm",
+              isSelected
+                ? "text-[var(--color-brand)]"
+                : "text-[var(--color-text-3)] group-hover:text-[var(--color-text)]",
+            )}
           >
             {icon}
           </span>
@@ -681,9 +782,10 @@ export function SelectItem<T extends string | number = string>({
           </div>
           {description && (
             <p
-              className={`mt-0.5 text-[11px] font-normal leading-tight line-clamp-1 ${
-                isSelected ? "text-[var(--color-brand)]/80" : "text-[var(--color-text-3)]"
-              }`}
+              className={cn(
+                "mt-0.5 line-clamp-1 text-[11px] font-normal leading-tight",
+                isSelected ? "text-[var(--color-brand)]/80" : "text-[var(--color-text-3)]",
+              )}
             >
               {description}
             </p>
@@ -714,7 +816,7 @@ export interface SelectGroupProps {
 
 export function SelectGroup({ label, className = "", children }: SelectGroupProps) {
   return (
-    <div role="group" className={`py-1 ${className}`}>
+    <div role="group" className={cn("py-1", className)}>
       {label && <SelectLabel>{label}</SelectLabel>}
       {children}
     </div>
@@ -729,7 +831,10 @@ export interface SelectLabelProps {
 export function SelectLabel({ className = "", children }: SelectLabelProps) {
   return (
     <div
-      className={`px-3 py-1 text-[10px] font-extrabold tracking-wider text-[var(--color-text-3)] uppercase ${className}`}
+      className={cn(
+        "px-3 py-1 text-[10px] font-extrabold tracking-wider text-[var(--color-text-3)] uppercase",
+        className,
+      )}
     >
       {children}
     </div>
@@ -739,7 +844,7 @@ export function SelectLabel({ className = "", children }: SelectLabelProps) {
 export function SelectSeparator({ className = "" }: { className?: string }) {
   return (
     <div
-      className={`my-1 -mx-1 h-px bg-[var(--color-border-subtle)] ${className}`}
+      className={cn("my-1 -mx-1 h-px bg-[var(--color-border-subtle)]", className)}
     />
   );
 }

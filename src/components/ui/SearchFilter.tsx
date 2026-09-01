@@ -1,6 +1,7 @@
 import React from "react";
 import { MagnifyingGlassIcon, XIcon, TagIcon } from "@phosphor-icons/react";
 import { Select, type SelectOption } from "./Select";
+import { cn } from "#/lib/utils";
 
 interface SearchFilterProps {
   search: string;
@@ -43,7 +44,7 @@ export function SearchFilter({
   }
 
   return (
-    <div className={`flex flex-col items-stretch gap-3 sm:flex-row sm:items-center ${className}`}>
+    <div className={cn("flex flex-col items-stretch gap-3 sm:flex-row sm:items-center", className)}>
       {/* Search Input Box */}
       <div className="relative flex-1">
         <MagnifyingGlassIcon
