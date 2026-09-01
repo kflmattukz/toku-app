@@ -118,6 +118,7 @@ function Transaksi() {
       <TransactionDetailModal
         transaction={selected}
         storeName={store.name}
+        storeAddress={store.address}
         onClose={() => setSelected(null)}
         onOpenCancel={handleOpenCancel}
       />

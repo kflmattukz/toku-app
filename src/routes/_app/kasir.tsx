@@ -159,6 +159,7 @@ function Kasir() {
         onClose={() => setShowReceipt(false)}
         tx={lastTx}
         storeName={store.name}
+        storeAddress={store.address}
       />
     </div>
   );

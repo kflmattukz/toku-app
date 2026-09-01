@@ -1,15 +1,34 @@
+import { formatIDR, calculateItemDiscount } from "./utils";
+import { toast } from "sonner";
+
+export interface PrintReceiptOptions {
+  paperWidth?: "58mm" | "80mm";
+  title?: string;
+}
+
+export interface ReceiptData {
+  tx: any;
+  storeName: string;
+  storeAddress?: string;
+  paperWidth?: "58mm" | "80mm";
+}
+
 /**
- * Prints the receipt element in an isolated hidden iframe.
- * Eliminates blank pages caused by parent SPA DOM layout and ensures exact 1-page 80mm output.
+ * Prints the receipt element in an isolated hidden iframe with exact thermal dimensions.
+ * Ensures 100% fidelity without parent application layout or theme interference.
  */
-export function printReceipt(elementId = "toku-receipt-content") {
+export function printReceipt(
+  elementId = "toku-receipt-content",
+  options: PrintReceiptOptions = {},
+) {
+  const { paperWidth = "80mm", title = "Struk Toku POS" } = options;
   const el = document.getElementById(elementId);
   if (!el) {
     window.print();
     return;
   }
 
-  // Remove existing print iframe if any
+  // Remove previous print frame if any
   const existingFrame = document.getElementById("toku-print-frame");
   if (existingFrame) existingFrame.remove();
 
@@ -30,16 +49,20 @@ export function printReceipt(elementId = "toku-receipt-content") {
     return;
   }
 
+  const printWidth = paperWidth === "58mm" ? "58mm" : "80mm";
+  const bodyPadding = paperWidth === "58mm" ? "3mm 2mm" : "5mm 4mm";
+  const fontSize = paperWidth === "58mm" ? "11.5px" : "13px";
+
   doc.open();
   doc.write(`
     <!DOCTYPE html>
     <html lang="id">
     <head>
       <meta charset="utf-8" />
-      <title>Struk Toku POS</title>
+      <title>${title}</title>
       <style>
         @page {
-          size: 80mm auto;
+          size: ${printWidth} auto;
           margin: 0;
         }
         *, *::before, *::after {
@@ -51,25 +74,26 @@ export function printReceipt(elementId = "toku-receipt-content") {
           margin: 0;
           padding: 0;
           background: #ffffff;
-          color: #1c1917;
+          color: #111827;
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-          width: 80mm;
-          max-width: 80mm;
+          width: ${printWidth};
+          max-width: ${printWidth};
+          -webkit-font-smoothing: antialiased;
         }
         .price {
-          font-family: "JetBrains Mono", "Courier New", monospace;
+          font-family: "JetBrains Mono", "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
           font-variant-numeric: tabular-nums;
           font-weight: 800;
         }
         .receipt-paper {
-          width: 80mm !important;
-          max-width: 80mm !important;
+          width: ${printWidth} !important;
+          max-width: ${printWidth} !important;
           margin: 0 auto !important;
-          padding: 5mm 4mm !important;
+          padding: ${bodyPadding} !important;
           background: #ffffff !important;
-          color: #1c1917 !important;
-          font-size: 13px !important;
-          line-height: 1.4 !important;
+          color: #111827 !important;
+          font-size: ${fontSize} !important;
+          line-height: 1.35 !important;
           box-sizing: border-box !important;
           border: none !important;
           box-shadow: none !important;
@@ -77,6 +101,9 @@ export function printReceipt(elementId = "toku-receipt-content") {
         img {
           max-width: 100%;
           height: auto;
+        }
+        .no-print {
+          display: none !important;
         }
       </style>
     </head>
@@ -87,6 +114,7 @@ export function printReceipt(elementId = "toku-receipt-content") {
   `);
   doc.close();
 
+  // Allow images and fonts to settle in the iframe before printing
   setTimeout(() => {
     try {
       iframe.contentWindow?.focus();
@@ -96,7 +124,492 @@ export function printReceipt(elementId = "toku-receipt-content") {
     } finally {
       setTimeout(() => {
         iframe.remove();
-      }, 1000);
+      }, 1500);
     }
-  }, 200);
+  }, 150);
+}
+
+/**
+ * Helper to wrap text into multiple lines for canvas rendering
+ */
+function wrapText(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  maxWidth: number,
+): string[] {
+  const words = text.split(" ");
+  const lines: string[] = [];
+  let currentLine = words[0] || "";
+
+  for (let i = 1; i < words.length; i++) {
+    const word = words[i];
+    const width = ctx.measureText(currentLine + " " + word).width;
+    if (width < maxWidth) {
+      currentLine += " " + word;
+    } else {
+      lines.push(currentLine);
+      currentLine = word;
+    }
+  }
+  lines.push(currentLine);
+  return lines;
+}
+
+/**
+ * Generates a high-DPI receipt canvas with 100% visual fidelity matching on-screen receipt.
+ */
+export async function renderReceiptCanvas(
+  tx: any,
+  storeName: string,
+  storeAddress?: string,
+  paperWidth: "58mm" | "80mm" = "80mm",
+): Promise<HTMLCanvasElement> {
+  const is58mm = paperWidth === "58mm";
+  const canvasWidth = is58mm ? 360 : 420;
+  const paddingX = is58mm ? 20 : 28;
+  const contentWidth = canvasWidth - paddingX * 2;
+  const scale = 2; // 2x Retina resolution
+
+  const now = new Date(tx.createdAt || Date.now());
+  const txId = tx._id
+    ? `TX-${String(tx._id).slice(-6).toUpperCase()}`
+    : `TX-${now.getTime().toString().slice(-6)}`;
+
+  // First pass: measure total height required
+  let estimatedHeight = 220; // Header & Top info
+
+  const items = Array.isArray(tx.items) ? tx.items : [];
+  estimatedHeight += items.length * (is58mm ? 42 : 46);
+
+  if (tx.subtotal && tx.subtotal !== tx.total) estimatedHeight += 24;
+  if (tx.discountAmount && tx.discountAmount > 0) estimatedHeight += 24;
+
+  estimatedHeight += 30; // Payment method
+  if (tx.paymentMethod === "cash") estimatedHeight += 44;
+
+  estimatedHeight += 90; // Total Bayar box
+  estimatedHeight += 90; // Barcode & Footer
+
+  // Create canvas
+  const canvas = document.createElement("canvas");
+  canvas.width = canvasWidth * scale;
+  canvas.height = estimatedHeight * scale;
+
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Canvas 2D context not available");
+
+  ctx.scale(scale, scale);
+
+  // Background card
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, canvasWidth, estimatedHeight);
+
+  let curY = 28;
+
+  // 1. Logo Circle
+  const logoSize = is58mm ? 36 : 42;
+  const logoX = (canvasWidth - logoSize) / 2;
+  ctx.fillStyle = "#ea580c";
+  ctx.beginPath();
+  ctx.arc(logoX + logoSize / 2, curY + logoSize / 2, logoSize / 2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // White "T" Logo Monogram in center
+  ctx.fillStyle = "#ffffff";
+  ctx.font = `900 ${is58mm ? 18 : 22}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("T", canvasWidth / 2, curY + logoSize / 2);
+
+  curY += logoSize + 12;
+
+  // 2. Store Name
+  ctx.fillStyle = "#1c1917";
+  ctx.font = `900 ${is58mm ? 16 : 18}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+  ctx.textAlign = "center";
+  ctx.fillText(storeName, canvasWidth / 2, curY);
+  curY += 18;
+
+  // Store Address (if any)
+  if (storeAddress) {
+    ctx.fillStyle = "#78716c";
+    ctx.font = `500 ${is58mm ? 10.5 : 11.5}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+    ctx.fillText(storeAddress, canvasWidth / 2, curY);
+    curY += 16;
+  }
+
+  // Date & Time
+  const dateStr = `${now.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })} · ${now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}`;
+  ctx.fillStyle = "#78716c";
+  ctx.font = `500 ${is58mm ? 10.5 : 11.5}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+  ctx.fillText(dateStr, canvasWidth / 2, curY);
+  curY += 16;
+
+  // Cashier Name
+  if (tx.cashierName) {
+    ctx.fillStyle = "#57534e";
+    ctx.font = `600 ${is58mm ? 10.5 : 11.5}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+    ctx.fillText(`Kasir: ${tx.cashierName}`, canvasWidth / 2, curY);
+    curY += 16;
+  }
+
+  // Transaction Badge #TX-XXXX
+  const badgeText = `#${txId}`;
+  ctx.font = `800 ${is58mm ? 10.5 : 11.5}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+  const badgeWidth = ctx.measureText(badgeText).width + 16;
+  const badgeHeight = 22;
+  const badgeX = (canvasWidth - badgeWidth) / 2;
+
+  ctx.fillStyle = "#f5f5f4";
+  ctx.beginPath();
+  ctx.roundRect(badgeX, curY, badgeWidth, badgeHeight, 99);
+  ctx.fill();
+  ctx.strokeStyle = "#e7e5e4";
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  ctx.fillStyle = "#ea580c";
+  ctx.fillText(badgeText, canvasWidth / 2, curY + badgeHeight / 2 + 1);
+
+  curY += badgeHeight + 14;
+
+  // Dashed Separator
+  ctx.strokeStyle = "#d6d3d1";
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.moveTo(paddingX, curY);
+  ctx.lineTo(canvasWidth - paddingX, curY);
+  ctx.stroke();
+  ctx.setLineDash([]); // Reset line dash
+
+  curY += 14;
+
+  // 3. Item List Header
+  ctx.fillStyle = "#78716c";
+  ctx.font = `800 ${is58mm ? 9.5 : 10.5}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+  ctx.textAlign = "left";
+  ctx.fillText("ITEM BARANG", paddingX, curY);
+  ctx.textAlign = "right";
+  ctx.fillText("SUBTOTAL", canvasWidth - paddingX, curY);
+
+  curY += 12;
+  ctx.strokeStyle = "#f5f5f4";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(paddingX, curY);
+  ctx.lineTo(canvasWidth - paddingX, curY);
+  ctx.stroke();
+
+  curY += 10;
+
+  // 4. Items Rows
+  items.forEach((item: any) => {
+    const disc = calculateItemDiscount(item.price, item.discountType, item.discountValue);
+    const itemTotal = item.subtotal ?? disc.unitPrice * item.qty;
+
+    // Item name
+    ctx.fillStyle = "#1c1917";
+    ctx.font = `700 ${is58mm ? 11.5 : 12.5}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+    ctx.textAlign = "left";
+
+    const nameLines = wrapText(ctx, item.name, contentWidth - 90);
+    nameLines.forEach((line) => {
+      ctx.fillText(line, paddingX, curY);
+      curY += 14;
+    });
+
+    // Subtotal (aligned right)
+    ctx.fillStyle = "#1c1917";
+    ctx.font = `800 ${is58mm ? 11.5 : 12.5}px "JetBrains Mono", Consolas, monospace`;
+    ctx.textAlign = "right";
+    ctx.fillText(formatIDR(itemTotal), canvasWidth - paddingX, curY - 2);
+
+    // Qty and unit price
+    ctx.fillStyle = "#78716c";
+    ctx.font = `500 ${is58mm ? 10 : 11}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+    ctx.textAlign = "left";
+    let qtyDesc = `${item.qty}x ${formatIDR(item.price)}`;
+    if (disc.hasDiscount) {
+      qtyDesc += ` (Disc ${disc.discountLabel} ➔ ${formatIDR(disc.unitPrice)})`;
+    }
+    ctx.fillText(qtyDesc, paddingX, curY);
+
+    curY += 16;
+  });
+
+  curY += 4;
+
+  // Dashed Separator
+  ctx.strokeStyle = "#d6d3d1";
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.moveTo(paddingX, curY);
+  ctx.lineTo(canvasWidth - paddingX, curY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  curY += 12;
+
+  // 5. Subtotals & Discounts
+  if (tx.subtotal && tx.subtotal !== tx.total) {
+    ctx.fillStyle = "#57534e";
+    ctx.font = `500 ${is58mm ? 11 : 12}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+    ctx.textAlign = "left";
+    ctx.fillText("Subtotal Produk", paddingX, curY);
+    ctx.textAlign = "right";
+    ctx.font = `700 ${is58mm ? 11 : 12}px "JetBrains Mono", Consolas, monospace`;
+    ctx.fillText(formatIDR(tx.subtotal), canvasWidth - paddingX, curY);
+    curY += 16;
+  }
+
+  if (tx.discountAmount && tx.discountAmount > 0) {
+    ctx.fillStyle = "#ea580c";
+    ctx.font = `700 ${is58mm ? 11 : 12}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+    ctx.textAlign = "left";
+    const discLabel = tx.discountType === "percentage" ? `(${tx.discountValue}%)` : "";
+    ctx.fillText(`Diskon Keranjang ${discLabel}`, paddingX, curY);
+    ctx.textAlign = "right";
+    ctx.font = `800 ${is58mm ? 11 : 12}px "JetBrains Mono", Consolas, monospace`;
+    ctx.fillText(`-${formatIDR(tx.discountAmount)}`, canvasWidth - paddingX, curY);
+    curY += 16;
+  }
+
+  // Payment Details
+  ctx.strokeStyle = "#e7e5e4";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(paddingX, curY);
+  ctx.lineTo(canvasWidth - paddingX, curY);
+  ctx.stroke();
+  curY += 10;
+
+  ctx.fillStyle = "#57534e";
+  ctx.font = `500 ${is58mm ? 11 : 12}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+  ctx.textAlign = "left";
+  ctx.fillText("Metode Bayar", paddingX, curY);
+  ctx.textAlign = "right";
+  ctx.font = `800 ${is58mm ? 11 : 12}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+  ctx.fillStyle = "#1c1917";
+  ctx.fillText(tx.paymentMethod === "cash" ? "Tunai (Cash)" : "QRIS Digital", canvasWidth - paddingX, curY);
+  curY += 16;
+
+  if (tx.paymentMethod === "cash") {
+    ctx.fillStyle = "#57534e";
+    ctx.font = `500 ${is58mm ? 11 : 12}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+    ctx.textAlign = "left";
+    ctx.fillText("Uang Diterima", paddingX, curY);
+    ctx.textAlign = "right";
+    ctx.font = `700 ${is58mm ? 11 : 12}px "JetBrains Mono", Consolas, monospace`;
+    ctx.fillStyle = "#1c1917";
+    ctx.fillText(formatIDR(tx.cashPaid || tx.total), canvasWidth - paddingX, curY);
+    curY += 16;
+
+    ctx.fillStyle = "#57534e";
+    ctx.font = `500 ${is58mm ? 11 : 12}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+    ctx.textAlign = "left";
+    ctx.fillText("Kembalian", paddingX, curY);
+    ctx.textAlign = "right";
+    ctx.font = `800 ${is58mm ? 11 : 12}px "JetBrains Mono", Consolas, monospace`;
+    ctx.fillStyle = "#047857";
+    ctx.fillText(formatIDR(tx.change || 0), canvasWidth - paddingX, curY);
+    curY += 18;
+  }
+
+  // 6. Total Bayar Box
+  const totalBoxHeight = is58mm ? 46 : 52;
+  ctx.fillStyle = "#fff7ed";
+  ctx.beginPath();
+  ctx.roundRect(paddingX, curY, contentWidth, totalBoxHeight, 10);
+  ctx.fill();
+  ctx.strokeStyle = "#ea580c";
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  ctx.fillStyle = "#ea580c";
+  ctx.font = `900 ${is58mm ? 10.5 : 12}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+  ctx.fillText("TOTAL BAYAR", paddingX + 14, curY + totalBoxHeight / 2);
+
+  ctx.textAlign = "right";
+  ctx.font = `900 ${is58mm ? 18 : 21}px "JetBrains Mono", Consolas, monospace`;
+  ctx.fillText(formatIDR(tx.total), canvasWidth - paddingX - 14, curY + totalBoxHeight / 2);
+
+  curY += totalBoxHeight + 16;
+
+  // 7. Barcode Lines Graphic
+  ctx.fillStyle = "#78716c";
+  ctx.font = `400 ${is58mm ? 15 : 17}px monospace`;
+  ctx.textAlign = "center";
+  ctx.letterSpacing = "4px";
+  ctx.fillText("||| | ||||| | |||| | ||| || ||||", canvasWidth / 2, curY);
+  ctx.letterSpacing = "0px";
+  curY += 18;
+
+  // Footer text
+  ctx.fillStyle = "#78716c";
+  ctx.font = `600 ${is58mm ? 10 : 10.5}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+  ctx.fillText("Terima kasih atas kunjungan Anda!", canvasWidth / 2, curY);
+  curY += 14;
+
+  ctx.fillStyle = "#ea580c";
+  ctx.font = `800 ${is58mm ? 9.5 : 10}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+  ctx.fillText("Toku POS · Kasir Digital UMKM", canvasWidth / 2, curY);
+
+  return canvas;
+}
+
+/**
+ * Captures receipt and triggers an immediate PNG download without hanging.
+ */
+export async function downloadReceiptImage(
+  data: ReceiptData | string,
+  filename?: string,
+) {
+  const toastId = toast.loading("Membuat gambar struk...");
+
+  try {
+    let canvas: HTMLCanvasElement;
+
+    // Check if rich receipt data object was passed directly
+    if (typeof data === "object" && data?.tx) {
+      canvas = await renderReceiptCanvas(
+        data.tx,
+        data.storeName,
+        data.storeAddress,
+        data.paperWidth || "80mm",
+      );
+    } else {
+      // Fallback: search DOM element or render generic
+      toast.dismiss(toastId);
+      toast.error("Data struk tidak valid untuk diunduh");
+      return;
+    }
+
+    // Export Blob and trigger instant browser download
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        toast.dismiss(toastId);
+        toast.error("Gagal mengekspor file gambar");
+        return;
+      }
+
+      const txId = data.tx._id
+        ? `TX-${String(data.tx._id).slice(-6).toUpperCase()}`
+        : "transaksi";
+      const finalFilename = filename || `struk-${txId}.png`;
+
+      const downloadUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = downloadUrl;
+      a.download = finalFilename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(downloadUrl);
+
+      toast.dismiss(toastId);
+      toast.success("Gambar struk berhasil diunduh!", {
+        description: `Disimpan sebagai ${finalFilename}`,
+      });
+    }, "image/png");
+  } catch (error) {
+    console.error("Error generating receipt image:", error);
+    toast.dismiss(toastId);
+    toast.error("Terjadi kesalahan saat membuat gambar struk");
+  }
+}
+
+/**
+ * Formats a clean Indonesian receipt summary and opens WhatsApp with prefilled text.
+ */
+export function shareReceiptWhatsApp(tx: any, storeName: string, storeAddress?: string) {
+  if (!tx) return;
+
+  const now = new Date(tx.createdAt || Date.now());
+  const txId = tx._id
+    ? `TX-${String(tx._id).slice(-6).toUpperCase()}`
+    : `TX-${now.getTime().toString().slice(-6)}`;
+
+  const formattedDate = now.toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+  const formattedTime = now.toLocaleTimeString("id-ID", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  const lines: string[] = [
+    `🧾 *STRUK PEMBELIAN - ${storeName.toUpperCase()}*`,
+  ];
+
+  if (storeAddress) {
+    lines.push(`📍 ${storeAddress}`);
+  }
+
+  lines.push(
+    `━━━━━━━━━━━━━━━━━━━━`,
+    `No. Transaksi : *#${txId}*`,
+    `Waktu : ${formattedDate}, ${formattedTime}`,
+  );
+
+  if (tx.cashierName) {
+    lines.push(`Kasir : ${tx.cashierName}`);
+  }
+
+  lines.push(`━━━━━━━━━━━━━━━━━━━━`, `*DAFTAR PESANAN:*`);
+
+  if (Array.isArray(tx.items)) {
+    tx.items.forEach((item: any) => {
+      const disc = calculateItemDiscount(item.price, item.discountType, item.discountValue);
+      const itemTotal = item.subtotal ?? disc.unitPrice * item.qty;
+      lines.push(`• *${item.name}*`);
+      if (disc.hasDiscount) {
+        lines.push(
+          `  ${item.qty}x ${formatIDR(disc.unitPrice)} ~(Disc ${disc.discountLabel})~ = *${formatIDR(itemTotal)}*`,
+        );
+      } else {
+        lines.push(`  ${item.qty}x ${formatIDR(item.price)} = *${formatIDR(itemTotal)}*`);
+      }
+    });
+  }
+
+  lines.push(`━━━━━━━━━━━━━━━━━━━━`);
+
+  if (tx.subtotal && tx.subtotal !== tx.total) {
+    lines.push(`Subtotal : ${formatIDR(tx.subtotal)}`);
+  }
+
+  if (tx.discountAmount && tx.discountAmount > 0) {
+    const discLabel = tx.discountType === "percentage" ? `(${tx.discountValue}%)` : "";
+    lines.push(`Diskon Keranjang ${discLabel} : -${formatIDR(tx.discountAmount)}`);
+  }
+
+  lines.push(
+    `*TOTAL PEMBAYARAN : ${formatIDR(tx.total)}*`,
+    `Metode Bayar : ${tx.paymentMethod === "cash" ? "Tunai" : "QRIS Digital"}`,
+  );
+
+  if (tx.paymentMethod === "cash") {
+    lines.push(
+      `Uang Diterima : ${formatIDR(tx.cashPaid || tx.total)}`,
+      `Kembalian : ${formatIDR(tx.change || 0)}`,
+    );
+  }
+
+  lines.push(
+    `━━━━━━━━━━━━━━━━━━━━`,
+    `Terima kasih telah berbelanja di *${storeName}*! 🙏`,
+    `_Struk resmi kasir digital Toku POS_`,
+  );
+
+  const fullText = lines.join("\n");
+  const waUrl = `https://wa.me/?text=${encodeURIComponent(fullText)}`;
+
+  window.open(waUrl, "_blank");
+  toast.success("Membuka WhatsApp untuk mengirim struk...");
 }
