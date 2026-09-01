@@ -256,7 +256,6 @@ export function ProductFormModal({
           />
         </div>
 
-
         {/* Diskon Produk Section */}
         <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-2)] p-3.5">
           <label className="mb-2 block text-xs font-extrabold text-[var(--color-text)]">

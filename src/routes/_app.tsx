@@ -268,7 +268,6 @@ function AppShell() {
           onTogglePrivacy={togglePrivacyMode}
         />
 
-
         {/* Route Content */}
         <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col p-4 pb-28 sm:p-6">
           <div

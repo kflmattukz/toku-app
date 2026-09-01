@@ -1,5 +1,12 @@
 import { useState } from "react";
-import { ChartBarIcon, TrendUpIcon, ReceiptIcon, FireIcon, ClockIcon, ScalesIcon } from "@phosphor-icons/react";
+import {
+  ChartBarIcon,
+  TrendUpIcon,
+  ReceiptIcon,
+  FireIcon,
+  ClockIcon,
+  ScalesIcon,
+} from "@phosphor-icons/react";
 import { formatIDR } from "#/lib/utils";
 import type { Range, TrendBucket } from "../types";
 
@@ -276,7 +283,8 @@ export function TrendChart({
                 </span>
               </div>
               <div className="text-xs text-[var(--color-text-2)]">
-                Arahkan kursor atau sentuh diagram batang untuk melihat rincian omset dan laba setiap waktu
+                Arahkan kursor atau sentuh diagram batang untuk melihat rincian omset dan laba
+                setiap waktu
               </div>
             </>
           )}

@@ -115,7 +115,6 @@ function Laporan() {
   );
 }
 
-
 function LaporanLoader() {
   return (
     <div className="flex h-[60vh] flex-col items-center justify-center gap-3">

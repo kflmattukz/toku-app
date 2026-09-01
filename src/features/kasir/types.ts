@@ -33,4 +33,3 @@ export type Product = {
   discountType?: "percentage" | "nominal";
   discountValue?: number;
 };
-

@@ -38,13 +38,7 @@ export function TransactionDetailModal({
           >
             Cetak Struk
           </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            size="md"
-            fullWidth
-            onClick={onClose}
-          >
+          <Button type="button" variant="secondary" size="md" fullWidth onClick={onClose}>
             Tutup
           </Button>
         </div>

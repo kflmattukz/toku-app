@@ -191,22 +191,10 @@ export function ItemDiscountModal({
         )}
 
         <div className="grid grid-cols-2 gap-3 pt-2">
-          <Button
-            type="button"
-            variant="secondary"
-            size="md"
-            fullWidth
-            onClick={onClose}
-          >
+          <Button type="button" variant="secondary" size="md" fullWidth onClick={onClose}>
             Batal
           </Button>
-          <Button
-            type="button"
-            variant="primary"
-            size="md"
-            fullWidth
-            onClick={onSave}
-          >
+          <Button type="button" variant="primary" size="md" fullWidth onClick={onSave}>
             Terapkan Diskon
           </Button>
         </div>

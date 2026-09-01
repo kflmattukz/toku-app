@@ -58,8 +58,7 @@ export type ButtonSize = NonNullable<ButtonVariants["size"]>;
 export type ButtonShape = NonNullable<ButtonVariants["shape"]>;
 
 export interface ButtonProps
-  extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "color">,
-    ButtonVariants {
+  extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "color">, ButtonVariants {
   loading?: boolean;
   isLoading?: boolean;
   loadingText?: ReactNode;
@@ -115,11 +114,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       >
         {/* Loading Spinner or Left Icon */}
         {isBusy ? (
-          <CircleNotchIcon
-            size={iconSize}
-            className="shrink-0 animate-spin"
-            weight="bold"
-          />
+          <CircleNotchIcon size={iconSize} className="shrink-0 animate-spin" weight="bold" />
         ) : leftIcon ? (
           <span className="inline-flex shrink-0 items-center">{leftIcon}</span>
         ) : null}

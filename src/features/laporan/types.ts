@@ -18,4 +18,3 @@ export type TrendBucket = {
   profit: number;
   count: number;
 };
-

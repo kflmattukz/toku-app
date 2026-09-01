@@ -225,9 +225,7 @@ export function ReportKpiGrid({
             <ChartLineUpIcon size={14} weight="bold" className="text-amber-600" />
             <span>Unit Terjual</span>
           </div>
-          <div className="mt-1 text-base font-black text-[var(--color-text)]">
-            {totalItems} pcs
-          </div>
+          <div className="mt-1 text-base font-black text-[var(--color-text)]">{totalItems} pcs</div>
           <div className="text-[10px] text-[var(--color-text-3)]">Total item keluar</div>
         </div>
 

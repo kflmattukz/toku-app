@@ -319,13 +319,7 @@ export function PaymentModal({
                 Mendukung GoPay, OVO, Dana, ShopeePay, BCA & LinkAja
               </p>
             </div>
-            <Button
-              type="button"
-              variant="primary"
-              size="lg"
-              fullWidth
-              onClick={onConfirm}
-            >
+            <Button type="button" variant="primary" size="lg" fullWidth onClick={onConfirm}>
               Konfirmasi Pembayaran QRIS Lunas
             </Button>
           </>

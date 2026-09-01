@@ -10,12 +10,7 @@ import React, {
 } from "react";
 import { createPortal } from "react-dom";
 import { cva, type VariantProps } from "class-variance-authority";
-import {
-  CaretDownIcon,
-  CheckIcon,
-  MagnifyingGlassIcon,
-  XIcon,
-} from "@phosphor-icons/react";
+import { CaretDownIcon, CheckIcon, MagnifyingGlassIcon, XIcon } from "@phosphor-icons/react";
 import { cn } from "#/lib/utils";
 
 // ============================================================================
@@ -179,16 +174,11 @@ export function Select<T extends string | number = string>({
   const [activeDescendant, setActiveDescendant] = useState<string | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
 
-  const itemsRef = useRef<Map<string, { value: T; text: string; disabled?: boolean }>>(
-    new Map(),
-  );
+  const itemsRef = useRef<Map<string, { value: T; text: string; disabled?: boolean }>>(new Map());
 
-  const registerItem = useCallback(
-    (id: string, val: T, text: string, isDisabled?: boolean) => {
-      itemsRef.current.set(id, { value: val, text, disabled: isDisabled });
-    },
-    [],
-  );
+  const registerItem = useCallback((id: string, val: T, text: string, isDisabled?: boolean) => {
+    itemsRef.current.set(id, { value: val, text, disabled: isDisabled });
+  }, []);
 
   const unregisterItem = useCallback((id: string) => {
     itemsRef.current.delete(id);
@@ -258,7 +248,8 @@ export function Select<T extends string | number = string>({
   const renderShorthandLabel = () => {
     if (!options) return null;
     if (multiple && Array.isArray(rawValue)) {
-      if (rawValue.length === 0) return <span className="text-[var(--color-text-3)]">{placeholder}</span>;
+      if (rawValue.length === 0)
+        return <span className="text-[var(--color-text-3)]">{placeholder}</span>;
       return (
         <div className="flex flex-wrap items-center gap-1">
           {rawValue.map((v) => {
@@ -318,9 +309,7 @@ export function Select<T extends string | number = string>({
       <div className={cn("relative inline-block w-full text-left", className)}>
         {options ? (
           <>
-            <SelectTrigger placeholder={placeholder}>
-              {renderShorthandLabel()}
-            </SelectTrigger>
+            <SelectTrigger placeholder={placeholder}>{renderShorthandLabel()}</SelectTrigger>
             <SelectContent>
               {searchable && <SelectSearchInput placeholder={searchPlaceholder} />}
               {filteredOptions.length === 0 ? (
@@ -370,16 +359,8 @@ export function SelectTrigger({
   children,
   hasError = false,
 }: SelectTriggerProps) {
-  const {
-    isOpen,
-    toggleOpen,
-    size,
-    variant,
-    disabled,
-    triggerRef,
-    selectId,
-    activeDescendant,
-  } = useSelectContext();
+  const { isOpen, toggleOpen, size, variant, disabled, triggerRef, selectId, activeDescendant } =
+    useSelectContext();
 
   return (
     <button
@@ -404,9 +385,7 @@ export function SelectTrigger({
       )}
     >
       <div className="flex min-w-0 flex-1 items-center gap-2 text-left">
-        {children || (
-          <span className="truncate text-[var(--color-text-3)]">{placeholder}</span>
-        )}
+        {children || <span className="truncate text-[var(--color-text-3)]">{placeholder}</span>}
       </div>
       <CaretDownIcon
         size={size === "sm" ? 13 : 16}
@@ -466,11 +445,7 @@ export interface SelectContentProps {
   maxHeight?: number;
 }
 
-export function SelectContent({
-  className = "",
-  children,
-  maxHeight = 280,
-}: SelectContentProps) {
+export function SelectContent({ className = "", children, maxHeight = 280 }: SelectContentProps) {
   const {
     isOpen,
     setIsOpen,
@@ -557,7 +532,9 @@ export function SelectContent({
         return;
       }
 
-      const items = contentRef.current?.querySelectorAll<HTMLElement>('[role="option"]:not([aria-disabled="true"])');
+      const items = contentRef.current?.querySelectorAll<HTMLElement>(
+        '[role="option"]:not([aria-disabled="true"])',
+      );
       if (!items || items.length === 0) return;
 
       const itemArray = Array.from(items);
@@ -783,7 +760,7 @@ export function SelectItem<T extends string | number = string>({
           {description && (
             <p
               className={cn(
-                "mt-0.5 line-clamp-1 text-[11px] font-normal leading-tight",
+                "mt-0.5 line-clamp-1 text-[11px] leading-tight font-normal",
                 isSelected ? "text-[var(--color-brand)]/80" : "text-[var(--color-text-3)]",
               )}
             >
@@ -794,11 +771,7 @@ export function SelectItem<T extends string | number = string>({
       </div>
 
       {isSelected && (
-        <CheckIcon
-          size={15}
-          weight="bold"
-          className="ml-2 shrink-0 text-[var(--color-brand)]"
-        />
+        <CheckIcon size={15} weight="bold" className="ml-2 shrink-0 text-[var(--color-brand)]" />
       )}
     </div>
   );
@@ -842,11 +815,7 @@ export function SelectLabel({ className = "", children }: SelectLabelProps) {
 }
 
 export function SelectSeparator({ className = "" }: { className?: string }) {
-  return (
-    <div
-      className={cn("my-1 -mx-1 h-px bg-[var(--color-border-subtle)]", className)}
-    />
-  );
+  return <div className={cn("-mx-1 my-1 h-px bg-[var(--color-border-subtle)]", className)} />;
 }
 
 // ============================================================================

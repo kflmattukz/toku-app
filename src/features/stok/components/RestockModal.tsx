@@ -56,7 +56,9 @@ export function RestockModal({
             </span>
             <span>
               Batas Menipis:{" "}
-              <strong className="font-extrabold text-[var(--color-warning-text)]">{threshold}</strong>
+              <strong className="font-extrabold text-[var(--color-warning-text)]">
+                {threshold}
+              </strong>
             </span>
           </div>
         </div>

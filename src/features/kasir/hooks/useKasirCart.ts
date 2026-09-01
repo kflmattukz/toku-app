@@ -43,7 +43,6 @@ export function useKasirCart() {
           discountValue: product.discountValue,
         },
       ];
-
     });
 
     const disc = calculateItemDiscount(product.price, product.discountType, product.discountValue);

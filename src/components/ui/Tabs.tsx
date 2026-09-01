@@ -16,7 +16,8 @@ export const tabTriggerVariants = cva(
     variants: {
       isActive: {
         true: "border border-[var(--color-border)] bg-[var(--color-surface)] font-extrabold text-[var(--color-brand)] shadow-xs",
-        false: "border border-transparent font-bold text-[var(--color-text-2)] hover:bg-[var(--color-surface)]/60 hover:text-[var(--color-text)]",
+        false:
+          "border border-transparent font-bold text-[var(--color-text-2)] hover:bg-[var(--color-surface)]/60 hover:text-[var(--color-text)]",
       },
     },
     defaultVariants: {
@@ -71,10 +72,7 @@ interface TabsListProps {
 
 Tabs.List = function TabsList({ children, className = "" }: TabsListProps) {
   return (
-    <div
-      role="tablist"
-      className={cn(tabListVariants(), className)}
-    >
+    <div role="tablist" className={cn(tabListVariants(), className)}>
       {children}
     </div>
   );

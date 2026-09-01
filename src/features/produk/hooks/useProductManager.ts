@@ -157,7 +157,6 @@ export function useProductManager({ storeId }: UseProductManagerProps) {
     }
   };
 
-
   const handleConfirmDelete = async () => {
     if (!deleteTarget) return;
     setDeleting(true);

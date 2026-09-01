@@ -35,7 +35,6 @@ export const NAV_ITEMS = [
   { to: "/pengaturan", icon: GearIcon, label: "Pengaturan" },
 ];
 
-
 interface SidebarNavProps {
   currentPath: string;
   session: any;

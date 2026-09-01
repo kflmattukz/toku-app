@@ -1,8 +1,4 @@
-import {
-  TagIcon,
-  ReceiptIcon,
-  TrendDownIcon,
-} from "@phosphor-icons/react";
+import { TagIcon, ReceiptIcon, TrendDownIcon } from "@phosphor-icons/react";
 import { formatIDR } from "#/lib/utils";
 import { EXPENSE_CATEGORY_LABELS, type ExpenseCategory } from "../types";
 
@@ -73,7 +69,9 @@ export function ExpenseOverviewCards({
               : "Belum ada biaya"}
           </div>
           <div className="price text-[11px] font-bold text-amber-600">
-            {topCategoryAmount > 0 ? `${formatIDR(topCategoryAmount)} terpakai` : "Toko hemat biaya"}
+            {topCategoryAmount > 0
+              ? `${formatIDR(topCategoryAmount)} terpakai`
+              : "Toko hemat biaya"}
           </div>
         </div>
       </div>

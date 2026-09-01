@@ -1,17 +1,8 @@
 import { useState } from "react";
-import {
-  ReceiptIcon,
-  TrashIcon,
-  FunnelIcon,
-  TagIcon,
-} from "@phosphor-icons/react";
+import { ReceiptIcon, TrashIcon, FunnelIcon, TagIcon } from "@phosphor-icons/react";
 import { formatIDR } from "#/lib/utils";
 import { Button } from "#/components/ui";
-import {
-  EXPENSE_CATEGORIES,
-  EXPENSE_CATEGORY_LABELS,
-  type Expense,
-} from "../types";
+import { EXPENSE_CATEGORIES, EXPENSE_CATEGORY_LABELS, type Expense } from "../types";
 
 interface ExpenseTableProps {
   expenses: Expense[];
@@ -98,16 +89,21 @@ export function ExpenseTable({
             <table className="w-full border-collapse">
               <thead>
                 <tr className="border-b border-[var(--color-border)] bg-[var(--color-surface-2)]">
-                  {["Tanggal", "Kategori", "Keperluan / Catatan", "Sumber Dana", "Nominal", "Aksi"].map(
-                    (h) => (
-                      <th
-                        key={h}
-                        className="px-5 py-3.5 text-left text-[11px] font-extrabold tracking-wider text-[var(--color-text-3)] uppercase"
-                      >
-                        {h}
-                      </th>
-                    ),
-                  )}
+                  {[
+                    "Tanggal",
+                    "Kategori",
+                    "Keperluan / Catatan",
+                    "Sumber Dana",
+                    "Nominal",
+                    "Aksi",
+                  ].map((h) => (
+                    <th
+                      key={h}
+                      className="px-5 py-3.5 text-left text-[11px] font-extrabold tracking-wider text-[var(--color-text-3)] uppercase"
+                    >
+                      {h}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
@@ -207,7 +203,7 @@ export function ExpenseTable({
                       variant="danger-subtle"
                       size="xs"
                       onClick={() => setDeleteTarget(exp)}
-                      className="!h-8 !w-8 !p-0 rounded-full"
+                      className="!h-8 !w-8 rounded-full !p-0"
                     >
                       <TrashIcon size={14} weight="bold" />
                     </Button>
@@ -223,10 +219,13 @@ export function ExpenseTable({
       {deleteTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-sm rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-2xl">
-            <h3 className="text-base font-extrabold text-[var(--color-text)]">Hapus Pengeluaran?</h3>
+            <h3 className="text-base font-extrabold text-[var(--color-text)]">
+              Hapus Pengeluaran?
+            </h3>
             <p className="mt-1.5 text-xs text-[var(--color-text-2)]">
               Apakah Anda yakin ingin menghapus catatan biaya sebesar{" "}
-              <strong>{formatIDR(deleteTarget.amount)}</strong> ({deleteTarget.notes || "Tanpa catatan"})?
+              <strong>{formatIDR(deleteTarget.amount)}</strong> (
+              {deleteTarget.notes || "Tanpa catatan"})?
             </p>
             <div className="mt-5 grid grid-cols-2 gap-3">
               <Button

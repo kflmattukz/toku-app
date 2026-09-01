@@ -39,4 +39,3 @@ export const emptyProductForm: ProductFormState = {
   discountType: "none",
   discountValue: "",
 };
-

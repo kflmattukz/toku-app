@@ -36,4 +36,3 @@ export const AppStoreContext = createContext<AppStoreContextType>({
 export function useAppStore() {
   return useContext(AppStoreContext);
 }
-

@@ -67,16 +67,22 @@ export function ProductTable({
             <table className="w-full border-collapse">
               <thead>
                 <tr className="border-b border-border bg-surface-2">
-                  {["Foto", "Nama Produk", "Kategori", "Harga Modal", "Harga Jual", "Stok Barang", "Aksi"].map(
-                    (h) => (
-                      <th
-                        key={h}
-                        className="px-5 py-4 text-left text-[11px] font-extrabold tracking-wider text-text-3 uppercase"
-                      >
-                        {h}
-                      </th>
-                    ),
-                  )}
+                  {[
+                    "Foto",
+                    "Nama Produk",
+                    "Kategori",
+                    "Harga Modal",
+                    "Harga Jual",
+                    "Stok Barang",
+                    "Aksi",
+                  ].map((h) => (
+                    <th
+                      key={h}
+                      className="px-5 py-4 text-left text-[11px] font-extrabold tracking-wider text-text-3 uppercase"
+                    >
+                      {h}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
@@ -175,13 +181,15 @@ export function ProductTable({
                           {marginPct !== null && (
                             <div className="mt-1">
                               <span
-                                className={`inline-block rounded-full px-1.5 py-0.2 text-[10px] font-extrabold ${
+                                className={`py-0.2 inline-block rounded-full px-1.5 text-[10px] font-extrabold ${
                                   (profitPerUnit || 0) >= 0
                                     ? "bg-emerald-500/10 text-emerald-600"
                                     : "bg-rose-500/10 text-rose-600"
                                 }`}
                               >
-                                {(profitPerUnit || 0) >= 0 ? `+${marginPct}% margin` : `${marginPct}% rugi`}
+                                {(profitPerUnit || 0) >= 0
+                                  ? `+${marginPct}% margin`
+                                  : `${marginPct}% rugi`}
                               </span>
                             </div>
                           )}
@@ -292,7 +300,6 @@ export function ProductTable({
                       </div>
                     </div>
                   </div>
-
 
                   <div className="flex justify-end gap-2 pt-1">
                     <Button
