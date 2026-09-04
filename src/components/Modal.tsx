@@ -7,11 +7,13 @@ export function Modal({
   onClose,
   maxWidth = 520,
   showCloseButton = true,
+  noPadding = false,
 }: {
   children: ReactNode;
   onClose: () => void;
   maxWidth?: number | string;
   showCloseButton?: boolean;
+  noPadding?: boolean;
 }) {
   const [mounted, setMounted] = useState(false);
 
@@ -32,8 +34,9 @@ export function Modal({
       style={{
         position: "fixed",
         inset: 0,
-        width: "100vw",
-        height: "100vh",
+        width: "100%",
+        height: "100%",
+        minHeight: "100dvh",
         background: "rgba(0, 0, 0, 0.6)",
         backdropFilter: "blur(10px)",
         WebkitBackdropFilter: "blur(10px)",
@@ -41,23 +44,27 @@ export function Modal({
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        padding: "16px",
+        padding: "12px",
         boxSizing: "border-box",
       }}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
-        className="animate-modal custom-scrollbar"
+        className={`animate-modal ${noPadding ? "" : "custom-scrollbar"}`}
         style={{
           background: "var(--color-surface)",
           border: "1.5px solid var(--color-border)",
           borderRadius: "var(--radius-xl)",
-          padding: "28px 24px",
+          padding: noPadding ? 0 : "28px 24px",
           width: "100%",
           maxWidth,
           boxShadow: "0 25px 60px -12px rgba(0, 0, 0, 0.4), 0 0 0 1px var(--color-border)",
-          maxHeight: "calc(100vh - 32px)",
-          overflowY: "auto",
+          maxHeight: "min(calc(100dvh - 24px), calc(100vh - 24px))",
+          overflow: noPadding ? "hidden" : undefined,
+          overflowX: "hidden",
+          overflowY: noPadding ? "hidden" : "auto",
+          display: noPadding ? "flex" : undefined,
+          flexDirection: noPadding ? "column" : undefined,
           position: "relative",
           boxSizing: "border-box",
         }}
