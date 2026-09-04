@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { ReceiptIcon, TrashIcon, FunnelIcon, TagIcon } from "@phosphor-icons/react";
 import { formatIDR } from "#/lib/utils";
-import { Button } from "#/components/ui";
+import { Button, DataTable } from "#/components/ui";
+import { useAppTable, createAppColumnHelper } from "#/lib/table";
 import { EXPENSE_CATEGORIES, EXPENSE_CATEGORY_LABELS, type Expense } from "../types";
 
 interface ExpenseTableProps {
@@ -10,6 +11,8 @@ interface ExpenseTableProps {
   selectedCategory: string;
   onSelectCategory: (cat: string) => void;
 }
+
+const columnHelper = createAppColumnHelper<Expense>();
 
 export function ExpenseTable({
   expenses,
@@ -31,6 +34,97 @@ export function ExpenseTable({
         return "Lainnya";
     }
   };
+
+  const columns = useMemo(
+    () =>
+      columnHelper.columns([
+        columnHelper.accessor("date", {
+          header: "Tanggal",
+          cell: (info) => {
+            const dateObj = new Date(info.getValue());
+            const formattedDate = dateObj.toLocaleDateString("id-ID", {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+            });
+            return (
+              <span className="text-xs font-bold text-[var(--color-text)]">
+                {formattedDate}
+              </span>
+            );
+          },
+        }),
+        columnHelper.accessor("category", {
+          header: "Kategori",
+          cell: (info) => {
+            const cat = info.getValue();
+            return (
+              <span className="inline-flex items-center gap-1 rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] px-2.5 py-0.5 text-xs font-bold text-[var(--color-text)]">
+                <TagIcon size={12} weight="bold" />
+                <span>{EXPENSE_CATEGORY_LABELS[cat] || cat}</span>
+              </span>
+            );
+          },
+        }),
+        columnHelper.accessor("notes", {
+          header: "Keperluan / Catatan",
+          cell: (info) => {
+            const exp = info.row.original;
+            return (
+              <div>
+                <div className="text-xs font-medium text-[var(--color-text)]">
+                  {exp.notes || "-"}
+                </div>
+                <div className="text-[10px] text-[var(--color-text-3)]">
+                  Dicatat oleh: {exp.createdBy}
+                </div>
+              </div>
+            );
+          },
+        }),
+        columnHelper.accessor("source", {
+          header: "Sumber Dana",
+          cell: (info) => (
+            <span className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface-2)] px-2 py-0.5 text-[11px] font-bold text-[var(--color-text-2)]">
+              {getSourceLabel(info.getValue())}
+            </span>
+          ),
+        }),
+        columnHelper.accessor("amount", {
+          header: "Nominal",
+          cell: (info) => (
+            <span className="price text-sm font-black text-rose-600">
+              -{formatIDR(info.getValue())}
+            </span>
+          ),
+        }),
+        columnHelper.display({
+          id: "actions",
+          header: "Aksi",
+          enableSorting: false,
+          cell: (info) => (
+            <Button
+              type="button"
+              variant="danger-subtle"
+              size="xs"
+              leftIcon={<TrashIcon size={14} weight="bold" />}
+              onClick={() => setDeleteTarget(info.row.original)}
+              title="Hapus pengeluaran"
+            >
+              Hapus
+            </Button>
+          ),
+        }),
+      ]),
+    [],
+  );
+
+  const table = useAppTable({
+    data: expenses,
+    columns,
+  });
+
+  const rows = table.getRowModel().rows;
 
   return (
     <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-xs">
@@ -85,90 +179,14 @@ export function ExpenseTable({
       ) : (
         <>
           {/* Desktop Table View */}
-          <div className="desktop-only w-full overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="border-b border-[var(--color-border)] bg-[var(--color-surface-2)]">
-                  {[
-                    "Tanggal",
-                    "Kategori",
-                    "Keperluan / Catatan",
-                    "Sumber Dana",
-                    "Nominal",
-                    "Aksi",
-                  ].map((h) => (
-                    <th
-                      key={h}
-                      className="px-5 py-3.5 text-left text-[11px] font-extrabold tracking-wider text-[var(--color-text-3)] uppercase"
-                    >
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {expenses.map((exp) => {
-                  const dateObj = new Date(exp.date);
-                  const formattedDate = dateObj.toLocaleDateString("id-ID", {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                  });
-
-                  return (
-                    <tr
-                      key={exp._id}
-                      className="border-b border-[var(--color-border)] transition-colors hover:bg-[var(--color-surface-2)]"
-                    >
-                      <td className="px-5 py-3 text-xs font-bold text-[var(--color-text)]">
-                        {formattedDate}
-                      </td>
-                      <td className="px-5 py-3">
-                        <span className="inline-flex items-center gap-1 rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] px-2.5 py-0.5 text-xs font-bold text-[var(--color-text)]">
-                          <TagIcon size={12} weight="bold" />
-                          <span>{EXPENSE_CATEGORY_LABELS[exp.category] || exp.category}</span>
-                        </span>
-                      </td>
-                      <td className="px-5 py-3">
-                        <div className="text-xs font-medium text-[var(--color-text)]">
-                          {exp.notes || "-"}
-                        </div>
-                        <div className="text-[10px] text-[var(--color-text-3)]">
-                          Dicatat oleh: {exp.createdBy}
-                        </div>
-                      </td>
-                      <td className="px-5 py-3 text-xs font-medium text-[var(--color-text-2)]">
-                        <span className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface-2)] px-2 py-0.5 text-[11px] font-bold">
-                          {getSourceLabel(exp.source)}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3">
-                        <span className="price text-sm font-black text-rose-600">
-                          -{formatIDR(exp.amount)}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3">
-                        <Button
-                          type="button"
-                          variant="danger-subtle"
-                          size="xs"
-                          leftIcon={<TrashIcon size={14} weight="bold" />}
-                          onClick={() => setDeleteTarget(exp)}
-                          title="Hapus pengeluaran"
-                        >
-                          Hapus
-                        </Button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          <div className="desktop-only w-full">
+            <DataTable table={table} />
           </div>
 
           {/* Mobile Card List View */}
           <div className="mobile-only flex flex-col divide-y divide-[var(--color-border)]">
-            {expenses.map((exp) => {
+            {rows.map((row: any) => {
+              const exp = row.original as Expense;
               const dateObj = new Date(exp.date);
               const formattedDate = dateObj.toLocaleDateString("id-ID", {
                 day: "numeric",

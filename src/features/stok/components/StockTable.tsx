@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { WarningIcon, CheckCircleIcon, PlusIcon, PackageIcon } from "@phosphor-icons/react";
 import { formatIDR } from "#/lib/utils";
 import { Pagination } from "#/components/ui/Pagination";
 import { SearchFilter } from "#/components/ui/SearchFilter";
-import { Button } from "#/components/ui";
+import { Button, DataTable } from "#/components/ui";
+import { useAppTable, createAppColumnHelper } from "#/lib/table";
 import type { Product } from "#/features/produk";
 
 interface StockTableProps {
@@ -12,6 +13,8 @@ interface StockTableProps {
   threshold: number;
   onOpenRestock: (product: Product) => void;
 }
+
+const columnHelper = createAppColumnHelper<Product>();
 
 export function StockTable({
   products,
@@ -23,18 +26,112 @@ export function StockTable({
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  const filtered = products.filter(
-    (p) =>
-      p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.category.toLowerCase().includes(search.toLowerCase()) ||
-      (p.barcode && p.barcode.includes(search)),
+  const filtered = useMemo(() => {
+    return products.filter(
+      (p) =>
+        p.name.toLowerCase().includes(search.toLowerCase()) ||
+        p.category.toLowerCase().includes(search.toLowerCase()) ||
+        (p.barcode && p.barcode.includes(search)),
+    );
+  }, [products, search]);
+
+  const columns = useMemo(
+    () =>
+      columnHelper.columns([
+        columnHelper.accessor("name", {
+          header: "Nama Produk",
+          cell: (info) => (
+            <div className="text-sm font-bold text-[var(--color-text)]">
+              {info.getValue()}
+            </div>
+          ),
+        }),
+        columnHelper.accessor("category", {
+          header: "Kategori",
+          cell: (info) => (
+            <span className="rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] px-3 py-1 text-xs font-semibold text-[var(--color-text-2)]">
+              {info.getValue()}
+            </span>
+          ),
+        }),
+        columnHelper.accessor("stock", {
+          header: "Stok Saat Ini",
+          cell: (info) => {
+            const stock = info.getValue();
+            const isLow = stock <= threshold;
+            return (
+              <span
+                className={`price text-sm font-black ${
+                  isLow ? "text-[var(--color-danger-text)]" : "text-[var(--color-text)]"
+                }`}
+              >
+                {stock} pcs
+              </span>
+            );
+          },
+        }),
+        columnHelper.accessor((row) => (row.stock <= threshold ? "low" : "safe"), {
+          id: "status",
+          header: "Status Persediaan",
+          cell: (info) => {
+            const isLow = info.row.original.stock <= threshold;
+            return (
+              <span
+                className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-extrabold ${
+                  isLow
+                    ? "border border-[var(--color-danger)]/30 bg-[var(--color-danger-light)] text-[var(--color-danger-text)]"
+                    : "border border-[var(--color-brand)] bg-[var(--color-brand-light)] text-[var(--color-brand)]"
+                }`}
+              >
+                {isLow ? (
+                  <WarningIcon size={12} weight="fill" />
+                ) : (
+                  <CheckCircleIcon size={12} weight="fill" />
+                )}
+                <span>{isLow ? "Stok Rendah" : "Aman"}</span>
+              </span>
+            );
+          },
+        }),
+        columnHelper.display({
+          id: "actions",
+          header: "Aksi Restock",
+          enableSorting: false,
+          cell: (info) => (
+            <div className="text-right">
+              <Button
+                type="button"
+                variant="primary"
+                size="xs"
+                leftIcon={<PlusIcon size={13} weight="bold" />}
+                onClick={() => onOpenRestock(info.row.original)}
+              >
+                Tambah Stok
+              </Button>
+            </div>
+          ),
+        }),
+      ]),
+    [onOpenRestock, threshold],
   );
 
   const totalCount = filtered.length;
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
   const currentPage = Math.min(Math.max(1, page), totalPages);
-  const startIndex = (currentPage - 1) * pageSize;
-  const pagedProducts = filtered.slice(startIndex, startIndex + pageSize);
+
+  const table = useAppTable({
+    data: filtered,
+    columns,
+    state: {
+      pagination: {
+        pageIndex: currentPage - 1,
+        pageSize,
+      },
+    },
+    autoResetPageIndex: false,
+  });
+
+  const pagedRows = table.getRowModel().rows;
 
   return (
     <div className="flex flex-col gap-6">
@@ -114,94 +211,14 @@ export function StockTable({
           ) : (
             <>
               {/* Desktop Table */}
-              <div className="desktop-only w-full overflow-x-auto">
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr className="border-b border-[var(--color-border)] bg-[var(--color-surface-2)]">
-                      {[
-                        "Nama Produk",
-                        "Kategori",
-                        "Stok Saat Ini",
-                        "Status Persediaan",
-                        "Aksi Restock",
-                      ].map((h, idx) => (
-                        <th
-                          key={h}
-                          className={`px-5 py-3.5 text-[11px] font-extrabold tracking-wider text-[var(--color-text-3)] uppercase ${
-                            idx === 4 ? "text-right" : "text-left"
-                          }`}
-                        >
-                          {h}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {pagedProducts.map((p) => {
-                      const isLow = p.stock <= threshold;
-                      return (
-                        <tr
-                          key={p._id}
-                          className="border-b border-[var(--color-border)] transition-colors hover:bg-[var(--color-surface-2)]"
-                        >
-                          <td className="px-5 py-3.5">
-                            <div className="text-sm font-bold text-[var(--color-text)]">
-                              {p.name}
-                            </div>
-                          </td>
-                          <td className="px-5 py-3.5">
-                            <span className="rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] px-3 py-1 text-xs font-semibold text-[var(--color-text-2)]">
-                              {p.category}
-                            </span>
-                          </td>
-                          <td className="px-5 py-3.5">
-                            <span
-                              className={`price text-sm font-black ${
-                                isLow
-                                  ? "text-[var(--color-danger-text)]"
-                                  : "text-[var(--color-text)]"
-                              }`}
-                            >
-                              {p.stock} pcs
-                            </span>
-                          </td>
-                          <td className="px-5 py-3.5">
-                            <span
-                              className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-extrabold ${
-                                isLow
-                                  ? "border border-[var(--color-danger)]/30 bg-[var(--color-danger-light)] text-[var(--color-danger-text)]"
-                                  : "border border-[var(--color-brand)] bg-[var(--color-brand-light)] text-[var(--color-brand)]"
-                              }`}
-                            >
-                              {isLow ? (
-                                <WarningIcon size={12} weight="fill" />
-                              ) : (
-                                <CheckCircleIcon size={12} weight="fill" />
-                              )}
-                              <span>{isLow ? "Stok Rendah" : "Aman"}</span>
-                            </span>
-                          </td>
-                          <td className="px-5 py-3.5 text-right">
-                            <Button
-                              type="button"
-                              variant="primary"
-                              size="xs"
-                              leftIcon={<PlusIcon size={13} weight="bold" />}
-                              onClick={() => onOpenRestock(p)}
-                            >
-                              Tambah Stok
-                            </Button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+              <div className="desktop-only w-full">
+                <DataTable table={table} />
               </div>
 
               {/* Mobile Card List */}
               <div className="mobile-only flex flex-col divide-y divide-[var(--color-border)]">
-                {pagedProducts.map((p) => {
+                {pagedRows.map((row: any) => {
+                  const p = row.original;
                   const isLow = p.stock <= threshold;
                   return (
                     <div key={p._id} className="flex flex-col gap-3 p-4">

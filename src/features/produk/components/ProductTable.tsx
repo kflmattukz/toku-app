@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   PackageIcon,
   ImageIcon,
@@ -10,7 +10,8 @@ import {
 import { formatIDR, calculateItemDiscount } from "#/lib/utils";
 import { Pagination } from "#/components/ui/Pagination";
 import { ImagePreviewModal } from "#/components/ui/ImagePreviewModal";
-import { Button } from "#/components/ui";
+import { Button, DataTable } from "#/components/ui";
+import { useAppTable, createAppColumnHelper } from "#/lib/table";
 import type { Product } from "../types";
 
 interface ProductTableProps {
@@ -24,6 +25,8 @@ interface ProductTableProps {
   onDelete: (product: Product) => void;
 }
 
+const columnHelper = createAppColumnHelper<Product>();
+
 export function ProductTable({
   products,
   search,
@@ -36,18 +39,213 @@ export function ProductTable({
 }: ProductTableProps) {
   const [previewProduct, setPreviewProduct] = useState<Product | null>(null);
 
-  const filtered = products.filter(
-    (p) =>
-      p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.category.toLowerCase().includes(search.toLowerCase()) ||
-      (p.barcode && p.barcode.includes(search)),
+  const filtered = useMemo(() => {
+    return products.filter(
+      (p) =>
+        p.name.toLowerCase().includes(search.toLowerCase()) ||
+        p.category.toLowerCase().includes(search.toLowerCase()) ||
+        (p.barcode && p.barcode.includes(search)),
+    );
+  }, [products, search]);
+
+  const columns = useMemo(
+    () =>
+      columnHelper.columns([
+        columnHelper.display({
+          id: "image",
+          header: "Foto",
+          enableSorting: false,
+          cell: (info) => {
+            const p = info.row.original;
+            const img = p.imageUrl || p.imageId;
+            if (img) {
+              return (
+                <button
+                  type="button"
+                  onClick={() => setPreviewProduct(p)}
+                  className="group relative flex h-11 w-11 cursor-pointer overflow-hidden rounded-md border border-border transition-all hover:scale-105 hover:ring-2 hover:ring-brand/40"
+                  title="Lihat foto produk"
+                >
+                  <img src={img} alt={p.name} className="h-full w-full object-cover" />
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 transition-opacity group-hover:opacity-100">
+                    <MagnifyingGlassPlusIcon size={16} className="text-white" weight="bold" />
+                  </div>
+                </button>
+              );
+            }
+            return (
+              <div className="flex h-11 w-11 items-center justify-center rounded-md border border-border bg-surface-2 text-text-3">
+                <ImageIcon size={20} weight="duotone" />
+              </div>
+            );
+          },
+        }),
+        columnHelper.accessor("name", {
+          header: "Nama Produk",
+          cell: (info) => {
+            const p = info.row.original;
+            return (
+              <div>
+                <div className="text-sm font-extrabold text-text">{p.name}</div>
+                {p.barcode && (
+                  <div className="mt-0.5 font-mono text-[11px] text-text-3">SKU: {p.barcode}</div>
+                )}
+              </div>
+            );
+          },
+        }),
+        columnHelper.accessor("category", {
+          header: "Kategori",
+          cell: (info) => (
+            <span className="rounded-full border border-border bg-surface-2 px-3 py-1 text-xs font-bold text-text-2">
+              {info.getValue()}
+            </span>
+          ),
+        }),
+        columnHelper.accessor((row) => row.costPrice ?? 0, {
+          id: "costPrice",
+          header: "Harga Modal",
+          cell: (info) => {
+            const cost = info.row.original.costPrice;
+            const hasCost = cost !== undefined && cost > 0;
+            return hasCost ? (
+              <div className="text-xs font-bold text-[var(--color-text-2)]">
+                <span className="price">{formatIDR(cost || 0)}</span>
+              </div>
+            ) : (
+              <span className="text-[11px] font-medium text-[var(--color-text-3)] italic">
+                Belum diset
+              </span>
+            );
+          },
+        }),
+        columnHelper.accessor("price", {
+          header: "Harga Jual",
+          cell: (info) => {
+            const p = info.row.original;
+            const disc = calculateItemDiscount(p.price, p.discountType, p.discountValue);
+            const effectivePrice = disc.unitPrice;
+            const hasCost = p.costPrice !== undefined && p.costPrice > 0;
+            const profitPerUnit = hasCost ? effectivePrice - (p.costPrice || 0) : null;
+            const marginPct =
+              hasCost && effectivePrice > 0
+                ? (((profitPerUnit || 0) / effectivePrice) * 100).toFixed(0)
+                : null;
+
+            return (
+              <div>
+                {disc.hasDiscount ? (
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="price text-sm font-extrabold text-[var(--color-brand)]">
+                        {formatIDR(disc.unitPrice)}
+                      </span>
+                      <span className="rounded-full border border-[var(--color-brand)] bg-[var(--color-brand-light)] px-1.5 py-0.5 text-[10px] font-extrabold text-[var(--color-brand)]">
+                        {p.discountType === "percentage"
+                          ? `${p.discountValue}% OFF`
+                          : `-${formatIDR(p.discountValue || 0)}`}
+                      </span>
+                    </div>
+                    <div className="price mt-0.5 text-[11px] text-[var(--color-text-3)] line-through">
+                      {formatIDR(p.price)}
+                    </div>
+                  </div>
+                ) : (
+                  <span className="price text-sm font-extrabold text-[var(--color-text)]">
+                    {formatIDR(p.price)}
+                  </span>
+                )}
+
+                {marginPct !== null && (
+                  <div className="mt-1">
+                    <span
+                      className={`py-0.2 inline-block rounded-full px-1.5 text-[10px] font-extrabold ${
+                        (profitPerUnit || 0) >= 0
+                          ? "bg-emerald-500/10 text-emerald-600"
+                          : "bg-rose-500/10 text-rose-600"
+                      }`}
+                    >
+                      {(profitPerUnit || 0) >= 0 ? `+${marginPct}% margin` : `${marginPct}% rugi`}
+                    </span>
+                  </div>
+                )}
+              </div>
+            );
+          },
+        }),
+        columnHelper.accessor("stock", {
+          header: "Stok Barang",
+          cell: (info) => {
+            const stock = info.getValue();
+            return (
+              <span
+                className={`inline-flex items-center gap-1.5 text-sm font-extrabold ${
+                  stock <= 5 ? "text-[var(--color-danger-text)]" : "text-[var(--color-text)]"
+                }`}
+              >
+                {stock <= 5 && (
+                  <WarningIcon
+                    size={15}
+                    weight="fill"
+                    className="text-[var(--color-danger-text)]"
+                  />
+                )}
+                {stock} pcs
+              </span>
+            );
+          },
+        }),
+        columnHelper.display({
+          id: "actions",
+          header: "Aksi",
+          enableSorting: false,
+          cell: (info) => {
+            const p = info.row.original;
+            return (
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="xs"
+                  leftIcon={<PencilSimpleIcon size={13} weight="bold" />}
+                  onClick={() => onEdit(p)}
+                >
+                  Edit
+                </Button>
+                <Button
+                  type="button"
+                  variant="danger-subtle"
+                  size="xs"
+                  leftIcon={<TrashIcon size={13} weight="bold" />}
+                  onClick={() => onDelete(p)}
+                >
+                  Hapus
+                </Button>
+              </div>
+            );
+          },
+        }),
+      ]),
+    [onEdit, onDelete],
   );
 
   const totalCount = filtered.length;
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
   const currentPage = Math.min(page, totalPages);
-  const startIndex = (currentPage - 1) * pageSize;
-  const pagedProducts = filtered.slice(startIndex, startIndex + pageSize);
+
+  const table = useAppTable({
+    data: filtered,
+    columns,
+    state: {
+      pagination: {
+        pageIndex: currentPage - 1,
+        pageSize,
+      },
+    },
+    autoResetPageIndex: false,
+  });
+
+  const pagedRows = table.getRowModel().rows;
 
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-surface shadow-xs">
@@ -63,188 +261,14 @@ export function ProductTable({
       ) : (
         <>
           {/* Desktop Table View */}
-          <div className="desktop-only w-full overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="border-b border-border bg-surface-2">
-                  {[
-                    "Foto",
-                    "Nama Produk",
-                    "Kategori",
-                    "Harga Modal",
-                    "Harga Jual",
-                    "Stok Barang",
-                    "Aksi",
-                  ].map((h) => (
-                    <th
-                      key={h}
-                      className="px-5 py-4 text-left text-[11px] font-extrabold tracking-wider text-text-3 uppercase"
-                    >
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {pagedProducts.map((p) => {
-                  const disc = calculateItemDiscount(p.price, p.discountType, p.discountValue);
-                  const effectivePrice = disc.unitPrice;
-                  const hasCost = p.costPrice !== undefined && p.costPrice > 0;
-                  const profitPerUnit = hasCost ? effectivePrice - (p.costPrice || 0) : null;
-                  const marginPct =
-                    hasCost && effectivePrice > 0
-                      ? (((profitPerUnit || 0) / effectivePrice) * 100).toFixed(0)
-                      : null;
-
-                  return (
-                    <tr
-                      key={p._id}
-                      className="border-b border-border transition-colors hover:bg-surface-2"
-                    >
-                      <td className="px-5 py-3">
-                        {p.imageUrl || p.imageId ? (
-                          <button
-                            type="button"
-                            onClick={() => setPreviewProduct(p)}
-                            className="group relative flex h-11 w-11 cursor-pointer overflow-hidden rounded-md border border-border transition-all hover:scale-105 hover:ring-2 hover:ring-brand/40"
-                            title="Lihat foto produk"
-                          >
-                            <img
-                              src={p.imageUrl || p.imageId}
-                              alt={p.name}
-                              className="h-full w-full object-cover"
-                            />
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 transition-opacity group-hover:opacity-100">
-                              <MagnifyingGlassPlusIcon
-                                size={16}
-                                className="text-white"
-                                weight="bold"
-                              />
-                            </div>
-                          </button>
-                        ) : (
-                          <div className="flex h-11 w-11 items-center justify-center rounded-md border border-border bg-surface-2 text-text-3">
-                            <ImageIcon size={20} weight="duotone" />
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-5 py-3">
-                        <div className="text-sm font-extrabold text-text">{p.name}</div>
-                        {p.barcode && (
-                          <div className="mt-0.5 font-mono text-[11px] text-text-3">
-                            SKU: {p.barcode}
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-5 py-3">
-                        <span className="rounded-full border border-border bg-surface-2 px-3 py-1 text-xs font-bold text-text-2">
-                          {p.category}
-                        </span>
-                      </td>
-                      {/* Harga Modal (HPP) */}
-                      <td className="px-5 py-3">
-                        {hasCost ? (
-                          <div className="text-xs font-bold text-[var(--color-text-2)]">
-                            <span className="price">{formatIDR(p.costPrice || 0)}</span>
-                          </div>
-                        ) : (
-                          <span className="text-[11px] font-medium text-[var(--color-text-3)] italic">
-                            Belum diset
-                          </span>
-                        )}
-                      </td>
-                      {/* Harga Jual & Margin */}
-                      <td className="px-5 py-3">
-                        <div>
-                          {disc.hasDiscount ? (
-                            <div>
-                              <div className="flex items-center gap-1.5">
-                                <span className="price text-sm font-extrabold text-[var(--color-brand)]">
-                                  {formatIDR(disc.unitPrice)}
-                                </span>
-                                <span className="rounded-full border border-[var(--color-brand)] bg-[var(--color-brand-light)] px-1.5 py-0.5 text-[10px] font-extrabold text-[var(--color-brand)]">
-                                  {p.discountType === "percentage"
-                                    ? `${p.discountValue}% OFF`
-                                    : `-${formatIDR(p.discountValue || 0)}`}
-                                </span>
-                              </div>
-                              <div className="price mt-0.5 text-[11px] text-[var(--color-text-3)] line-through">
-                                {formatIDR(p.price)}
-                              </div>
-                            </div>
-                          ) : (
-                            <span className="price text-sm font-extrabold text-[var(--color-text)]">
-                              {formatIDR(p.price)}
-                            </span>
-                          )}
-
-                          {marginPct !== null && (
-                            <div className="mt-1">
-                              <span
-                                className={`py-0.2 inline-block rounded-full px-1.5 text-[10px] font-extrabold ${
-                                  (profitPerUnit || 0) >= 0
-                                    ? "bg-emerald-500/10 text-emerald-600"
-                                    : "bg-rose-500/10 text-rose-600"
-                                }`}
-                              >
-                                {(profitPerUnit || 0) >= 0
-                                  ? `+${marginPct}% margin`
-                                  : `${marginPct}% rugi`}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-5 py-3">
-                        <span
-                          className={`inline-flex items-center gap-1.5 text-sm font-extrabold ${
-                            p.stock <= 5
-                              ? "text-[var(--color-danger-text)]"
-                              : "text-[var(--color-text)]"
-                          }`}
-                        >
-                          {p.stock <= 5 && (
-                            <WarningIcon
-                              size={15}
-                              weight="fill"
-                              className="text-[var(--color-danger-text)]"
-                            />
-                          )}
-                          {p.stock} pcs
-                        </span>
-                      </td>
-                      <td className="px-5 py-3">
-                        <div className="flex gap-2">
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            size="xs"
-                            leftIcon={<PencilSimpleIcon size={13} weight="bold" />}
-                            onClick={() => onEdit(p)}
-                          >
-                            Edit
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="danger-subtle"
-                            size="xs"
-                            leftIcon={<TrashIcon size={13} weight="bold" />}
-                            onClick={() => onDelete(p)}
-                          >
-                            Hapus
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          <div className="desktop-only w-full">
+            <DataTable table={table} />
           </div>
 
           {/* Mobile Card List View */}
           <div className="mobile-only flex flex-col divide-y divide-border">
-            {pagedProducts.map((p) => {
+            {pagedRows.map((row: any) => {
+              const p = row.original;
               const disc = calculateItemDiscount(p.price, p.discountType, p.discountValue);
               const hasCost = p.costPrice !== undefined && p.costPrice > 0;
               const profitPerUnit = hasCost ? disc.unitPrice - (p.costPrice || 0) : null;
@@ -260,53 +284,79 @@ export function ProductTable({
                       <button
                         type="button"
                         onClick={() => setPreviewProduct(p)}
-                        className="group relative flex h-12 w-12 shrink-0 cursor-pointer overflow-hidden rounded-md border border-border transition-all hover:scale-105"
-                        title="Lihat foto produk"
+                        className="h-12 w-12 shrink-0 cursor-pointer overflow-hidden rounded-md border border-border"
                       >
                         <img
                           src={p.imageUrl || p.imageId}
                           alt={p.name}
                           className="h-full w-full object-cover"
                         />
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 transition-opacity group-hover:opacity-100">
-                          <MagnifyingGlassPlusIcon size={16} className="text-white" weight="bold" />
-                        </div>
                       </button>
                     ) : (
                       <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md border border-border bg-surface-2 text-text-3">
-                        <ImageIcon size={20} weight="duotone" />
+                        <ImageIcon size={22} weight="duotone" />
                       </div>
                     )}
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-sm font-extrabold text-text">{p.name}</div>
-                      <div className="mt-0.5 text-xs text-text-3">
-                        {p.category} ·{" "}
-                        <span className={p.stock <= 5 ? "font-bold text-danger-text" : ""}>
-                          Stok: {p.stock} pcs
+                      <div className="mt-0.5 flex items-center gap-2">
+                        <span className="rounded-full border border-border bg-surface-2 px-2 py-0.5 text-[10px] font-bold text-text-2">
+                          {p.category}
                         </span>
-                      </div>
-                      {hasCost && (
-                        <div className="mt-0.5 text-[11px] text-text-3">
-                          Modal: {formatIDR(p.costPrice || 0)}{" "}
-                          {marginPct !== null && (
-                            <span className="font-bold text-emerald-600">(+{marginPct}%)</span>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                    <div className="shrink-0 text-right">
-                      <div className="price text-sm font-black text-brand">
-                        {formatIDR(disc.unitPrice)}
+                        {p.barcode && (
+                          <span className="font-mono text-[10px] text-text-3">
+                            SKU: {p.barcode}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex justify-end gap-2 pt-1">
+                  <div className="grid grid-cols-3 gap-2 rounded-lg bg-surface-2 p-2.5 text-center">
+                    <div>
+                      <div className="text-[10px] font-bold text-text-3 uppercase">Modal</div>
+                      <div className="price mt-0.5 text-xs font-extrabold text-text-2">
+                        {hasCost ? formatIDR(p.costPrice || 0) : "-"}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] font-bold text-text-3 uppercase">Jual</div>
+                      <div className="price mt-0.5 text-xs font-extrabold text-brand">
+                        {formatIDR(disc.unitPrice)}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] font-bold text-text-3 uppercase">Stok</div>
+                      <div
+                        className={`price mt-0.5 text-xs font-extrabold ${
+                          p.stock <= 5 ? "text-rose-500" : "text-text"
+                        }`}
+                      >
+                        {p.stock} pcs
+                      </div>
+                    </div>
+                  </div>
+
+                  {marginPct !== null && (
+                    <div className="flex justify-between text-xs">
+                      <span className="text-text-3">Margin Keuntungan:</span>
+                      <span
+                        className={`font-bold ${
+                          (profitPerUnit || 0) >= 0 ? "text-emerald-600" : "text-rose-600"
+                        }`}
+                      >
+                        {(profitPerUnit || 0) >= 0 ? `+${marginPct}%` : `${marginPct}%`}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="flex gap-2 pt-1">
                     <Button
                       type="button"
                       variant="secondary"
-                      size="xs"
-                      leftIcon={<PencilSimpleIcon size={13} weight="bold" />}
+                      size="sm"
+                      className="flex-1"
+                      leftIcon={<PencilSimpleIcon size={14} weight="bold" />}
                       onClick={() => onEdit(p)}
                     >
                       Edit
@@ -314,8 +364,9 @@ export function ProductTable({
                     <Button
                       type="button"
                       variant="danger-subtle"
-                      size="xs"
-                      leftIcon={<TrashIcon size={13} weight="bold" />}
+                      size="sm"
+                      className="flex-1"
+                      leftIcon={<TrashIcon size={14} weight="bold" />}
                       onClick={() => onDelete(p)}
                     >
                       Hapus

@@ -24,3 +24,4 @@ export {
   type ButtonSize,
   type ButtonShape,
 } from "./Button";
+export { DataTable } from "./DataTable";
