@@ -564,6 +564,9 @@ body {
   max-width: 380px;
   margin: 0 auto;
   box-sizing: border-box;
+  height: auto !important;
+  min-height: fit-content !important;
+  display: block;
 }
 
 .receipt-paper strong,
@@ -777,6 +780,25 @@ body {
 ::-webkit-scrollbar-thumb {
   background: var(--color-border);
   border-radius: 99px;
+}
+
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 99px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-3);
 }
 
 button,

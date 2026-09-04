@@ -29,13 +29,15 @@ function ReceiptBarcode({ value, is58mm }: { value: string; is58mm: boolean }) {
         alignItems: "center",
         justifyContent: "center",
         marginBottom: 8,
+        width: "100%",
+        overflow: "hidden",
       }}
     >
       <svg
         width={totalWidth}
         height={height}
         viewBox={`0 0 ${totalWidth} ${height}`}
-        style={{ display: "block" }}
+        style={{ display: "block", maxWidth: "100%", height: "auto" }}
       >
         {bars.map((bar, idx) => {
           const x = curX;
@@ -99,9 +101,11 @@ export function KasirReceipt({
           "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
         fontSize: is58mm ? "11px" : "12.5px",
         lineHeight: 1.35,
-        padding: is58mm ? "16px 12px" : "20px 16px",
+        padding: is58mm ? "18px 14px 24px" : "24px 18px 28px",
         boxSizing: "border-box",
         borderRadius: "14px",
+        height: "auto",
+        minHeight: "fit-content",
       }}
     >
       {/* Store Header */}
@@ -401,6 +405,8 @@ export function KasirReceipt({
           justifyContent: "space-between",
           alignItems: "center",
           marginBottom: 16,
+          boxSizing: "border-box",
+          width: "100%",
         }}
       >
         <span

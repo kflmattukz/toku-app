@@ -6,10 +6,12 @@ export function Modal({
   children,
   onClose,
   maxWidth = 520,
+  showCloseButton = true,
 }: {
   children: ReactNode;
   onClose: () => void;
   maxWidth?: number | string;
+  showCloseButton?: boolean;
 }) {
   const [mounted, setMounted] = useState(false);
 
@@ -45,7 +47,7 @@ export function Modal({
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
-        className="animate-modal"
+        className="animate-modal custom-scrollbar"
         style={{
           background: "var(--color-surface)",
           border: "1.5px solid var(--color-border)",
@@ -60,30 +62,32 @@ export function Modal({
           boxSizing: "border-box",
         }}
       >
-        <button
-          onClick={onClose}
-          className="press-tactile"
-          aria-label="Tutup"
-          style={{
-            position: "absolute",
-            top: 25,
-            right: 25,
-            width: 32,
-            height: 32,
-            background: "var(--color-surface-2)",
-            border: "1px solid var(--color-border)",
-            borderRadius: 99,
-            cursor: "pointer",
-            color: "var(--color-text-2)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: 0,
-            zIndex: 10,
-          }}
-        >
-          <XIcon size={16} weight="bold" />
-        </button>
+        {showCloseButton && (
+          <button
+            onClick={onClose}
+            className="press-tactile"
+            aria-label="Tutup"
+            style={{
+              position: "absolute",
+              top: 25,
+              right: 25,
+              width: 32,
+              height: 32,
+              background: "var(--color-surface-2)",
+              border: "1px solid var(--color-border)",
+              borderRadius: 99,
+              cursor: "pointer",
+              color: "var(--color-text-2)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 0,
+              zIndex: 10,
+            }}
+          >
+            <XIcon size={16} weight="bold" />
+          </button>
+        )}
         {children}
       </div>
     </div>,

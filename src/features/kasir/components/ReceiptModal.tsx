@@ -11,6 +11,7 @@ import {
   DownloadSimpleIcon,
   WhatsappLogoIcon,
   CheckCircleIcon,
+  XIcon,
 } from "@phosphor-icons/react";
 import { Button } from "#/components/ui";
 
@@ -68,48 +69,60 @@ export function ReceiptModal({
   };
 
   return (
-    <Modal onClose={onClose} maxWidth={460}>
-      {/* Top Header & Paper Width Toggle */}
-      <div className="no-print mb-4 flex items-center justify-between gap-3 border-b border-[var(--color-border)] pb-3">
-        <div>
-          <h2 className="text-sm font-extrabold text-[var(--color-text)]">
+    <Modal onClose={onClose} maxWidth={460} showCloseButton={false}>
+      {/* Top Header, Paper Width Toggle & Close Button */}
+      <div className="no-print mb-3.5 flex items-center justify-between gap-3 border-b border-[var(--color-border)] pb-3">
+        <div className="min-w-0 flex-1">
+          <h2 className="truncate text-sm font-extrabold text-[var(--color-text)]">
             Struk Pembayaran
           </h2>
-          <p className="text-[11px] text-[var(--color-text-3)]">
+          <p className="truncate text-[11px] text-[var(--color-text-3)]">
             Cetak, simpan gambar, atau kirim ke pelanggan
           </p>
         </div>
 
-        {/* 58mm / 80mm Switcher */}
-        <div className="flex items-center gap-1 rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] p-1">
+        <div className="flex shrink-0 items-center gap-2">
+          {/* 58mm / 80mm Switcher */}
+          <div className="flex items-center gap-1 rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] p-1">
+            <button
+              type="button"
+              onClick={() => setPaperWidth("58mm")}
+              className={`press-tactile cursor-pointer rounded-full px-2.5 py-1 text-[11px] font-bold transition-all ${
+                paperWidth === "58mm"
+                  ? "bg-[var(--color-surface)] text-[var(--color-brand)] shadow-xs"
+                  : "text-[var(--color-text-3)] hover:text-[var(--color-text)]"
+              }`}
+            >
+              58mm
+            </button>
+            <button
+              type="button"
+              onClick={() => setPaperWidth("80mm")}
+              className={`press-tactile cursor-pointer rounded-full px-2.5 py-1 text-[11px] font-bold transition-all ${
+                paperWidth === "80mm"
+                  ? "bg-[var(--color-surface)] text-[var(--color-brand)] shadow-xs"
+                  : "text-[var(--color-text-3)] hover:text-[var(--color-text)]"
+              }`}
+            >
+              80mm
+            </button>
+          </div>
+
+          {/* Integrated Close Button (Never overlaps switcher) */}
           <button
             type="button"
-            onClick={() => setPaperWidth("58mm")}
-            className={`press-tactile cursor-pointer rounded-full px-2.5 py-1 text-[11px] font-bold transition-all ${
-              paperWidth === "58mm"
-                ? "bg-[var(--color-surface)] text-[var(--color-brand)] shadow-xs"
-                : "text-[var(--color-text-3)] hover:text-[var(--color-text)]"
-            }`}
+            onClick={onClose}
+            className="press-tactile flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-text-2)] hover:bg-[var(--color-surface-3)] hover:text-[var(--color-text)]"
+            aria-label="Tutup"
           >
-            58mm
-          </button>
-          <button
-            type="button"
-            onClick={() => setPaperWidth("80mm")}
-            className={`press-tactile cursor-pointer rounded-full px-2.5 py-1 text-[11px] font-bold transition-all ${
-              paperWidth === "80mm"
-                ? "bg-[var(--color-surface)] text-[var(--color-brand)] shadow-xs"
-                : "text-[var(--color-text-3)] hover:text-[var(--color-text)]"
-            }`}
-          >
-            80mm
+            <XIcon size={16} weight="bold" />
           </button>
         </div>
       </div>
 
-      {/* Rendered Receipt Card (Exact Preview) */}
-      <div className="flex justify-center overflow-x-auto rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-2)] p-3.5 shadow-inner">
-        <div id="toku-receipt-content" className="receipt-print w-full flex justify-center">
+      {/* Rendered Receipt Card with contained scroll */}
+      <div className="custom-scrollbar max-h-[52vh] sm:max-h-[56vh] overflow-y-auto overflow-x-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-2)] p-3 sm:p-4 shadow-inner">
+        <div id="toku-receipt-content" className="receipt-print flex w-full justify-center py-1">
           <KasirReceipt
             tx={tx}
             storeName={storeName}
