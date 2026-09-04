@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as betterAuth from "../betterAuth.js";
 import type * as cashiers from "../cashiers.js";
 import type * as expenses from "../expenses.js";
 import type * as products from "../products.js";
@@ -24,6 +25,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  betterAuth: typeof betterAuth;
   cashiers: typeof cashiers;
   expenses: typeof expenses;
   products: typeof products;

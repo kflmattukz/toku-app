@@ -1,18 +1,11 @@
 import { betterAuth } from "better-auth";
-import { memoryAdapter } from "better-auth/adapters/memory";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
+import { convexAdapter } from "./convex-auth-adapter";
 
-// ponytail: memory adapter — fine for dev/single-instance.
-// Swap to a persistent adapter (Drizzle+SQLite or Convex custom) when multi-instance deployment matters.
-const db: Parameters<typeof memoryAdapter>[0] = {
-  user: [],
-  session: [],
-  account: [],
-  verification: [],
-};
+const CONVEX_URL = process.env.VITE_CONVEX_URL!;
 
 export const auth = betterAuth({
-  database: memoryAdapter(db),
+  database: convexAdapter(CONVEX_URL),
   session: {
     expiresIn: 60 * 60 * 24 * 30, // 30 days (1 month)
     updateAge: 60 * 60 * 24, // 1 day - auto-refresh session if active

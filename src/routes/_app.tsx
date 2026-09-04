@@ -1,6 +1,7 @@
 import { createFileRoute, Outlet, Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { authClient } from "#/lib/auth-client";
 import { useEffect, useState, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { AppStoreContext, type ActiveCashier } from "#/lib/store-context";
@@ -142,6 +143,17 @@ function AppShell() {
     setSidebarOpen(false);
   }, [currentPath]);
 
+  // Lock body scroll when mobile sidebar drawer is open
+  useEffect(() => {
+    if (sidebarOpen && typeof document !== "undefined") {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = prev;
+      };
+    }
+  }, [sidebarOpen]);
+
   useEffect(() => {
     if (!isPending && !session) navigate({ to: "/" });
   }, [session, isPending, navigate]);
@@ -216,44 +228,56 @@ function AppShell() {
         />
       </aside>
 
-      {/* Mobile Drawer Backdrop & Drawer */}
-      {sidebarOpen && (
-        <div
-          className="mobile-only fixed inset-0 z-50 flex bg-black/50 backdrop-blur-xs"
-          onClick={() => setSidebarOpen(false)}
-        >
+      {/* Mobile Drawer Backdrop & Drawer (Portaled with z-[70] so it sits above bottom nav and floating docks) */}
+      {sidebarOpen &&
+        typeof document !== "undefined" &&
+        createPortal(
           <div
-            className="flex h-full w-4/5 max-w-[300px] flex-col bg-[var(--color-surface)] shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-[70] flex bg-black/60 backdrop-blur-xs transition-opacity"
+            onClick={() => setSidebarOpen(false)}
           >
-            <div className="flex items-center justify-between border-b border-[var(--color-border)] p-3">
-              <span className="text-xs font-black tracking-wider text-[var(--color-text)]">
-                MENU APLIKASI
-              </span>
-              <button
-                type="button"
-                onClick={() => setSidebarOpen(false)}
-                className="cursor-pointer rounded-full p-1 text-[var(--color-text-2)] hover:bg-[var(--color-surface-2)]"
-              >
-                <XIcon size={18} />
-              </button>
+            <div
+              className="animate-sidebar flex h-full w-4/5 max-w-[300px] flex-col bg-[var(--color-surface)] shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between border-b border-[var(--color-border)] p-3">
+                <span className="text-xs font-black tracking-wider text-[var(--color-text)]">
+                  MENU APLIKASI
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setSidebarOpen(false)}
+                  className="cursor-pointer rounded-full p-1 text-[var(--color-text-2)] hover:bg-[var(--color-surface-2)]"
+                  aria-label="Tutup Menu"
+                >
+                  <XIcon size={18} />
+                </button>
+              </div>
+              <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+                <SidebarNav
+                  currentPath={currentPath}
+                  session={session}
+                  store={store}
+                  userStores={userStores}
+                  onSelectStore={handleSelectStore}
+                  currentCashier={currentCashier}
+                  onOpenCashierModal={() => {
+                    setSidebarOpen(false);
+                    setCashierModalOpen(true);
+                  }}
+                  onOpenShiftModal={() => {
+                    setSidebarOpen(false);
+                    setShiftModalOpen(true);
+                  }}
+                  activeShift={activeShift}
+                  collapsed={false}
+                  onSignOut={handleSignOut}
+                />
+              </div>
             </div>
-            <SidebarNav
-              currentPath={currentPath}
-              session={session}
-              store={store}
-              userStores={userStores}
-              onSelectStore={handleSelectStore}
-              currentCashier={currentCashier}
-              onOpenCashierModal={() => setCashierModalOpen(true)}
-              onOpenShiftModal={() => setShiftModalOpen(true)}
-              activeShift={activeShift}
-              collapsed={false}
-              onSignOut={handleSignOut}
-            />
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body,
+        )}
 
       {/* Main Content Area */}
       <div className="flex min-h-screen min-w-0 flex-1 flex-col">

@@ -2,6 +2,64 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
 export default defineSchema({
+  // ── Better Auth tables ──────────────────────────────────
+  auth_users: defineTable({
+    id: v.string(), // Better Auth generated ID
+    name: v.string(),
+    email: v.string(),
+    emailVerified: v.boolean(),
+    image: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_auth_id", ["id"])
+    .index("by_email", ["email"]),
+
+  auth_sessions: defineTable({
+    id: v.string(),
+    userId: v.string(),
+    token: v.string(),
+    expiresAt: v.number(),
+    ipAddress: v.optional(v.string()),
+    userAgent: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_auth_id", ["id"])
+    .index("by_token", ["token"])
+    .index("by_userId", ["userId"]),
+
+  auth_accounts: defineTable({
+    id: v.string(),
+    userId: v.string(),
+    accountId: v.string(),
+    providerId: v.string(),
+    accessToken: v.optional(v.string()),
+    refreshToken: v.optional(v.string()),
+    accessTokenExpiresAt: v.optional(v.number()),
+    refreshTokenExpiresAt: v.optional(v.number()),
+    scope: v.optional(v.string()),
+    idToken: v.optional(v.string()),
+    password: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_auth_id", ["id"])
+    .index("by_userId", ["userId"])
+    .index("by_providerId_accountId", ["providerId", "accountId"]),
+
+  auth_verifications: defineTable({
+    id: v.string(),
+    identifier: v.string(),
+    value: v.string(),
+    expiresAt: v.number(),
+    createdAt: v.optional(v.number()),
+    updatedAt: v.optional(v.number()),
+  })
+    .index("by_auth_id", ["id"])
+    .index("by_identifier", ["identifier"]),
+
+  // ── App tables ──────────────────────────────────────────
   stores: defineTable({
     userId: v.string(), // Better Auth user ID
     userEmail: v.optional(v.string()), // Permanent Google user email

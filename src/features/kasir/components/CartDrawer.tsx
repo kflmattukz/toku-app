@@ -238,7 +238,7 @@ export function CartDrawer({
         !showPayment &&
         typeof document !== "undefined" &&
         createPortal(
-          <div className="mobile-only animate-float-pill fixed right-4 bottom-[calc(78px+env(safe-area-inset-bottom,0px))] left-4 z-50">
+          <div className="mobile-only animate-float-pill fixed right-4 bottom-[calc(78px+env(safe-area-inset-bottom,0px))] left-4 z-40">
             <button
               type="button"
               onClick={() => setShowMobileCart(true)}
