@@ -318,7 +318,7 @@ function AppShell() {
         <nav className="mobile-bottom-nav floating-dock relative flex items-center p-1.5 select-none">
           {/* Active Sliding Indicator Pill */}
           <div
-            className="pointer-events-none absolute top-1.5 bottom-1.5 rounded-2xl bg-brand shadow-primary-500/30 shadow-md"
+            className="pointer-events-none absolute top-1.5 bottom-1.5 rounded-full bg-brand shadow-primary-500/30 shadow-md"
             style={{
               width: "calc((100% - 12px) / 5)",
               left: 6,
@@ -338,7 +338,7 @@ function AppShell() {
                 to={item.to}
                 preload="intent"
                 onClick={() => setIndicatorIndex(index)}
-                className={`press-tactile relative z-10 flex flex-1 min-w-0 flex-col items-center justify-center rounded-2xl py-2 px-1 text-center transition-colors duration-200 ${
+                className={`press-tactile relative z-10 flex flex-1 min-w-0 flex-col items-center justify-center rounded-full py-2 px-1 text-center transition-colors duration-200 ${
                   active ? "text-white" : "text-text-2 hover:text-text"
                 }`}
               >
