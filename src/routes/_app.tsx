@@ -323,8 +323,7 @@ function AppShell() {
               width: "calc((100% - 12px) / 5)",
               left: 6,
               transform: `translateX(${indicatorIndex * 100}%)`,
-              transition:
-                "transform 280ms cubic-bezier(0.23, 1, 0.32, 1), opacity 200ms ease-out",
+              transition: "transform 280ms cubic-bezier(0.23, 1, 0.32, 1), opacity 200ms ease-out",
               opacity: activeBottomIndex >= 0 ? 1 : 0,
             }}
             aria-hidden="true"
