@@ -7,35 +7,53 @@ interface StockOverviewCardsProps {
 
 export function StockOverviewCards({ lowStockCount, healthyStockCount }: StockOverviewCardsProps) {
   return (
-    <div className="mb-6 grid grid-cols-1 gap-3.5 sm:grid-cols-2">
-      {/* Low Stock Alert Card */}
-      <div className="rounded-[18px] border border-[var(--color-danger)]/30 bg-[var(--color-danger-light)] p-5 shadow-xs">
-        <div className="mb-2 flex items-center justify-between">
-          <span className="text-xs font-black tracking-wider text-[var(--color-danger-text)] uppercase">
-            Stok Rendah
-          </span>
-          <WarningIcon size={20} weight="fill" className="text-[var(--color-danger-text)]" />
-        </div>
-        <div className="price text-3xl font-black text-[var(--color-danger-text)]">
-          {lowStockCount}
-        </div>
-        <div className="mt-1 text-xs text-[var(--color-danger-text)]/80">
-          Produk perlu restock segera
+    <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+      {/* 1. Low Stock Alert Card */}
+      <div className="doppelrand-shell">
+        <div className="doppelrand-core">
+          <div className="mb-3.5 flex items-center justify-between">
+            <span className="rounded-full border border-rose-500/30 bg-rose-500/10 px-2.5 py-0.5 text-[10px] font-extrabold tracking-wider text-rose-600 uppercase">
+              PERLU RESTOK
+            </span>
+            <div className="flex h-10 w-10 items-center justify-center rounded-full border border-rose-500/30 bg-rose-500/10 text-rose-600 transition-transform duration-200 hover:scale-105">
+              <WarningIcon size={22} weight="duotone" />
+            </div>
+          </div>
+          <div className="mb-1 text-xs font-bold text-[var(--color-text-2)]">
+            Stok Menipis & Kritis
+          </div>
+          <div className="price mb-1.5 text-2xl font-black tracking-tight text-rose-600 sm:text-3xl">
+            {lowStockCount} Produk
+          </div>
+          <div className="text-[11px] font-medium text-[var(--color-text-3)]">
+            {lowStockCount > 0
+              ? "Segera tambah stok agar transaksi lancar"
+              : "Semua persediaan produk terkendali aman"}
+          </div>
         </div>
       </div>
 
-      {/* Healthy Stock Card */}
-      <div className="rounded-[18px] border border-[var(--color-brand)]/40 bg-[var(--color-brand-light)] p-5 shadow-xs">
-        <div className="mb-2 flex items-center justify-between">
-          <span className="text-xs font-black tracking-wider text-[var(--color-brand)] uppercase">
-            Stok Aman
-          </span>
-          <CheckCircleIcon size={20} weight="fill" className="text-[var(--color-brand)]" />
+      {/* 2. Healthy Stock Card */}
+      <div className="doppelrand-shell">
+        <div className="doppelrand-core">
+          <div className="mb-3.5 flex items-center justify-between">
+            <span className="rounded-full border border-[var(--color-brand)] bg-[var(--color-brand-light)] px-2.5 py-0.5 text-[10px] font-extrabold tracking-wider text-[var(--color-brand)] uppercase">
+              STOK AMAN
+            </span>
+            <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--color-brand)] bg-[var(--color-brand-light)] text-[var(--color-brand)] transition-transform duration-200 hover:scale-105">
+              <CheckCircleIcon size={22} weight="duotone" />
+            </div>
+          </div>
+          <div className="mb-1 text-xs font-bold text-[var(--color-text-2)]">
+            Persediaan Cukup
+          </div>
+          <div className="price mb-1.5 text-2xl font-black tracking-tight text-[var(--color-text)] sm:text-3xl">
+            {healthyStockCount} Produk
+          </div>
+          <div className="text-[11px] font-medium text-[var(--color-text-3)]">
+            Stok aman di atas batas minimum toko
+          </div>
         </div>
-        <div className="price text-3xl font-black text-[var(--color-brand)]">
-          {healthyStockCount}
-        </div>
-        <div className="mt-1 text-xs text-[var(--color-brand)]/80">Produk persediaan cukup</div>
       </div>
     </div>
   );
