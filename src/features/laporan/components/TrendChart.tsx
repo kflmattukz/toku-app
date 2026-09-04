@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   ChartBarIcon,
   TrendUpIcon,
@@ -7,6 +7,10 @@ import {
   ClockIcon,
   ScalesIcon,
 } from "@phosphor-icons/react";
+import { defineChart, barY } from "@tanstack/charts";
+import { scaleBand } from "@tanstack/charts/scales/band";
+import { scaleLinear } from "@tanstack/charts/scales/linear";
+import { Chart } from "@tanstack/charts/react";
 import { formatIDR } from "#/lib/utils";
 import type { Range, TrendBucket } from "../types";
 
@@ -141,11 +145,88 @@ export function TrendChart({
   const values = buckets.map((b) =>
     metric === "revenue" ? b.revenue : metric === "profit" ? b.profit : b.count,
   );
-  const maxVal = Math.max(...values, 1);
   const peakVal = Math.max(...values, 0);
   const peakIdx = values.findIndex((v) => v === peakVal && v > 0);
   const peakBucket = peakIdx !== -1 ? buckets[peakIdx] : null;
   const activeBucket = activeIdx !== null ? buckets[activeIdx] : null;
+
+  // 3. TanStack Charts Data & Definition
+  const chartData = useMemo(() => {
+    return buckets.map((b, idx) => ({
+      ...b,
+      idx,
+      value: metric === "revenue" ? b.revenue : metric === "profit" ? b.profit : b.count,
+    }));
+  }, [buckets, metric]);
+
+  const chartDef = useMemo(() => {
+    const isProfit = metric === "profit";
+    return defineChart({
+      svgAnimation: { duration: 320, easing: "ease-out" },
+      marks: [
+        barY(chartData, {
+          key: (d) => d.id,
+          x: (d: any) => d.shortLabel,
+          y: (d) => d.value,
+          fill: (d: any) => {
+            const isHovered = d.idx === activeIdx;
+            const isPeak = d.idx === peakIdx && d.value > 0;
+            const hasData = d.value > 0;
+
+            if (isProfit) {
+              if (isHovered) return "#10b981";
+              if (isPeak) return "#059669";
+              if (hasData) return "rgba(16, 185, 129, 0.75)";
+              return "var(--color-surface-3)";
+            }
+
+            if (isHovered) return "var(--color-brand)";
+            if (isPeak) return "var(--color-brand)";
+            if (hasData) return "color-mix(in srgb, var(--color-brand) 75%, transparent)";
+            return "var(--color-surface-3)";
+          },
+          radius: 4,
+          maxThickness: range === "minggu" ? 48 : range === "hari" ? 26 : 14,
+        }),
+      ],
+      scales: {
+        x: {
+          scale: scaleBand,
+          axis: {
+            ticks: {
+              format: (val: any) => {
+                const str = String(val ?? "");
+                if (range === "bulan") {
+                  const n = parseInt(str, 10);
+                  return n === 1 || n % 5 === 0 || n === buckets.length ? str : "";
+                }
+                if (range === "hari") {
+                  const hour = parseInt(str, 10);
+                  return hour % 2 === 0 ? str : "";
+                }
+                return str;
+              },
+            },
+          },
+        },
+        y: {
+          scale: scaleLinear,
+          axis: {
+            ticks: {
+              format: (val: any) => {
+                const num = Number(val);
+                if (metric === "count") return Number.isInteger(num) ? `${num} nota` : "";
+                if (num === 0) return "Rp 0";
+                if (num >= 1000000) return `Rp ${(num / 1000000).toFixed(1)}jt`;
+                if (num >= 1000) return `Rp ${(num / 1000).toFixed(0)}rb`;
+                return `Rp ${num}`;
+              },
+            },
+          },
+        },
+      },
+    });
+  }, [chartData, metric, activeIdx, peakIdx, range, buckets.length]);
 
   return (
     <section className="doppelrand-shell mb-6" onMouseLeave={() => setActiveIdx(null)}>
@@ -153,7 +234,7 @@ export function TrendChart({
         {/* Header & Controls */}
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3.5">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--color-brand)] bg-[var(--color-brand-light)] text-[var(--color-brand)]">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--color-brand)] bg-[var(--color-brand-light)] text-[var(--color-brand)] transition-transform duration-200 hover:scale-105">
               <ChartBarIcon size={22} weight="duotone" />
             </div>
             <div>
@@ -162,8 +243,8 @@ export function TrendChart({
                   Grafik Tren & Pertumbuhan
                 </h2>
                 {peakBucket && (
-                  <span className="inline-flex items-center gap-1 rounded-full border border-[var(--color-brand)] bg-[var(--color-brand-light)] px-2 py-0.5 text-[11px] font-extrabold text-[var(--color-brand)]">
-                    <FireIcon size={12} weight="fill" />
+                  <span className="inline-flex items-center gap-1 rounded-full border border-[var(--color-brand)] bg-[var(--color-brand-light)] px-2 py-0.5 text-[11px] font-extrabold text-[var(--color-brand)] shadow-xs transition-transform duration-200 hover:scale-105">
+                    <FireIcon size={12} weight="fill" className="animate-pulse" />
                     <span>
                       Puncak: {peakBucket.shortLabel} (
                       {metric === "revenue"
@@ -290,121 +371,21 @@ export function TrendChart({
           )}
         </div>
 
-        {/* Chart Canvas */}
-        <div className="relative h-52 w-full pt-2.5">
-          {/* Grid Lines */}
-          <div className="pointer-events-none absolute inset-0 flex flex-col justify-between pb-7">
-            {[100, 50, 0].map((pct) => {
-              const val = Math.round((maxVal * pct) / 100);
-              const label =
-                metric !== "count"
-                  ? val === 0
-                    ? "Rp 0"
-                    : val >= 1000000
-                      ? `Rp ${(val / 1000000).toFixed(1)}jt`
-                      : `Rp ${(val / 1000).toFixed(0)}rb`
-                  : `${val} nota`;
-
-              return (
-                <div key={pct} className="flex w-full items-center gap-2">
-                  <span className="price min-w-[54px] text-right text-[10px] font-semibold text-[var(--color-text-3)]">
-                    {label}
-                  </span>
-                  <div
-                    className={`flex-1 ${
-                      pct === 0
-                        ? "border-b border-[var(--color-border)]"
-                        : "border-b border-dashed border-[var(--color-border-subtle)]"
-                    }`}
-                  />
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Bar Columns Container */}
-          <div
-            className={`absolute inset-0 flex items-end pb-7 pl-16 ${
-              range === "bulan" ? "gap-0.5" : range === "minggu" ? "gap-3.5" : "gap-1.5"
-            }`}
-          >
-            {buckets.map((b, idx) => {
-              const val =
-                metric === "revenue" ? b.revenue : metric === "profit" ? b.profit : b.count;
-              const heightPct = maxVal > 0 ? (val / maxVal) * 100 : 0;
-              const isPeak = idx === peakIdx && val > 0;
-              const isHovered = activeIdx === idx;
-              const hasData = val > 0;
-
-              const barColor =
-                metric === "profit"
-                  ? isHovered
-                    ? "bg-emerald-500 shadow-emerald-500/50"
-                    : isPeak
-                      ? "bg-emerald-600 shadow-emerald-500/30"
-                      : hasData
-                        ? "bg-emerald-500/70"
-                        : "bg-[var(--color-surface-3)]"
-                  : isHovered
-                    ? "shadow-primary-500/50 scale-y-105 bg-[var(--color-brand)] shadow-lg"
-                    : isPeak
-                      ? "shadow-primary-500/30 bg-[var(--color-brand)] shadow-md"
-                      : hasData
-                        ? "bg-[var(--color-brand)]/70"
-                        : "bg-[var(--color-surface-3)]";
-
-              return (
-                <div
-                  key={b.id}
-                  onMouseEnter={() => setActiveIdx(idx)}
-                  onTouchStart={() => setActiveIdx(idx)}
-                  onClick={() => setActiveIdx(idx)}
-                  className="relative flex h-full flex-1 cursor-pointer flex-col items-center justify-end"
-                >
-                  <div
-                    className={`w-full rounded-t-md transition-all duration-200 ${
-                      range === "minggu"
-                        ? "max-w-[48px]"
-                        : range === "hari"
-                          ? "max-w-[26px]"
-                          : "max-w-[14px]"
-                    } ${barColor}`}
-                    style={{
-                      height: hasData ? `${Math.max(6, heightPct)}%` : "4px",
-                      transformOrigin: "bottom",
-                    }}
-                  />
-                </div>
-              );
-            })}
-          </div>
-
-          {/* X-Axis Labels */}
-          <div className="absolute right-0 bottom-0 left-16 flex h-6 items-center justify-between gap-0.5">
-            {buckets.map((b, idx) => {
-              const showLabel =
-                range === "minggu" ||
-                (range === "hari" && idx % 2 === 0) ||
-                (range === "bulan" &&
-                  (idx === 0 || (idx + 1) % 5 === 0 || idx === buckets.length - 1));
-              const isHovered = activeIdx === idx;
-
-              return (
-                <div
-                  key={b.id}
-                  className={`flex-1 truncate text-center text-[10px] ${
-                    isHovered
-                      ? "font-extrabold text-[var(--color-brand)]"
-                      : showLabel
-                        ? "font-semibold text-[var(--color-text-3)]"
-                        : "text-transparent"
-                  }`}
-                >
-                  {showLabel ? b.shortLabel : ""}
-                </div>
-              );
-            })}
-          </div>
+        {/* TanStack Chart Canvas */}
+        <div className="relative w-full pt-2 transition-opacity duration-300 [&_.ts-chart__bar_rect]:transition-colors [&_.ts-chart__bar_rect]:duration-200">
+          <Chart
+            definition={chartDef}
+            height={220}
+            ariaLabel="Grafik Tren Penjualan"
+            onFocusChange={(point) => {
+              const nextIdx =
+                point && point.datum && typeof (point.datum as any).idx === "number"
+                  ? (point.datum as any).idx
+                  : null;
+              setActiveIdx((prev) => (prev === nextIdx ? prev : nextIdx));
+            }}
+            className="w-full text-[var(--color-text-3)]"
+          />
         </div>
       </div>
     </section>
