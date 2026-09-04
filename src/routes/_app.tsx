@@ -60,6 +60,18 @@ function AppShell() {
   const routerState = useRouterState();
   const currentPath = routerState.location.pathname;
 
+  const bottomNavItems = useMemo(() => NAV_ITEMS.slice(0, 5), []);
+  const activeBottomIndex = bottomNavItems.findIndex((item) => currentPath.startsWith(item.to));
+  const [indicatorIndex, setIndicatorIndex] = useState(() =>
+    activeBottomIndex >= 0 ? activeBottomIndex : 0,
+  );
+
+  useEffect(() => {
+    if (activeBottomIndex >= 0) {
+      setIndicatorIndex(activeBottomIndex);
+    }
+  }, [activeBottomIndex]);
+
   const isPro = true;
 
   const activeShift = useQuery(api.shifts.getActive, store ? { storeId: store._id } : "skip");
@@ -303,8 +315,22 @@ function AppShell() {
         </main>
 
         {/* Mobile Floating Bottom Dock */}
-        <nav className="mobile-bottom-nav floating-dock flex items-center justify-around p-1.5">
-          {NAV_ITEMS.slice(0, 5).map((item) => {
+        <nav className="mobile-bottom-nav floating-dock relative flex items-center p-1.5 select-none">
+          {/* Active Sliding Indicator Pill */}
+          <div
+            className="pointer-events-none absolute top-1.5 bottom-1.5 rounded-2xl bg-brand shadow-primary-500/30 shadow-md"
+            style={{
+              width: "calc((100% - 12px) / 5)",
+              left: 6,
+              transform: `translateX(${indicatorIndex * 100}%)`,
+              transition:
+                "transform 280ms cubic-bezier(0.23, 1, 0.32, 1), opacity 200ms ease-out",
+              opacity: activeBottomIndex >= 0 ? 1 : 0,
+            }}
+            aria-hidden="true"
+          />
+
+          {bottomNavItems.map((item, index) => {
             const Icon = item.icon;
             const active = currentPath.startsWith(item.to);
             return (
@@ -312,14 +338,18 @@ function AppShell() {
                 key={item.to}
                 to={item.to}
                 preload="intent"
-                className={`press-tactile flex flex-col items-center justify-center rounded-2xl p-2 transition-all ${
-                  active
-                    ? "shadow-primary-500/25 bg-[var(--color-brand)] text-white shadow-md"
-                    : "text-[var(--color-text-2)] hover:text-[var(--color-text)]"
+                onClick={() => setIndicatorIndex(index)}
+                className={`press-tactile relative z-10 flex flex-1 min-w-0 flex-col items-center justify-center rounded-2xl py-2 px-1 text-center transition-colors duration-200 ${
+                  active ? "text-white" : "text-text-2 hover:text-text"
                 }`}
               >
-                <Icon size={20} weight={active ? "fill" : "regular"} />
-                <span className="mt-0.5 text-[10px] font-extrabold">{item.label}</span>
+                <Icon
+                  size={20}
+                  weight={active ? "fill" : "regular"}
+                  className="transition-transform duration-200 ease-out"
+                  style={{ transform: active ? "scale(1.08)" : "scale(1)" }}
+                />
+                <span className="mt-0.5 truncate text-[10px] font-extrabold">{item.label}</span>
               </Link>
             );
           })}
