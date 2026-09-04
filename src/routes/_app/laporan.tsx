@@ -4,7 +4,7 @@ import { api } from "../../../convex/_generated/api";
 import { useAppStore } from "#/lib/store-context";
 import { useState } from "react";
 import { dayRange, weekRange, monthRange } from "#/lib/utils";
-import { PackageIcon } from "@phosphor-icons/react";
+import { PackageIcon, EyeIcon, EyeSlashIcon } from "@phosphor-icons/react";
 import {
   ReportPeriodFilter,
   ReportKpiGrid,
@@ -17,7 +17,7 @@ import {
 export const Route = createFileRoute("/_app/laporan")({ component: Laporan });
 
 function Laporan() {
-  const { store, privacyMode } = useAppStore();
+  const { store, privacyMode, togglePrivacyMode } = useAppStore();
   const [range, setRange] = useState<Range>("hari");
 
   const { startOfDay, endOfDay } =
@@ -80,7 +80,31 @@ function Laporan() {
           </p>
         </div>
 
-        <ReportPeriodFilter range={range} onRangeChange={setRange} />
+        <div className="flex flex-wrap items-center gap-2">
+          <ReportPeriodFilter range={range} onRangeChange={setRange} />
+          <button
+            type="button"
+            onClick={togglePrivacyMode}
+            className={`press-tactile flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-bold transition-all ${
+              privacyMode
+                ? "border-[var(--color-brand)] bg-[var(--color-brand-light)] text-[var(--color-brand)] shadow-xs"
+                : "border-[var(--color-border)] bg-[var(--color-surface-3)] text-[var(--color-text-2)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-text)]"
+            }`}
+            title={privacyMode ? "Tampilkan Angka Omset & Cuan" : "Sensor Angka Privasi"}
+          >
+            {privacyMode ? (
+              <>
+                <EyeSlashIcon size={15} weight="bold" />
+                <span className="text-[11px]">Privasi Aktif</span>
+              </>
+            ) : (
+              <>
+                <EyeIcon size={15} weight="bold" />
+                <span className="text-[11px]">Sensor Angka</span>
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Main KPI Stat Cards (P&L Breakdown) */}

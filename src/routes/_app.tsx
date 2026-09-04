@@ -288,8 +288,6 @@ function AppShell() {
           isOnline={isOnline}
           onOpenSidebar={() => setSidebarOpen(true)}
           onOpenCashierModal={() => setCashierModalOpen(true)}
-          privacyMode={privacyMode}
-          onTogglePrivacy={togglePrivacyMode}
         />
 
         {/* Route Content */}
