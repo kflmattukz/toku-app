@@ -59,13 +59,7 @@ export function ProductCatalogGrid({
             onChange={(e) => onSearchChange(e.target.value)}
             className="pill-search-input w-full pl-12"
             style={{
-              paddingRight: onOpenScanner
-                ? search
-                  ? 120
-                  : 84
-                : search
-                  ? 82
-                  : 48,
+              paddingRight: onOpenScanner ? (search ? 120 : 84) : search ? 82 : 48,
             }}
           />
           {search && (

@@ -54,10 +54,7 @@ export function BarcodeScannerModal({
 
       const now = Date.now();
       // Cooldown for identical barcode: 1.3 seconds
-      if (
-        trimmed === lastScannedRef.current.code &&
-        now - lastScannedRef.current.time < 1300
-      ) {
+      if (trimmed === lastScannedRef.current.code && now - lastScannedRef.current.time < 1300) {
         return;
       }
 
@@ -160,10 +157,7 @@ export function BarcodeScannerModal({
           setCameraError(
             "Izin kamera ditolak. Mohon izinkan akses kamera di pengaturan browser Anda.",
           );
-        } else if (
-          errStr.includes("NotFoundError") ||
-          errStr.includes("DevicesNotFoundError")
-        ) {
+        } else if (errStr.includes("NotFoundError") || errStr.includes("DevicesNotFoundError")) {
           setCameraError("Kamera tidak ditemukan di perangkat ini.");
         } else {
           setCameraError(
@@ -237,9 +231,7 @@ export function BarcodeScannerModal({
               <BarcodeIcon size={20} weight="bold" />
             </div>
             <div>
-              <h3 className="text-sm font-black text-[var(--color-text)] sm:text-base">
-                {title}
-              </h3>
+              <h3 className="text-sm font-black text-[var(--color-text)] sm:text-base">{title}</h3>
               <p className="text-[11px] font-semibold text-[var(--color-text-3)]">
                 {continuous ? "Mode Berkelanjutan (Multi-Scan)" : subtitle}
               </p>
@@ -276,10 +268,10 @@ export function BarcodeScannerModal({
                 }`}
               >
                 {/* Target Reticles (Corner brackets) */}
-                <div className="absolute -top-1.5 -left-1.5 h-4 w-4 border-t-4 border-l-4 border-[var(--color-brand)] rounded-tl-md" />
-                <div className="absolute -top-1.5 -right-1.5 h-4 w-4 border-t-4 border-r-4 border-[var(--color-brand)] rounded-tr-md" />
-                <div className="absolute -bottom-1.5 -left-1.5 h-4 w-4 border-b-4 border-l-4 border-[var(--color-brand)] rounded-bl-md" />
-                <div className="absolute -bottom-1.5 -right-1.5 h-4 w-4 border-b-4 border-r-4 border-[var(--color-brand)] rounded-br-md" />
+                <div className="absolute -top-1.5 -left-1.5 h-4 w-4 rounded-tl-md border-t-4 border-l-4 border-[var(--color-brand)]" />
+                <div className="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-tr-md border-t-4 border-r-4 border-[var(--color-brand)]" />
+                <div className="absolute -bottom-1.5 -left-1.5 h-4 w-4 rounded-bl-md border-b-4 border-l-4 border-[var(--color-brand)]" />
+                <div className="absolute -right-1.5 -bottom-1.5 h-4 w-4 rounded-br-md border-r-4 border-b-4 border-[var(--color-brand)]" />
 
                 {/* Animated Red Laser Scanning Line */}
                 <div className="absolute inset-x-2 h-0.5 animate-pulse bg-gradient-to-r from-transparent via-red-500 to-transparent shadow-[0_0_8px_rgba(239,68,68,0.9)]" />
@@ -298,14 +290,14 @@ export function BarcodeScannerModal({
 
           {/* Flash feedback overlay */}
           {scanFlash && (
-            <div className="pointer-events-none absolute inset-0 bg-emerald-500/30 animate-ping transition-opacity" />
+            <div className="pointer-events-none absolute inset-0 animate-ping bg-emerald-500/30 transition-opacity" />
           )}
 
           {/* Camera Error Message */}
           {cameraError && (
             <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center text-white">
               <WarningCircleIcon size={44} weight="duotone" className="mb-2 text-rose-400" />
-              <p className="max-w-xs text-xs font-semibold leading-relaxed text-rose-200">
+              <p className="max-w-xs text-xs leading-relaxed font-semibold text-rose-200">
                 {cameraError}
               </p>
               <p className="mt-3 text-[11px] text-white/60">

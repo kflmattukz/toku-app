@@ -40,4 +40,3 @@ export function KasirHeader({ productCount, isOnline, onOpenScanner }: KasirHead
     </div>
   );
 }
-
