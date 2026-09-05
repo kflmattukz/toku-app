@@ -8,8 +8,12 @@ import {
   XIcon,
   MagnifyingGlassPlusIcon,
   WarningCircleIcon,
+  BarcodeIcon,
 } from "@phosphor-icons/react";
+import { toast } from "sonner";
 import { ImagePreviewModal } from "#/components/ui/ImagePreviewModal";
+import { BarcodeScannerModal } from "#/components/BarcodeScannerModal";
+import { triggerScanFeedback } from "#/lib/scan-feedback";
 import { Button } from "#/components/ui";
 import type { ProductFormState } from "../types";
 
@@ -39,6 +43,7 @@ export function ProductFormModal({
   onSave,
 }: ProductFormModalProps) {
   const [showImagePreview, setShowImagePreview] = useState(false);
+  const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
@@ -238,13 +243,24 @@ export function ProductFormModal({
             <label className="mb-1.5 block text-xs font-bold text-[var(--color-text)]">
               Barcode / SKU (Opsional)
             </label>
-            <input
-              type="text"
-              placeholder="Contoh: 89912345678"
-              value={form.barcode}
-              onChange={(e) => onChangeForm((p) => ({ ...p, barcode: e.target.value }))}
-              className="focus:ring-primary-500/20 focus:border-primary-500 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 text-sm font-medium text-[var(--color-text)] focus:ring-2 focus:outline-none"
-            />
+            <div className="relative flex items-center">
+              <input
+                type="text"
+                placeholder="Contoh: 89912345678"
+                value={form.barcode}
+                onChange={(e) => onChangeForm((p) => ({ ...p, barcode: e.target.value }))}
+                className="focus:ring-primary-500/20 focus:border-primary-500 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] py-2.5 pr-24 pl-3.5 text-sm font-medium text-[var(--color-text)] focus:ring-2 focus:outline-none"
+              />
+              <button
+                type="button"
+                onClick={() => setShowBarcodeScanner(true)}
+                className="press-tactile absolute right-1.5 flex cursor-pointer items-center gap-1.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-2)] px-2.5 py-1.5 text-xs font-bold text-[var(--color-brand)] hover:bg-[var(--color-surface-3)]"
+                title="Pindai barcode dengan kamera"
+              >
+                <BarcodeIcon size={16} weight="bold" />
+                <span>Scan</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -475,6 +491,21 @@ export function ProductFormModal({
         title={form.name || "Preview Foto Produk"}
         category={form.category}
         price={priceNum}
+      />
+
+      {/* Barcode Camera Scanner */}
+      <BarcodeScannerModal
+        open={showBarcodeScanner}
+        onClose={() => setShowBarcodeScanner(false)}
+        continuous={false}
+        title="Pindai Barcode Produk"
+        subtitle="Arahkan kamera ke barcode untuk mengisi otomatis"
+        onScanSuccess={(code) => {
+          onChangeForm((p) => ({ ...p, barcode: code }));
+          triggerScanFeedback(true);
+          toast.success(`Barcode ${code} berhasil dipindai`);
+          setShowBarcodeScanner(false);
+        }}
       />
     </Modal>
   );

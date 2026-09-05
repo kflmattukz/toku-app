@@ -30,9 +30,12 @@ export function useProductManager({ storeId }: UseProductManagerProps) {
   const [pageSize, setPageSize] = useState<number>(10);
   const [page, setPage] = useState<number>(1);
 
-  const openAdd = () => {
+  const openAdd = (initialBarcode?: string) => {
     setEditId(null);
-    setForm(emptyProductForm);
+    setForm({
+      ...emptyProductForm,
+      barcode: initialBarcode ?? "",
+    });
     setImagePreview("");
     setShowModal(true);
   };

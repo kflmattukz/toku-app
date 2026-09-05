@@ -13,9 +13,17 @@ import {
   type Product,
 } from "#/features/produk";
 
-export const Route = createFileRoute("/_app/produk")({ component: Produk });
+import { useEffect } from "react";
+
+export const Route = createFileRoute("/_app/produk")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    barcode: typeof search.barcode === "string" ? search.barcode : undefined,
+  }),
+  component: Produk,
+});
 
 function Produk() {
+  const { barcode } = Route.useSearch();
   const { store } = useAppStore();
   const rawProducts = useQuery(api.products.list, store ? { storeId: store._id } : "skip");
   const products = (rawProducts as Product[] | undefined) ?? [];
@@ -45,6 +53,12 @@ function Produk() {
     handleConfirmDelete,
   } = useProductManager({ storeId: store?._id });
 
+  useEffect(() => {
+    if (barcode) {
+      openAdd(barcode);
+    }
+  }, [barcode]);
+
   if (!store || !rawProducts) return <ProdukLoader />;
 
   return (
@@ -66,7 +80,7 @@ function Produk() {
           variant="primary"
           size="md"
           leftIcon={<PlusIcon size={16} weight="bold" />}
-          onClick={openAdd}
+          onClick={() => openAdd()}
         >
           Tambah Produk
         </Button>

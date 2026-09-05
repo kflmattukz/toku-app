@@ -1,9 +1,12 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { api } from "../../../convex/_generated/api";
 import { useAppStore } from "#/lib/store-context";
 import { PackageIcon } from "@phosphor-icons/react";
+import { BarcodeScannerModal } from "#/components/BarcodeScannerModal";
+import { triggerScanFeedback } from "#/lib/scan-feedback";
 import {
   useOfflineSync,
   useKasirCart,
@@ -20,6 +23,7 @@ import {
 export const Route = createFileRoute("/_app/kasir")({ component: Kasir });
 
 function Kasir() {
+  const navigate = useNavigate();
   const { store, currentCashier } = useAppStore();
   const rawProducts = useQuery(api.products.list, store ? { storeId: store._id } : "skip");
   const products = (rawProducts as Product[] | undefined) ?? [];
@@ -28,6 +32,12 @@ function Kasir() {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("Semua");
   const [showMobileCart, setShowMobileCart] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
+  const [lastScannedInfo, setLastScannedInfo] = useState<{
+    code: string;
+    name?: string;
+    success: boolean;
+  } | null>(null);
 
   // Sync & state hooks
   const { isOnline } = useOfflineSync(store?._id);
@@ -80,6 +90,44 @@ function Kasir() {
     onPaymentSuccess: clearCart,
   });
 
+  const handleScanBarcode = (scannedCode: string) => {
+    const code = scannedCode.trim();
+    if (!code) return;
+
+    const found = products.find((p) => p.barcode && p.barcode.trim() === code);
+
+    if (found) {
+      if (found.stock <= 0) {
+        triggerScanFeedback(false);
+        setLastScannedInfo({ code, name: `${found.name} (Stok Habis)`, success: false });
+        toast.error(`Stok ${found.name} habis!`, {
+          description: "Silakan restok produk terlebih dahulu",
+        });
+        return;
+      }
+
+      addToCart(found);
+      triggerScanFeedback(true);
+      setLastScannedInfo({ code, name: found.name, success: true });
+    } else {
+      triggerScanFeedback(false);
+      setLastScannedInfo({ code, success: false });
+      toast.error(`Barcode "${code}" tidak ditemukan di katalog`, {
+        description: "Tambahkan produk baru dengan barcode ini?",
+        action: {
+          label: "Tambah Produk",
+          onClick: () => {
+            setShowScanner(false);
+            navigate({
+              to: "/produk",
+              search: { barcode: code },
+            });
+          },
+        },
+      });
+    }
+  };
+
   if (!store || !rawProducts) return <KasirLoader />;
 
   const categories = ["Semua", ...new Set(products.map((p) => p.category))];
@@ -88,7 +136,14 @@ function Kasir() {
     <div className="flex min-h-[calc(100vh-120px)] flex-1 flex-col gap-6 lg:flex-row">
       {/* Products Panel */}
       <div className={`flex min-w-0 flex-1 flex-col ${cart.length > 0 ? "pb-20 lg:pb-0" : ""}`}>
-        <KasirHeader productCount={products.length} isOnline={isOnline} />
+        <KasirHeader
+          productCount={products.length}
+          isOnline={isOnline}
+          onOpenScanner={() => {
+            setLastScannedInfo(null);
+            setShowScanner(true);
+          }}
+        />
 
         <ProductCatalogGrid
           products={products}
@@ -100,6 +155,10 @@ function Kasir() {
           cart={cart}
           onAddToCart={addToCart}
           onUpdateQty={updateQty}
+          onOpenScanner={() => {
+            setLastScannedInfo(null);
+            setShowScanner(true);
+          }}
         />
       </div>
 
@@ -160,6 +219,20 @@ function Kasir() {
         tx={lastTx}
         storeName={store.name}
         storeAddress={store.address}
+      />
+
+      {/* Barcode Camera Scanner (Continuous Mode) */}
+      <BarcodeScannerModal
+        open={showScanner}
+        onClose={() => {
+          setShowScanner(false);
+          setLastScannedInfo(null);
+        }}
+        continuous={true}
+        title="Scanner Kasir"
+        subtitle="Scan barcode barang untuk otomatis masuk keranjang"
+        lastScannedInfo={lastScannedInfo}
+        onScanSuccess={handleScanBarcode}
       />
     </div>
   );

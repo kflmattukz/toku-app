@@ -1,9 +1,9 @@
 import {
   MagnifyingGlassIcon,
   XIcon,
-  FadersIcon,
   FireIcon,
   PackageIcon,
+  BarcodeIcon,
 } from "@phosphor-icons/react";
 import { KasirProductCard } from "./KasirProductCard";
 import type { CartItem, Product } from "../types";
@@ -18,6 +18,7 @@ interface ProductCatalogGridProps {
   cart: CartItem[];
   onAddToCart: (product: Product) => void;
   onUpdateQty: (productId: string, delta: number) => void;
+  onOpenScanner?: () => void;
 }
 
 export function ProductCatalogGrid({
@@ -30,18 +31,21 @@ export function ProductCatalogGrid({
   cart,
   onAddToCart,
   onUpdateQty,
+  onOpenScanner,
 }: ProductCatalogGridProps) {
   const filtered = products.filter((p) => {
-    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
+    const q = search.toLowerCase();
+    const matchSearch = p.name.toLowerCase().includes(q);
+    const matchBarcode = p.barcode ? p.barcode.toLowerCase().includes(q) : false;
     const matchCat = categoryFilter === "Semua" || p.category === categoryFilter;
-    return matchSearch && matchCat;
+    return (matchSearch || matchBarcode) && matchCat;
   });
 
   return (
     <div className="flex min-w-0 flex-1 flex-col">
       {/* Search & Category Header */}
       <div className="mb-5">
-        {/* Pill Search Input with filter icon and clear X button */}
+        {/* Pill Search Input with filter icon, scan button and clear X button */}
         <div className="relative mb-4 w-full">
           <MagnifyingGlassIcon
             size={18}
@@ -50,25 +54,42 @@ export function ProductCatalogGrid({
           />
           <input
             type="text"
-            placeholder="Cari berdasarkan nama atau kategori..."
+            placeholder="Cari berdasarkan nama, kategori, atau barcode..."
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
             className="pill-search-input w-full pl-12"
-            style={{ paddingRight: search ? 82 : 48 }}
+            style={{
+              paddingRight: onOpenScanner
+                ? search
+                  ? 120
+                  : 84
+                : search
+                  ? 82
+                  : 48,
+            }}
           />
           {search && (
             <button
               type="button"
               onClick={() => onSearchChange("")}
               aria-label="Hapus pencarian"
-              className="press-tactile absolute top-1/2 right-11.5 flex h-6 w-6 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] p-0 text-[var(--color-text-3)] hover:text-[var(--color-text)]"
+              className="press-tactile absolute top-1/2 flex h-6 w-6 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] p-0 text-[var(--color-text-3)] hover:text-[var(--color-text)]"
+              style={{ right: onOpenScanner ? 86 : 14 }}
             >
               <XIcon size={12} weight="bold" />
             </button>
           )}
-          <div className="absolute top-1/2 right-2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-[var(--color-brand)] text-white shadow-xs">
-            <FadersIcon size={16} weight="bold" />
-          </div>
+          {onOpenScanner && (
+            <button
+              type="button"
+              onClick={onOpenScanner}
+              title="Buka Scanner Barcode Kamera"
+              className="press-tactile absolute top-1/2 right-2 flex h-8 -translate-y-1/2 cursor-pointer items-center gap-1.5 rounded-full bg-[var(--color-brand)] px-3 text-xs font-extrabold text-white shadow-xs transition-all hover:opacity-90 active:scale-95"
+            >
+              <BarcodeIcon size={16} weight="bold" />
+              <span className="hidden sm:inline">Scan</span>
+            </button>
+          )}
         </div>
 
         {/* Category Navigation Pills */}
