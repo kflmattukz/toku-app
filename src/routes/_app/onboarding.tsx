@@ -28,16 +28,19 @@ function Onboarding() {
     setSaving(true);
     setError("");
     try {
+      const cleanEmail = session.user.email?.trim().toLowerCase();
       const newStoreId = await createStore({
         userId: session.user.id,
-        userEmail: session.user.email || undefined,
+        userEmail: cleanEmail || undefined,
         name: name.trim(),
         category,
       });
       if (newStoreId) {
-        const userKey = `toku_active_store_id_${session.user.email || session.user.id}`;
-        localStorage.setItem(userKey, newStoreId as string);
-        localStorage.setItem("toku_active_store_id", newStoreId as string);
+        try {
+          const userKey = `toku_active_store_id_${(cleanEmail || session.user.id).toLowerCase()}`;
+          localStorage.setItem(userKey, newStoreId as string);
+          localStorage.setItem("toku_active_store_id", newStoreId as string);
+        } catch {}
       }
       toast.success(`Toko "${name.trim()}" berhasil dibuat!`, {
         description: "Selamat datang di Toku POS",

@@ -37,10 +37,24 @@ export const findOne = query({
         .first();
     }
     if (field === "email" && table === "auth_users") {
-      return (ctx.db as any)
+      const direct = await (ctx.db as any)
         .query(table)
         .withIndex("by_email", (q: any) => q.eq("email", value))
         .first();
+      if (direct) return direct;
+
+      if (typeof value === "string") {
+        const valLower = value.trim().toLowerCase();
+        const all = await (ctx.db as any).query(table).collect();
+        return (
+          all.find(
+            (row: any) =>
+              row.email &&
+              typeof row.email === "string" &&
+              row.email.trim().toLowerCase() === valLower,
+          ) ?? null
+        );
+      }
     }
     if (field === "token" && table === "auth_sessions") {
       return (ctx.db as any)

@@ -2,7 +2,7 @@ import { createFileRoute, Outlet, Link, useNavigate, useRouterState } from "@tan
 import { authClient } from "#/lib/auth-client";
 import { useEffect, useState, useMemo } from "react";
 import { createPortal } from "react-dom";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { AppStoreContext, type ActiveCashier } from "#/lib/store-context";
 import { XIcon } from "@phosphor-icons/react";
@@ -15,35 +15,79 @@ export const Route = createFileRoute("/_app")({
   component: AppShell,
 });
 
+function safeGetStorage(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function safeSetStorage(key: string, val: string): void {
+  try {
+    localStorage.setItem(key, val);
+  } catch {}
+}
+
+function safeRemoveStorage(key: string): void {
+  try {
+    localStorage.removeItem(key);
+  } catch {}
+}
+
 function AppShell() {
   const { data: session, isPending } = authClient.useSession();
   const [selectedStoreId, setSelectedStoreId] = useState<Id<"stores"> | null>(null);
+  const syncUserStore = useMutation(api.stores.syncUserStore);
 
-  // Sync selectedStoreId with current user's session from localStorage
+  // Sync selectedStoreId with current user's session from localStorage with validation
   useEffect(() => {
     if (session?.user) {
-      const userKey = `toku_active_store_id_${session.user.email || session.user.id}`;
-      const saved = (localStorage.getItem(userKey) as Id<"stores">) || null;
-      setSelectedStoreId(saved);
+      const userKey = `toku_active_store_id_${(session.user.email || session.user.id).toLowerCase()}`;
+      const saved = safeGetStorage(userKey);
+      if (saved && saved !== "undefined" && saved !== "null" && saved.trim() !== "") {
+        setSelectedStoreId(saved as Id<"stores">);
+      } else {
+        const legacy = safeGetStorage("toku_active_store_id");
+        if (legacy && legacy !== "undefined" && legacy !== "null" && legacy.trim() !== "") {
+          setSelectedStoreId(legacy as Id<"stores">);
+        } else {
+          setSelectedStoreId(null);
+        }
+      }
     } else {
       setSelectedStoreId(null);
     }
   }, [session?.user?.id, session?.user?.email]);
 
+  const isValidStoreId =
+    Boolean(selectedStoreId) &&
+    typeof selectedStoreId === "string" &&
+    selectedStoreId !== "undefined" &&
+    selectedStoreId !== "null" &&
+    selectedStoreId.trim() !== "";
+
+  const cleanEmail = session?.user?.email?.trim().toLowerCase();
+
   const store = useQuery(
     api.stores.getByUserId,
-    session
+    session?.user
       ? {
           userId: session.user.id,
-          userEmail: session.user.email,
-          storeId: selectedStoreId || undefined,
+          userEmail: cleanEmail || undefined,
+          storeId: isValidStoreId ? (selectedStoreId as Id<"stores">) : undefined,
         }
       : "skip",
   );
 
   const userStores = useQuery(
     api.stores.listUserStores,
-    session ? { userId: session.user.id, userEmail: session.user.email } : "skip",
+    session?.user
+      ? {
+          userId: session.user.id,
+          userEmail: cleanEmail || undefined,
+        }
+      : "skip",
   );
 
   const [currentCashier, setCurrentCashierState] = useState<ActiveCashier>({
@@ -77,14 +121,14 @@ function AppShell() {
   const activeShift = useQuery(api.shifts.getActive, store ? { storeId: store._id } : "skip");
 
   useEffect(() => {
-    try {
-      const savedCashier = localStorage.getItem("toku_active_cashier");
-      if (savedCashier) {
+    const savedCashier = safeGetStorage("toku_active_cashier");
+    if (savedCashier) {
+      try {
         setCurrentCashierState(JSON.parse(savedCashier));
-      }
-    } catch {}
+      } catch {}
+    }
 
-    const savedCollapsed = localStorage.getItem("toku_sidebar_collapsed");
+    const savedCollapsed = safeGetStorage("toku_sidebar_collapsed");
     if (savedCollapsed !== null) {
       setCollapsed(savedCollapsed === "true");
     } else if (window.innerWidth <= 1024 && window.innerWidth > 768) {
@@ -97,30 +141,30 @@ function AppShell() {
   const setCurrentCashier = (cashier: ActiveCashier | null) => {
     const next = cashier || { name: "Kasir Utama", role: "owner" };
     setCurrentCashierState(next);
-    localStorage.setItem("toku_active_cashier", JSON.stringify(next));
+    safeSetStorage("toku_active_cashier", JSON.stringify(next));
   };
 
   const handleSelectStore = (id: Id<"stores"> | null) => {
     setSelectedStoreId(id);
     if (session?.user) {
-      const userKey = `toku_active_store_id_${session.user.email || session.user.id}`;
+      const userKey = `toku_active_store_id_${(session.user.email || session.user.id).toLowerCase()}`;
       if (id) {
-        localStorage.setItem(userKey, id);
-        localStorage.setItem("toku_active_store_id", id);
+        safeSetStorage(userKey, id);
+        safeSetStorage("toku_active_store_id", id);
       } else {
-        localStorage.removeItem(userKey);
-        localStorage.removeItem("toku_active_store_id");
+        safeRemoveStorage(userKey);
+        safeRemoveStorage("toku_active_store_id");
       }
     }
   };
 
   const handleSignOut = () => {
     if (session?.user) {
-      const userKey = `toku_active_store_id_${session.user.email || session.user.id}`;
-      localStorage.removeItem(userKey);
+      const userKey = `toku_active_store_id_${(session.user.email || session.user.id).toLowerCase()}`;
+      safeRemoveStorage(userKey);
     }
-    localStorage.removeItem("toku_active_store_id");
-    localStorage.removeItem("toku_active_cashier");
+    safeRemoveStorage("toku_active_store_id");
+    safeRemoveStorage("toku_active_cashier");
     authClient.signOut({
       fetchOptions: {
         onSuccess: () => {
@@ -137,7 +181,7 @@ function AppShell() {
   };
 
   useEffect(() => {
-    localStorage.setItem("toku_sidebar_collapsed", String(collapsed));
+    safeSetStorage("toku_sidebar_collapsed", String(collapsed));
   }, [collapsed]);
 
   useEffect(() => {
@@ -166,27 +210,51 @@ function AppShell() {
     }
   }, [sidebarOpen]);
 
+  // If not logged in, redirect to landing
   useEffect(() => {
     if (!isPending && !session) navigate({ to: "/" });
   }, [session, isPending, navigate]);
 
+  // If logged in but user has no store, immediately redirect to onboarding instead of hanging loaders
+  useEffect(() => {
+    if (!isPending && session && store === null && currentPath !== "/onboarding") {
+      navigate({ to: "/onboarding" });
+    }
+  }, [isPending, session, store, currentPath, navigate]);
+
+  // Sync selectedStoreId and update ownership link when store is resolved
   useEffect(() => {
     if (store && store._id) {
       if (selectedStoreId !== store._id) {
         setSelectedStoreId(store._id);
         if (session?.user) {
-          const userKey = `toku_active_store_id_${session.user.email || session.user.id}`;
-          localStorage.setItem(userKey, store._id);
-          localStorage.setItem("toku_active_store_id", store._id);
+          const userKey = `toku_active_store_id_${(session.user.email || session.user.id).toLowerCase()}`;
+          safeSetStorage(userKey, store._id);
+          safeSetStorage("toku_active_store_id", store._id);
+        }
+      }
+
+      // Auto-heal / link ownership across devices if userId or userEmail changed
+      if (session?.user) {
+        const emailClean = session.user.email?.trim().toLowerCase();
+        if (
+          store.userId !== session.user.id ||
+          (emailClean && store.userEmail !== emailClean)
+        ) {
+          syncUserStore({
+            storeId: store._id,
+            userId: session.user.id,
+            userEmail: emailClean,
+          }).catch(() => {});
         }
       }
     }
-  }, [store?._id, session?.user, selectedStoreId]);
+  }, [store?._id, store?.userId, store?.userEmail, session?.user, selectedStoreId, syncUserStore]);
 
   const [privacyMode, setPrivacyMode] = useState<boolean>(false);
 
   useEffect(() => {
-    const savedPrivacy = localStorage.getItem("toku_privacy_mode");
+    const savedPrivacy = safeGetStorage("toku_privacy_mode");
     if (savedPrivacy !== null) {
       setPrivacyMode(savedPrivacy === "true");
     }
@@ -195,7 +263,7 @@ function AppShell() {
   const togglePrivacyMode = () => {
     setPrivacyMode((prev) => {
       const next = !prev;
-      localStorage.setItem("toku_privacy_mode", String(next));
+      safeSetStorage("toku_privacy_mode", String(next));
       return next;
     });
   };

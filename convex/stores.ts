@@ -8,34 +8,72 @@ export const getByUserId = query({
     storeId: v.optional(v.id("stores")),
   },
   handler: async (ctx, { userId, userEmail, storeId }) => {
-    // If specific storeId requested, fetch and verify ownership
+    const cleanEmail = userEmail?.trim().toLowerCase();
+
+    // 1. If specific storeId requested, fetch and verify ownership
     if (storeId) {
       const store = await ctx.db.get(storeId);
-      if (
-        store &&
-        (store.userId === userId || (userEmail && store.userEmail === userEmail))
-      ) {
-        return store;
+      if (store) {
+        const storeEmailClean = store.userEmail?.trim().toLowerCase();
+        if (
+          store.userId === userId ||
+          (cleanEmail && storeEmailClean === cleanEmail)
+        ) {
+          return store;
+        }
       }
     }
 
-    // 1. Try finding by userEmail if provided (canonical Google identity)
-    if (userEmail) {
-      const storeByEmail = await ctx.db
-        .query("stores")
-        .withIndex("by_userEmail", (q) => q.eq("userEmail", userEmail))
-        .first();
+    // 2. Try finding by userEmail (case-insensitive & whitespace trimmed)
+    if (cleanEmail) {
+      if (userEmail) {
+        const storeByEmail = await ctx.db
+          .query("stores")
+          .withIndex("by_userEmail", (q) => q.eq("userEmail", userEmail))
+          .first();
+        if (storeByEmail) return storeByEmail;
+      }
 
-      if (storeByEmail) return storeByEmail;
+      const storeByCleanEmail = await ctx.db
+        .query("stores")
+        .withIndex("by_userEmail", (q) => q.eq("userEmail", cleanEmail))
+        .first();
+      if (storeByCleanEmail) return storeByCleanEmail;
+
+      // Scan stores for case-insensitive match
+      const allStores = await ctx.db.query("stores").collect();
+      const match = allStores.find(
+        (s) => s.userEmail && s.userEmail.trim().toLowerCase() === cleanEmail,
+      );
+      if (match) return match;
     }
 
-    // 2. Try finding by current userId
+    // 3. Try finding by current userId
     const storeByUserId = await ctx.db
       .query("stores")
       .withIndex("by_userId", (q) => q.eq("userId", userId))
       .first();
 
     if (storeByUserId) return storeByUserId;
+
+    // 4. Multi-device identity fallback:
+    // If user logged in on another device where Better Auth assigned another userId for the same email,
+    // find linked users in auth_users and check their stores.
+    if (cleanEmail) {
+      const allUsers = await ctx.db.query("auth_users").collect();
+      const linkedUsers = allUsers.filter(
+        (u) => u.email && u.email.trim().toLowerCase() === cleanEmail,
+      );
+      for (const u of linkedUsers) {
+        if (u.id !== userId) {
+          const store = await ctx.db
+            .query("stores")
+            .withIndex("by_userId", (q) => q.eq("userId", u.id))
+            .first();
+          if (store) return store;
+        }
+      }
+    }
 
     return null;
   },
@@ -48,14 +86,49 @@ export const listUserStores = query({
   },
   handler: async (ctx, { userId, userEmail }) => {
     const storeMap = new Map();
+    const cleanEmail = userEmail?.trim().toLowerCase();
 
-    if (userEmail) {
-      const byEmail = await ctx.db
+    if (cleanEmail) {
+      if (userEmail) {
+        const byEmail = await ctx.db
+          .query("stores")
+          .withIndex("by_userEmail", (q) => q.eq("userEmail", userEmail))
+          .collect();
+        for (const s of byEmail) {
+          storeMap.set(s._id, s);
+        }
+      }
+
+      const byCleanEmail = await ctx.db
         .query("stores")
-        .withIndex("by_userEmail", (q) => q.eq("userEmail", userEmail))
+        .withIndex("by_userEmail", (q) => q.eq("userEmail", cleanEmail))
         .collect();
-      for (const s of byEmail) {
+      for (const s of byCleanEmail) {
         storeMap.set(s._id, s);
+      }
+
+      const allStores = await ctx.db.query("stores").collect();
+      for (const s of allStores) {
+        if (s.userEmail && s.userEmail.trim().toLowerCase() === cleanEmail) {
+          storeMap.set(s._id, s);
+        }
+      }
+
+      // Find stores linked to other userIds with same email
+      const allUsers = await ctx.db.query("auth_users").collect();
+      const linkedUserIds = new Set(
+        allUsers
+          .filter((u) => u.email && u.email.trim().toLowerCase() === cleanEmail)
+          .map((u) => u.id),
+      );
+      for (const uid of linkedUserIds) {
+        const byId = await ctx.db
+          .query("stores")
+          .withIndex("by_userId", (q) => q.eq("userId", uid))
+          .collect();
+        for (const s of byId) {
+          storeMap.set(s._id, s);
+        }
       }
     }
 
@@ -68,6 +141,25 @@ export const listUserStores = query({
     }
 
     return Array.from(storeMap.values());
+  },
+});
+
+export const syncUserStore = mutation({
+  args: {
+    storeId: v.id("stores"),
+    userId: v.string(),
+    userEmail: v.optional(v.string()),
+  },
+  handler: async (ctx, { storeId, userId, userEmail }) => {
+    const store = await ctx.db.get(storeId);
+    if (!store) return;
+    const cleanEmail = userEmail?.trim().toLowerCase();
+    const patch: Record<string, any> = {};
+    if (store.userId !== userId) patch.userId = userId;
+    if (cleanEmail && store.userEmail !== cleanEmail) patch.userEmail = cleanEmail;
+    if (Object.keys(patch).length > 0) {
+      await ctx.db.patch(storeId, patch);
+    }
   },
 });
 
@@ -97,16 +189,18 @@ export const create = mutation({
     address: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const cleanEmail = args.userEmail?.trim().toLowerCase();
+
     // Check if store already exists for userEmail
-    if (args.userEmail) {
+    if (cleanEmail) {
       const existingByEmail = await ctx.db
         .query("stores")
-        .withIndex("by_userEmail", (q) => q.eq("userEmail", args.userEmail))
+        .withIndex("by_userEmail", (q) => q.eq("userEmail", cleanEmail))
         .first();
       if (existingByEmail) {
         await ctx.db.patch(existingByEmail._id, {
           userId: args.userId,
-          userEmail: args.userEmail,
+          userEmail: cleanEmail,
           name: args.name,
           category: args.category,
           address: args.address,
@@ -123,7 +217,7 @@ export const create = mutation({
     if (existingById) {
       await ctx.db.patch(existingById._id, {
         userId: args.userId,
-        userEmail: args.userEmail,
+        userEmail: cleanEmail,
         name: args.name,
         category: args.category,
         address: args.address,
@@ -133,7 +227,7 @@ export const create = mutation({
 
     return ctx.db.insert("stores", {
       userId: args.userId,
-      userEmail: args.userEmail,
+      userEmail: cleanEmail,
       name: args.name,
       category: args.category,
       address: args.address,
@@ -156,6 +250,7 @@ export const createBranch = mutation({
     address: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const cleanEmail = args.userEmail?.trim().toLowerCase();
     const existingStores = await ctx.db
       .query("stores")
       .withIndex("by_userId", (q) => q.eq("userId", args.userId))
@@ -163,7 +258,7 @@ export const createBranch = mutation({
 
     return ctx.db.insert("stores", {
       userId: args.userId,
-      userEmail: args.userEmail,
+      userEmail: cleanEmail,
       name: args.name,
       category: args.category,
       address: args.address,
