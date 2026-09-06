@@ -624,11 +624,11 @@ body {
   color: #ea580c !important;
 }
 
-/* Thermal Receipt Printer CSS (58mm/80mm POS format) */
+/* Print Stylesheet */
 @media print {
   @page {
-    size: 80mm auto;
-    margin: 0;
+    size: auto;
+    margin: 10mm;
   }
 
   *,
@@ -636,83 +636,26 @@ body {
   *::after {
     box-shadow: none !important;
     text-shadow: none !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   html,
   body {
     background: #ffffff !important;
-    color: #000000 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    width: 80mm !important;
-    min-width: 80mm !important;
-    max-width: 80mm !important;
-    height: auto !important;
-    min-height: 0 !important;
-    max-height: none !important;
-    overflow: visible !important;
+    color: #171717 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 
-  /* Reset all containers so only receipt is measured */
-  #app,
-  div,
-  main {
-    overflow: visible !important;
-    height: auto !important;
-    min-height: 0 !important;
-    max-height: none !important;
-    position: static !important;
-  }
-
-  /* Hide default page contents */
-  body * {
-    visibility: hidden;
-  }
-
-  /* Modal Backdrop and Container Reset */
-  .animate-backdrop {
-    position: static !important;
-    inset: auto !important;
-    background: transparent !important;
-    backdrop-filter: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    display: block !important;
-    visibility: visible !important;
-    height: auto !important;
-    min-height: 0 !important;
-  }
-
-  .animate-modal {
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    padding: 0 !important;
-    margin: 0 auto !important;
-    max-width: 80mm !important;
+  /* Thermal receipt fallback styles */
+  body.printing-receipt {
     width: 80mm !important;
-    height: auto !important;
-    min-height: 0 !important;
-    max-height: none !important;
-    overflow: visible !important;
-    transform: none !important;
-    animation: none !important;
-    display: block !important;
-    visibility: visible !important;
+    max-width: 80mm !important;
+    margin: 0 auto !important;
   }
 
-  /* Make receipt-print and all its children visible */
-  .receipt-print,
-  .receipt-print *,
-  .receipt-paper,
-  .receipt-paper * {
-    visibility: visible !important;
-    color: #000000 !important;
-  }
-
-  .receipt-print {
+  body.printing-receipt .receipt-print {
     position: static !important;
     width: 80mm !important;
     max-width: 80mm !important;
@@ -722,36 +665,6 @@ body {
     border: none !important;
     background: #ffffff !important;
     display: block !important;
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-  }
-
-  .receipt-paper {
-    width: 80mm !important;
-    max-width: 80mm !important;
-    padding: 6mm 4mm !important;
-    margin: 0 auto !important;
-    background: #ffffff !important;
-    border: none !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-    font-family: "JetBrains Mono", monospace !important;
-    font-size: 13px !important;
-    line-height: 1.4 !important;
-  }
-
-  .receipt-paper div,
-  .receipt-paper span,
-  .receipt-paper strong,
-  .receipt-paper p {
-    color: #000000 !important;
-    border-color: #000000 !important;
-  }
-
-  .receipt-paper img {
-    filter: grayscale(100%) contrast(150%) !important;
   }
 
   /* Hide interactive non-printable UI elements */

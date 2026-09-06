@@ -4,12 +4,14 @@ import { api } from "../../../convex/_generated/api";
 import { useAppStore } from "#/lib/store-context";
 import { useState } from "react";
 import { dayRange, weekRange, monthRange } from "#/lib/utils";
-import { PackageIcon, EyeIcon, EyeSlashIcon } from "@phosphor-icons/react";
+import { PackageIcon, EyeIcon, EyeSlashIcon, DownloadSimpleIcon } from "@phosphor-icons/react";
+import { Button } from "#/components/ui";
 import {
   ReportPeriodFilter,
   ReportKpiGrid,
   TrendChart,
   TopProductsLeaderboard,
+  ExportReportModal,
   type Range,
   type TopProduct,
 } from "#/features/laporan";
@@ -19,9 +21,17 @@ export const Route = createFileRoute("/_app/laporan")({ component: Laporan });
 function Laporan() {
   const { store, privacyMode, togglePrivacyMode } = useAppStore();
   const [range, setRange] = useState<Range>("hari");
+  const [showExportModal, setShowExportModal] = useState(false);
 
   const { startOfDay, endOfDay } =
     range === "hari" ? dayRange() : range === "minggu" ? weekRange() : monthRange();
+
+  const dateLabel =
+    range === "hari"
+      ? `Hari Ini (${new Date().toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })})`
+      : range === "minggu"
+        ? "Minggu Ini (7 Hari Terakhir)"
+        : "Bulan Ini (30 Hari Terakhir)";
 
   const summary = useQuery(
     api.transactions.dailySummary,
@@ -82,6 +92,18 @@ function Laporan() {
 
         <div className="flex flex-wrap items-center gap-2">
           <ReportPeriodFilter range={range} onRangeChange={setRange} />
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            leftIcon={<DownloadSimpleIcon size={15} weight="bold" />}
+            onClick={() => setShowExportModal(true)}
+            className="shadow-xs"
+          >
+            Export Laporan
+          </Button>
+
           <button
             type="button"
             onClick={togglePrivacyMode}
@@ -135,6 +157,31 @@ function Laporan() {
 
       {/* Top-Selling & Most Profitable Products Ranking List */}
       <TopProductsLeaderboard topProducts={topProducts} privacyMode={privacyMode} />
+
+      {/* Export Report Modal (PDF, Excel, Google Sheets) */}
+      <ExportReportModal
+        open={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        data={{
+          storeName: store?.name || "Toku POS",
+          storeAddress: store?.address,
+          range,
+          dateLabel,
+          totalRevenue,
+          totalCogs,
+          grossProfit,
+          grossMargin,
+          totalExpenses,
+          netProfit,
+          netMargin,
+          totalTransactions,
+          totalItems,
+          cancelledCount: summary.cancelledCount ?? 0,
+          cancelledTotal: summary.cancelledTotal ?? 0,
+          topProducts,
+          transactions: txs,
+        }}
+      />
     </div>
   );
 }
