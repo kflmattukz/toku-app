@@ -1,6 +1,7 @@
+import { LoginCard, LoginHeader, PosSimulationShowcase } from "#/features/auth";
 import { authClient } from "#/lib/auth-client";
-import { ArrowLeftIcon, GoogleLogoIcon, ShieldCheckIcon } from "@phosphor-icons/react";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { isDarkMode, toggleTheme } from "#/lib/utils";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
 export const Route = createFileRoute("/login")({
@@ -15,8 +16,16 @@ function LoginPage() {
   const navigate = useNavigate();
   const { data: session, isPending } = authClient.useSession();
   const [isSigningIn, setIsSigningIn] = useState(false);
+  const [dark, setDark] = useState(isDarkMode);
 
   const redirectTarget = search.redirect || "/kasir";
+
+  // Sync theme changes with global event
+  useEffect(() => {
+    const handleThemeChange = (e: CustomEvent<boolean>) => setDark(e.detail);
+    window.addEventListener("toku_theme_change" as any, handleThemeChange);
+    return () => window.removeEventListener("toku_theme_change" as any, handleThemeChange);
+  }, []);
 
   // If already authenticated, redirect to destination
   useEffect(() => {
@@ -41,7 +50,7 @@ function LoginPage() {
     return (
       <div
         style={{
-          minHeight: "100vh",
+          minHeight: "100dvh",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -50,12 +59,12 @@ function LoginPage() {
       >
         <div
           style={{
-            width: 32,
-            height: 32,
+            width: 36,
+            height: 36,
             borderRadius: "50%",
             border: "3px solid var(--color-border)",
             borderTopColor: "var(--color-brand)",
-            animation: "spin 0.8s linear infinite",
+            animation: "toku-spin 0.8s linear infinite",
           }}
         />
       </div>
@@ -65,150 +74,68 @@ function LoginPage() {
   return (
     <div
       style={{
-        minHeight: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "24px 16px",
+        minHeight: "100dvh",
         backgroundColor: "var(--color-surface-2)",
+        color: "var(--color-text)",
         position: "relative",
         overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
       }}
     >
-      {/* Background dot pattern */}
+      {/* Background Dot Matrix Pattern */}
       <div
         className="bg-grid-pattern"
-        style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0 }}
+        style={{
+          position: "absolute",
+          inset: 0,
+          pointerEvents: "none",
+          zIndex: 0,
+          opacity: dark ? 0.35 : 0.65,
+        }}
       />
 
-      {/* Main Login Card */}
+      {/* Ambient Radial Mesh Orbs */}
       <div
+        className="hero-glow-1"
+        style={{
+          animation: "toku-pulse-glow 9s ease-in-out infinite",
+          opacity: dark ? 0.3 : 0.5,
+        }}
+      />
+      <div
+        className="hero-glow-2"
+        style={{
+          top: "40%",
+          right: "-10%",
+          animation: "toku-pulse-glow 11s ease-in-out 2s infinite",
+          opacity: dark ? 0.2 : 0.35,
+        }}
+      />
+
+      {/* Top Floating Glass Navigation Header */}
+      <LoginHeader dark={dark} onToggleTheme={() => setDark(toggleTheme())} />
+
+      {/* Main Split-Screen Canvas */}
+      <main
         style={{
           position: "relative",
-          zIndex: 1,
-          width: "100%",
-          maxWidth: 400,
-          backgroundColor: "var(--color-surface)",
-          border: "1px solid var(--color-border)",
-          borderRadius: 24,
-          padding: "36px 28px",
-          boxShadow: "0 12px 36px rgba(0, 0, 0, 0.06)",
+          zIndex: 10,
+          flex: 1,
           display: "flex",
-          flexDirection: "column",
           alignItems: "center",
-          textAlign: "center",
+          justifyContent: "center",
+          padding: "24px 20px 48px",
+          maxWidth: 1280,
+          width: "100%",
+          margin: "0 auto",
         }}
       >
-        {/* Brand Logo */}
-        <div
-          style={{
-            width: 56,
-            height: 56,
-            borderRadius: 16,
-            backgroundColor: "var(--color-surface-2)",
-            border: "1px solid var(--color-border)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            marginBottom: 20,
-            overflow: "hidden",
-            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.04)",
-          }}
-        >
-          <img
-            src="/logo.png"
-            alt="Toku POS Logo"
-            style={{ width: 38, height: 38, objectFit: "contain" }}
-          />
+        <div className="login-split-grid">
+          <PosSimulationShowcase dark={dark} />
+          <LoginCard dark={dark} isSigningIn={isSigningIn} onGoogleLogin={handleGoogleLogin} />
         </div>
-
-        {/* Heading */}
-        <h1
-          style={{
-            margin: 0,
-            fontSize: 22,
-            fontWeight: 800,
-            color: "var(--color-text)",
-            letterSpacing: "-0.02em",
-          }}
-        >
-          Masuk ke Toku POS
-        </h1>
-        <p
-          style={{
-            margin: "8px 0 28px",
-            fontSize: 13,
-            color: "var(--color-text-2)",
-            lineHeight: 1.5,
-          }}
-        >
-          Kelola kasir, inventaris barang, dan laporan penjualan UMKM dalam satu aplikasi.
-        </p>
-
-        {/* Google Sign-in Button */}
-        <button
-          onClick={handleGoogleLogin}
-          disabled={isSigningIn}
-          className="press-tactile"
-          style={{
-            width: "100%",
-            height: 48,
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 12,
-            backgroundColor: "var(--color-surface)",
-            color: "var(--color-text)",
-            border: "1.5px solid var(--color-border)",
-            borderRadius: 14,
-            fontSize: 14,
-            fontWeight: 700,
-            cursor: isSigningIn ? "wait" : "pointer",
-            transition: "all 0.15s ease",
-            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
-            opacity: isSigningIn ? 0.7 : 1,
-          }}
-        >
-          <GoogleLogoIcon size={20} weight="bold" />
-          <span>{isSigningIn ? "Menghubungkan..." : "Masuk dengan Google"}</span>
-        </button>
-
-        {/* Security badge note */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            marginTop: 20,
-            fontSize: 12,
-            color: "var(--color-text-3)",
-          }}
-        >
-          <ShieldCheckIcon size={16} weight="fill" color="var(--color-brand)" />
-          <span>Autentikasi resmi & aman via Google Account</span>
-        </div>
-      </div>
-
-      {/* Back to Home Link */}
-      <Link
-        to="/"
-        style={{
-          position: "relative",
-          zIndex: 1,
-          marginTop: 20,
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 6,
-          fontSize: 13,
-          fontWeight: 600,
-          color: "var(--color-text-2)",
-          textDecoration: "none",
-        }}
-      >
-        <ArrowLeftIcon size={14} weight="bold" />
-        <span>Kembali ke Beranda</span>
-      </Link>
+      </main>
     </div>
   );
 }
