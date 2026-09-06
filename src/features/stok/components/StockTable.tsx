@@ -1,5 +1,11 @@
 import { useState, useMemo } from "react";
-import { WarningIcon, CheckCircleIcon, PlusIcon, PackageIcon } from "@phosphor-icons/react";
+import {
+  WarningIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  PlusIcon,
+  PackageIcon,
+} from "@phosphor-icons/react";
 import { formatIDR } from "#/lib/utils";
 import { Pagination } from "#/components/ui/Pagination";
 import { SearchFilter } from "#/components/ui/SearchFilter";
@@ -12,6 +18,14 @@ interface StockTableProps {
   lowStockProducts: Product[];
   threshold: number;
   onOpenRestock: (product: Product) => void;
+}
+
+type StockLevel = "empty" | "low" | "safe";
+
+function getStockLevel(stock: number, threshold: number): StockLevel {
+  if (stock <= 0) return "empty";
+  if (stock <= threshold) return "low";
+  return "safe";
 }
 
 const columnHelper = createAppColumnHelper<Product>();
@@ -58,11 +72,15 @@ export function StockTable({
           header: "Stok Saat Ini",
           cell: (info) => {
             const stock = info.getValue();
-            const isLow = stock <= threshold;
+            const level = getStockLevel(stock, threshold);
             return (
               <span
-                className={`price text-sm font-black ${
-                  isLow ? "text-[var(--color-danger-text)]" : "text-[var(--color-text)]"
+                className={`price text-sm ${
+                  level === "empty"
+                    ? "font-black text-rose-600 dark:text-rose-400"
+                    : level === "low"
+                      ? "font-black text-amber-600 dark:text-amber-400"
+                      : "font-black text-[var(--color-text)]"
                 }`}
               >
                 {stock} pcs
@@ -70,25 +88,31 @@ export function StockTable({
             );
           },
         }),
-        columnHelper.accessor((row) => (row.stock <= threshold ? "low" : "safe"), {
+        columnHelper.accessor((row) => getStockLevel(row.stock, threshold), {
           id: "status",
           header: "Status Persediaan",
           cell: (info) => {
-            const isLow = info.row.original.stock <= threshold;
-            return (
-              <span
-                className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-extrabold ${
-                  isLow
-                    ? "border border-[var(--color-danger)]/30 bg-[var(--color-danger-light)] text-[var(--color-danger-text)]"
-                    : "border border-[var(--color-brand)] bg-[var(--color-brand-light)] text-[var(--color-brand)]"
-                }`}
-              >
-                {isLow ? (
+            const level = getStockLevel(info.row.original.stock, threshold);
+            if (level === "empty") {
+              return (
+                <span className="inline-flex items-center gap-1 rounded-full border border-rose-500/30 bg-rose-500/10 px-3 py-1 text-xs font-extrabold text-rose-600 dark:text-rose-400">
+                  <XCircleIcon size={13} weight="fill" />
+                  <span>Stok Habis</span>
+                </span>
+              );
+            }
+            if (level === "low") {
+              return (
+                <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/35 bg-amber-500/10 px-3 py-1 text-xs font-extrabold text-amber-600 dark:text-amber-400">
                   <WarningIcon size={12} weight="fill" />
-                ) : (
-                  <CheckCircleIcon size={12} weight="fill" />
-                )}
-                <span>{isLow ? "Stok Rendah" : "Aman"}</span>
+                  <span>Stok Menipis</span>
+                </span>
+              );
+            }
+            return (
+              <span className="inline-flex items-center gap-1 rounded-full border border-[var(--color-brand)] bg-[var(--color-brand-light)] px-3 py-1 text-xs font-extrabold text-[var(--color-brand)]">
+                <CheckCircleIcon size={12} weight="fill" />
+                <span>Aman</span>
               </span>
             );
           },
@@ -146,40 +170,65 @@ export function StockTable({
           </div>
 
           <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
-            {lowStockProducts.map((p) => (
-              <div
-                key={p._id}
-                className="flex flex-col justify-between gap-3 rounded-[18px] border border-[var(--color-danger)]/30 bg-[var(--color-surface)] p-4 shadow-xs"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <div className="truncate text-sm font-extrabold text-[var(--color-text)]">
-                      {p.name}
+            {lowStockProducts.map((p) => {
+              const level = getStockLevel(p.stock, threshold);
+              const isEmpty = level === "empty";
+              return (
+                <div
+                  key={p._id}
+                  className={`flex flex-col justify-between gap-3 rounded-[18px] border p-4 shadow-xs transition-colors ${
+                    isEmpty
+                      ? "border-rose-500/35 bg-rose-500/[0.02]"
+                      : "border-amber-500/35 bg-amber-500/[0.02]"
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="truncate text-sm font-extrabold text-[var(--color-text)]">
+                          {p.name}
+                        </span>
+                        <span
+                          className={`inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[10px] font-extrabold ${
+                            isEmpty
+                              ? "border border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400"
+                              : "border border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                          }`}
+                        >
+                          {isEmpty ? "Habis" : "Menipis"}
+                        </span>
+                      </div>
+                      <span className="text-xs font-semibold text-[var(--color-text-3)]">
+                        {p.category}
+                      </span>
                     </div>
-                    <span className="text-xs font-semibold text-[var(--color-text-3)]">
-                      {p.category}
+                    <span
+                      className={`price shrink-0 text-lg font-black ${
+                        isEmpty
+                          ? "text-rose-600 dark:text-rose-400"
+                          : "text-amber-600 dark:text-amber-400"
+                      }`}
+                    >
+                      {p.stock} pcs
                     </span>
                   </div>
-                  <span className="price shrink-0 text-lg font-black text-[var(--color-danger-text)]">
-                    {p.stock} pcs
-                  </span>
-                </div>
 
-                <div className="flex items-center justify-between border-t border-[var(--color-border)] pt-3">
-                  <span className="price text-xs font-bold text-[var(--color-brand)]">
-                    {formatIDR(p.price)}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => onOpenRestock(p)}
-                    className="press-tactile shadow-primary-500/20 flex cursor-pointer items-center gap-1 rounded-full bg-[var(--color-brand)] px-3 py-1 text-xs font-extrabold text-white shadow-xs"
-                  >
-                    <PlusIcon size={13} weight="bold" />
-                    <span>Restock</span>
-                  </button>
+                  <div className="flex items-center justify-between border-t border-[var(--color-border)] pt-3">
+                    <span className="price text-xs font-bold text-[var(--color-brand)]">
+                      {formatIDR(p.price)}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => onOpenRestock(p)}
+                      className="press-tactile shadow-primary-500/20 flex cursor-pointer items-center gap-1 rounded-full bg-[var(--color-brand)] px-3 py-1 text-xs font-extrabold text-white shadow-xs"
+                    >
+                      <PlusIcon size={13} weight="bold" />
+                      <span>Restock</span>
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
       )}
@@ -212,16 +261,33 @@ export function StockTable({
             <>
               {/* Desktop Table */}
               <div className="desktop-only w-full">
-                <DataTable table={table} />
+                <DataTable
+                  table={table}
+                  rowClassName={(row) => {
+                    const level = getStockLevel(row.original.stock, threshold);
+                    if (level === "empty") return "bg-rose-500/[0.035] hover:bg-rose-500/[0.07]";
+                    if (level === "low") return "bg-amber-500/[0.035] hover:bg-amber-500/[0.07]";
+                    return "hover:bg-[var(--color-surface-2)]";
+                  }}
+                />
               </div>
 
               {/* Mobile Card List */}
               <div className="mobile-only flex flex-col divide-y divide-[var(--color-border)]">
                 {pagedRows.map((row: any) => {
                   const p = row.original;
-                  const isLow = p.stock <= threshold;
+                  const level = getStockLevel(p.stock, threshold);
                   return (
-                    <div key={p._id} className="flex flex-col gap-3 p-4">
+                    <div
+                      key={p._id}
+                      className={`flex flex-col gap-3 p-4 transition-colors ${
+                        level === "empty"
+                          ? "bg-rose-500/[0.035]"
+                          : level === "low"
+                            ? "bg-amber-500/[0.035]"
+                            : "bg-[var(--color-surface)]"
+                      }`}
+                    >
                       <div className="flex items-start justify-between gap-2">
                         <div>
                           <div className="text-sm font-extrabold text-[var(--color-text)]">
@@ -231,24 +297,35 @@ export function StockTable({
                             {p.category} · {formatIDR(p.price)}
                           </span>
                         </div>
-                        <span
-                          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-extrabold ${
-                            isLow
-                              ? "border border-[var(--color-danger)]/30 bg-[var(--color-danger-light)] text-[var(--color-danger-text)]"
-                              : "border border-[var(--color-brand)]/20 bg-[var(--color-brand-light)] text-[var(--color-brand)]"
-                          }`}
-                        >
-                          {isLow ? "Stok Rendah" : "Aman"}
-                        </span>
+                        {level === "empty" ? (
+                          <span className="inline-flex items-center gap-1 rounded-full border border-rose-500/30 bg-rose-500/10 px-2.5 py-0.5 text-[10px] font-extrabold text-rose-600 dark:text-rose-400">
+                            <XCircleIcon size={12} weight="fill" />
+                            <span>Stok Habis</span>
+                          </span>
+                        ) : level === "low" ? (
+                          <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/35 bg-amber-500/10 px-2.5 py-0.5 text-[10px] font-extrabold text-amber-600 dark:text-amber-400">
+                            <WarningIcon size={11} weight="fill" />
+                            <span>Stok Menipis</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 rounded-full border border-[var(--color-brand)]/20 bg-[var(--color-brand-light)] px-2.5 py-0.5 text-[10px] font-extrabold text-[var(--color-brand)]">
+                            <CheckCircleIcon size={11} weight="fill" />
+                            <span>Aman</span>
+                          </span>
+                        )}
                       </div>
 
                       <div className="flex items-center justify-between pt-2">
                         <div className="text-xs font-bold text-[var(--color-text-2)]">
                           Stok:{" "}
                           <span
-                            className={
-                              isLow ? "font-extrabold text-[var(--color-danger-text)]" : ""
-                            }
+                            className={`font-black ${
+                              level === "empty"
+                                ? "text-rose-600 dark:text-rose-400"
+                                : level === "low"
+                                  ? "text-amber-600 dark:text-amber-400"
+                                  : "text-[var(--color-text)]"
+                            }`}
                           >
                             {p.stock} pcs
                           </span>

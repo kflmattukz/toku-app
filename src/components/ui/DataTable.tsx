@@ -6,12 +6,14 @@ interface DataTableProps {
   table: any;
   emptyMessage?: ReactNode;
   className?: string;
+  rowClassName?: (row: any) => string;
 }
 
 export function DataTable({
   table,
   emptyMessage = "Tidak ada data ditemukan",
   className = "",
+  rowClassName,
 }: DataTableProps) {
   const rows = table.getRowModel().rows;
   const colCount = table.getAllColumns().length;
@@ -86,7 +88,9 @@ export function DataTable({
             rows.map((row: any) => (
               <tr
                 key={row.id}
-                className="border-b border-[var(--color-border)] transition-colors hover:bg-[var(--color-surface-2)] last:border-b-0"
+                className={`border-b border-[var(--color-border)] transition-colors last:border-b-0 ${
+                  rowClassName ? rowClassName(row) : "hover:bg-[var(--color-surface-2)]"
+                }`}
               >
                 {row.getVisibleCells().map((cell: any) => (
                   <td
