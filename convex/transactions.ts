@@ -61,6 +61,29 @@ export const create = mutation({
       }),
     );
 
+    // Validate stock for online transactions
+    if (!args.syncedFromOffline) {
+      const insufficientStockItems: string[] = [];
+      for (const item of args.items) {
+        try {
+          const productId = ctx.db.normalizeId("products", item.productId);
+          if (productId) {
+            const product = await ctx.db.get(productId);
+            if (product && product.stock < item.qty) {
+              insufficientStockItems.push(
+                `${item.name} (tersisa ${product.stock}, diminta ${item.qty})`,
+              );
+            }
+          }
+        } catch {}
+      }
+      if (insufficientStockItems.length > 0) {
+        throw new Error(
+          `Stok tidak mencukupi untuk: ${insufficientStockItems.join(", ")}`,
+        );
+      }
+    }
+
     // Insert transaction with status completed by default
     const txId = await ctx.db.insert("transactions", {
       ...args,

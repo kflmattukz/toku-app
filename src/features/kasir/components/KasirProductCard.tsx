@@ -7,6 +7,7 @@ import {
   PlusIcon,
   TrashIcon,
 } from "@phosphor-icons/react";
+import { toast } from "sonner";
 import { formatIDR, calculateItemDiscount } from "#/lib/utils";
 import type { CartItem, Product } from "../types";
 
@@ -24,13 +25,30 @@ export function KasirProductCard({
   onUpdateQty,
 }: KasirProductCardProps) {
   const disc = calculateItemDiscount(product.price, product.discountType, product.discountValue);
+  const isOutOfStock = product.stock <= 0;
+  const isMaxStock = Boolean(inCart && inCart.qty >= product.stock);
 
   return (
     <div
-      onClick={() => onAddToCart(product)}
-      className="squircle-card product-card-interactive relative flex min-h-[190px] cursor-pointer flex-col justify-between rounded-2xl p-3 transition-all select-none"
+      onClick={() => {
+        if (isOutOfStock) return;
+        if (isMaxStock) {
+          toast.warning(`Maksimal stok ${product.name} tercapai (${product.stock} pcs)`);
+          return;
+        }
+        onAddToCart(product);
+      }}
+      className={`squircle-card relative flex min-h-[190px] flex-col justify-between rounded-2xl p-3 select-none transition-all ${
+        isOutOfStock
+          ? "cursor-not-allowed border-dashed opacity-50 grayscale-[50%]"
+          : "product-card-interactive cursor-pointer"
+      }`}
       style={{
-        border: inCart ? "2px solid var(--color-brand)" : "1.5px solid var(--color-border)",
+        border: inCart
+          ? "2px solid var(--color-brand)"
+          : isOutOfStock
+            ? "1.5px dashed var(--color-border)"
+            : "1.5px solid var(--color-border)",
         boxShadow: inCart ? "0 8px 24px rgba(234, 88, 12, 0.2)" : "var(--shadow-sm)",
       }}
     >
@@ -60,7 +78,12 @@ export function KasirProductCard({
           </div>
         )}
 
-        {disc.hasDiscount ? (
+        {isOutOfStock ? (
+          <div className="absolute top-2 left-2 z-2 flex items-center gap-0.5 rounded-full bg-neutral-700/90 px-2 py-0.5 text-[10px] font-extrabold text-white shadow-sm backdrop-blur-sm">
+            <WarningIcon size={11} weight="fill" />
+            <span>Stok Habis</span>
+          </div>
+        ) : disc.hasDiscount ? (
           <div className="shadow-primary-500/30 absolute top-2 left-2 z-2 flex items-center gap-0.5 rounded-full bg-[var(--color-brand)] px-1.5 py-0.5 text-[10px] font-extrabold text-white shadow-md">
             <TagIcon size={11} weight="fill" />
             <span>
@@ -123,12 +146,18 @@ export function KasirProductCard({
 
           <button
             type="button"
+            disabled={isMaxStock}
             onClick={(e) => {
               e.stopPropagation();
+              if (isMaxStock) return;
               onUpdateQty(product._id, 1);
             }}
-            className="press-tactile flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-[var(--color-brand)] text-white shadow-xs"
-            title="Tambah"
+            className={`flex h-7 w-7 items-center justify-center rounded-full transition-all ${
+              isMaxStock
+                ? "cursor-not-allowed bg-[var(--color-surface-3)] text-[var(--color-text-3)] opacity-40"
+                : "press-tactile cursor-pointer bg-[var(--color-brand)] text-white shadow-xs"
+            }`}
+            title={isMaxStock ? `Maksimal stok tercapai (${product.stock} pcs)` : "Tambah"}
           >
             <PlusIcon size={12} weight="bold" />
           </button>

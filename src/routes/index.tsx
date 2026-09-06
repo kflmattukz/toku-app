@@ -282,14 +282,14 @@ function Landing() {
                 <span>Buka Kasir</span> <ArrowRightIcon size={14} weight="bold" />
               </Link>
             ) : (
-              <button
-                onClick={handleGoogleLogin}
+              <Link
+                to="/login"
                 className="press-tactile"
-                style={googleHeaderBtnStyle}
+                style={{ ...googleHeaderBtnStyle, textDecoration: "none" }}
               >
                 <GoogleLogoIcon size={16} weight="bold" />
                 <span>Masuk</span>
-              </button>
+              </Link>
             )}
           </div>
         </div>

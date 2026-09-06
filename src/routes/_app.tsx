@@ -168,7 +168,7 @@ function AppShell() {
     authClient.signOut({
       fetchOptions: {
         onSuccess: () => {
-          window.location.href = "/";
+          window.location.href = "/login";
         },
       },
     });
@@ -210,10 +210,18 @@ function AppShell() {
     }
   }, [sidebarOpen]);
 
-  // If not logged in, redirect to landing
+  // If not logged in, redirect to login page with redirect destination
   useEffect(() => {
-    if (!isPending && !session) navigate({ to: "/" });
-  }, [session, isPending, navigate]);
+    if (!isPending && !session) {
+      const redirectSearch =
+        currentPath && currentPath !== "/" ? { redirect: currentPath } : undefined;
+      navigate({
+        to: "/login" as any,
+        search: redirectSearch as any,
+        replace: true,
+      });
+    }
+  }, [session, isPending, navigate, currentPath]);
 
   // If logged in but user has no store, immediately redirect to onboarding instead of hanging loaders
   useEffect(() => {
@@ -237,10 +245,7 @@ function AppShell() {
       // Auto-heal / link ownership across devices if userId or userEmail changed
       if (session?.user) {
         const emailClean = session.user.email?.trim().toLowerCase();
-        if (
-          store.userId !== session.user.id ||
-          (emailClean && store.userEmail !== emailClean)
-        ) {
+        if (store.userId !== session.user.id || (emailClean && store.userEmail !== emailClean)) {
           syncUserStore({
             storeId: store._id,
             userId: session.user.id,
@@ -386,7 +391,7 @@ function AppShell() {
         <nav className="mobile-bottom-nav floating-dock relative flex items-center p-1.5 select-none">
           {/* Active Sliding Indicator Pill */}
           <div
-            className="pointer-events-none absolute top-1.5 bottom-1.5 rounded-full bg-brand shadow-primary-500/30 shadow-md"
+            className="shadow-primary-500/30 pointer-events-none absolute top-1.5 bottom-1.5 rounded-full bg-brand shadow-md"
             style={{
               width: "calc((100% - 12px) / 5)",
               left: 6,
@@ -406,7 +411,7 @@ function AppShell() {
                 to={item.to}
                 preload="intent"
                 onClick={() => setIndicatorIndex(index)}
-                className={`press-tactile relative z-10 flex flex-1 min-w-0 flex-col items-center justify-center rounded-full py-2 px-1 text-center transition-colors duration-200 ${
+                className={`press-tactile relative z-10 flex min-w-0 flex-1 flex-col items-center justify-center rounded-full px-1 py-2 text-center transition-colors duration-200 ${
                   active ? "text-white" : "text-text-2 hover:text-text"
                 }`}
               >

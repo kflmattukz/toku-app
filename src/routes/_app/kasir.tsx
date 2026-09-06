@@ -61,7 +61,7 @@ function Kasir() {
     total,
     basketDiscountAmount,
     totalSavings,
-  } = useKasirCart();
+  } = useKasirCart(products);
 
   const {
     showPayment,
@@ -103,6 +103,14 @@ function Kasir() {
         toast.error(`Stok ${found.name} habis!`, {
           description: "Silakan restok produk terlebih dahulu",
         });
+        return;
+      }
+
+      const inCart = cart.find((i) => i.productId === found._id);
+      if (inCart && inCart.qty >= found.stock) {
+        triggerScanFeedback(false);
+        setLastScannedInfo({ code, name: `${found.name} (Maks Stok)`, success: false });
+        toast.warning(`Maksimal stok ${found.name} tercapai (${found.stock} pcs)`);
         return;
       }
 

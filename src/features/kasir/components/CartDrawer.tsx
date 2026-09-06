@@ -61,6 +61,7 @@ export function CartDrawer({
           const productData = products.find((p) => p._id === item.productId);
           const disc = calculateItemDiscount(item.price, item.discountType, item.discountValue);
           const lineTotal = disc.unitPrice * item.qty;
+          const isMaxStock = Boolean(productData && item.qty >= productData.stock);
 
           return (
             <div
@@ -137,8 +138,17 @@ export function CartDrawer({
                   </span>
                   <button
                     type="button"
-                    onClick={() => onUpdateQty(item.productId, 1)}
-                    className="press-tactile flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-[var(--color-brand)] text-white shadow-xs"
+                    disabled={isMaxStock}
+                    onClick={() => {
+                      if (isMaxStock) return;
+                      onUpdateQty(item.productId, 1);
+                    }}
+                    className={`flex h-7 w-7 items-center justify-center rounded-full transition-all ${
+                      isMaxStock
+                        ? "cursor-not-allowed bg-[var(--color-surface-3)] text-[var(--color-text-3)] opacity-40"
+                        : "press-tactile cursor-pointer bg-[var(--color-brand)] text-white shadow-xs"
+                    }`}
+                    title={isMaxStock ? `Maksimal stok tercapai (${productData?.stock} pcs)` : "Tambah"}
                   >
                     <PlusIcon size={11} weight="bold" />
                   </button>

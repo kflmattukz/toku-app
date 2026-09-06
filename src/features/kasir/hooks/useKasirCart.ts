@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { toast } from "sonner";
 import {
   formatIDR,
@@ -9,7 +9,7 @@ import {
 } from "#/lib/utils";
 import type { CartItem, ItemDiscountModalState, Product } from "../types";
 
-export function useKasirCart() {
+export function useKasirCart(products: Product[] = []) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [basketDiscountType, setBasketDiscountType] = useState<"none" | "percentage" | "nominal">(
     "none",
@@ -17,6 +17,44 @@ export function useKasirCart() {
   const [basketDiscountValue, setBasketDiscountValue] = useState<string>("");
 
   const [itemDiscountModal, setItemDiscountModal] = useState<ItemDiscountModalState>(null);
+
+  // Sync cart quantities when products stock updates in real-time
+  useEffect(() => {
+    if (!products || products.length === 0) return;
+
+    setCart((prev) => {
+      let changed = false;
+      const nextCart: CartItem[] = [];
+
+      for (const item of prev) {
+        const prod = products.find((p) => p._id === item.productId);
+        if (!prod) {
+          nextCart.push(item);
+          continue;
+        }
+
+        if (prod.stock <= 0) {
+          changed = true;
+          toast.warning(`Stok ${item.name} habis`, {
+            description: "Produk otomatis dikeluarkan dari keranjang",
+          });
+          continue;
+        }
+
+        if (item.qty > prod.stock) {
+          changed = true;
+          toast.warning(`Stok ${item.name} disesuaikan`, {
+            description: `Jumlah dikurangi menjadi ${prod.stock} pcs sesuai stok toko saat ini`,
+          });
+          nextCart.push({ ...item, qty: prod.stock });
+        } else {
+          nextCart.push(item);
+        }
+      }
+
+      return changed ? nextCart : prev;
+    });
+  }, [products]);
 
   const addToCart = (product: Product) => {
     if (product.stock <= 0) {
@@ -26,9 +64,15 @@ export function useKasirCart() {
       return;
     }
 
+    const existing = cart.find((i) => i.productId === product._id);
+    if (existing && existing.qty >= product.stock) {
+      toast.warning(`Maksimal stok ${product.name} tercapai (${product.stock} pcs)`);
+      return;
+    }
+
     setCart((prev) => {
-      const existing = prev.find((i) => i.productId === product._id);
-      if (existing) {
+      const exists = prev.find((i) => i.productId === product._id);
+      if (exists) {
         return prev.map((i) => (i.productId === product._id ? { ...i, qty: i.qty + 1 } : i));
       }
       return [
@@ -58,6 +102,17 @@ export function useKasirCart() {
   };
 
   const updateQty = (productId: string, delta: number) => {
+    const current = cart.find((i) => i.productId === productId);
+    if (!current) return;
+
+    if (delta > 0) {
+      const product = products.find((p) => p._id === productId);
+      if (product && current.qty >= product.stock) {
+        toast.warning(`Maksimal stok ${current.name} tercapai (${product.stock} pcs)`);
+        return;
+      }
+    }
+
     setCart((prev) =>
       prev
         .map((i) => (i.productId === productId ? { ...i, qty: i.qty + delta } : i))
