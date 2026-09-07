@@ -261,7 +261,7 @@ export function drawBarcodeToCanvas(
   let nextY = startY + height + 5;
 
   if (showText) {
-    ctx.fillStyle = "#78716c";
+    ctx.fillStyle = color;
     ctx.font = `600 10px "JetBrains Mono", Consolas, monospace`;
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
@@ -280,6 +280,7 @@ function wrapText(
   text: string,
   maxWidth: number,
 ): string[] {
+  if (!text) return [];
   const words = text.split(" ");
   const lines: string[] = [];
   let currentLine = words[0] || "";
@@ -291,10 +292,12 @@ function wrapText(
       currentLine += " " + word;
     } else {
       lines.push(currentLine);
+      currentLine = word;
     }
-    currentLine = word;
   }
-  lines.push(currentLine);
+  if (currentLine) {
+    lines.push(currentLine);
+  }
   return lines;
 }
 
@@ -308,8 +311,8 @@ export async function renderReceiptCanvas(
   paperWidth: "58mm" | "80mm" = "80mm",
 ): Promise<HTMLCanvasElement> {
   const is58mm = paperWidth === "58mm";
-  const canvasWidth = is58mm ? 360 : 420;
-  const paddingX = is58mm ? 20 : 28;
+  const canvasWidth = is58mm ? 340 : 400;
+  const paddingX = is58mm ? 14 : 18;
   const contentWidth = canvasWidth - paddingX * 2;
   const scale = 2; // 2x Retina resolution
 
@@ -318,22 +321,19 @@ export async function renderReceiptCanvas(
     ? `TX-${String(tx._id).slice(-6).toUpperCase()}`
     : `TX-${now.getTime().toString().slice(-6)}`;
 
-  // First pass: measure total height required
-  let estimatedHeight = 220; // Header & Top info
-
+  // First pass: measure approximate height to initialize buffer canvas
+  let estimatedHeight = 160;
   const items = Array.isArray(tx.items) ? tx.items : [];
-  estimatedHeight += items.length * (is58mm ? 42 : 46);
+  estimatedHeight += items.length * (is58mm ? 44 : 48);
 
-  if (tx.subtotal && tx.subtotal !== tx.total) estimatedHeight += 24;
-  if (tx.discountAmount && tx.discountAmount > 0) estimatedHeight += 24;
+  if (tx.subtotal && tx.subtotal !== tx.total) estimatedHeight += 20;
+  if (tx.discountAmount && tx.discountAmount > 0) estimatedHeight += 20;
+  estimatedHeight += 24; // Payment method
+  if (tx.paymentMethod === "cash") estimatedHeight += 38;
+  estimatedHeight += 70; // Total Bayar box
+  estimatedHeight += 80; // Barcode & Footer
 
-  estimatedHeight += 30; // Payment method
-  if (tx.paymentMethod === "cash") estimatedHeight += 44;
-
-  estimatedHeight += 90; // Total Bayar box
-  estimatedHeight += 90; // Barcode & Footer
-
-  // Create canvas
+  // Create temporary working canvas
   const canvas = document.createElement("canvas");
   canvas.width = canvasWidth * scale;
   canvas.height = estimatedHeight * scale;
@@ -343,149 +343,66 @@ export async function renderReceiptCanvas(
 
   ctx.scale(scale, scale);
 
-  // Background card
+  // Pure White Background
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, canvasWidth, estimatedHeight);
 
-  let curY = 28;
+  // Compact top margin without logo
+  let curY = 16;
 
-  // 1. Logo Circle
-  const logoSize = is58mm ? 36 : 42;
-  const logoX = (canvasWidth - logoSize) / 2;
-  ctx.fillStyle = "#ea580c";
-  ctx.beginPath();
-  ctx.arc(logoX + logoSize / 2, curY + logoSize / 2, logoSize / 2, 0, Math.PI * 2);
-  ctx.fill();
-
-  // White "T" Logo Monogram in center
-  ctx.fillStyle = "#ffffff";
-  ctx.font = `900 ${is58mm ? 18 : 22}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText("T", canvasWidth / 2, curY + logoSize / 2);
-
-  curY += logoSize + 12;
-
-  // 2. Store Name
-  ctx.fillStyle = "#1c1917";
+  // 1. Store Name (Bold Text, No logo)
+  ctx.fillStyle = "#000000";
   ctx.font = `900 ${is58mm ? 16 : 18}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
   ctx.textAlign = "center";
-  ctx.fillText(storeName, canvasWidth / 2, curY);
-  curY += 18;
+  ctx.textBaseline = "alphabetic";
+  ctx.fillText(storeName, canvasWidth / 2, curY + 14);
+  curY += 20;
 
   // Store Address (if any)
   if (storeAddress) {
-    ctx.fillStyle = "#78716c";
+    ctx.fillStyle = "#000000";
     ctx.font = `500 ${is58mm ? 10.5 : 11.5}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
     ctx.fillText(storeAddress, canvasWidth / 2, curY);
-    curY += 16;
+    curY += 15;
   }
 
   // Date & Time
   const dateStr = `${now.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })} · ${now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}`;
-  ctx.fillStyle = "#78716c";
+  ctx.fillStyle = "#000000";
   ctx.font = `500 ${is58mm ? 10.5 : 11.5}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
   ctx.fillText(dateStr, canvasWidth / 2, curY);
-  curY += 16;
+  curY += 15;
 
   // Cashier Name
   if (tx.cashierName) {
-    ctx.fillStyle = "#57534e";
+    ctx.fillStyle = "#000000";
     ctx.font = `600 ${is58mm ? 10.5 : 11.5}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
     ctx.fillText(`Kasir: ${tx.cashierName}`, canvasWidth / 2, curY);
-    curY += 16;
+    curY += 15;
   }
 
-  // Transaction Badge #TX-XXXX
+  // Transaction Badge #TX-XXXX (Clean B&W)
   const badgeText = `#${txId}`;
   ctx.font = `800 ${is58mm ? 10.5 : 11.5}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
   const badgeWidth = ctx.measureText(badgeText).width + 16;
-  const badgeHeight = 22;
+  const badgeHeight = 20;
   const badgeX = (canvasWidth - badgeWidth) / 2;
 
-  ctx.fillStyle = "#f5f5f4";
+  ctx.fillStyle = "#ffffff";
   ctx.beginPath();
   ctx.roundRect(badgeX, curY, badgeWidth, badgeHeight, 99);
   ctx.fill();
-  ctx.strokeStyle = "#e7e5e4";
+  ctx.strokeStyle = "#000000";
   ctx.lineWidth = 1;
   ctx.stroke();
 
-  ctx.fillStyle = "#ea580c";
-  ctx.fillText(badgeText, canvasWidth / 2, curY + badgeHeight / 2 + 1);
-
-  curY += badgeHeight + 14;
+  ctx.fillStyle = "#000000";
+  ctx.fillText(badgeText, canvasWidth / 2, curY + badgeHeight / 2 + 3.5);
+  curY += badgeHeight + 12;
 
   // Dashed Separator
-  ctx.strokeStyle = "#d6d3d1";
-  ctx.lineWidth = 1.5;
-  ctx.setLineDash([4, 4]);
-  ctx.beginPath();
-  ctx.moveTo(paddingX, curY);
-  ctx.lineTo(canvasWidth - paddingX, curY);
-  ctx.stroke();
-  ctx.setLineDash([]); // Reset line dash
-
-  curY += 14;
-
-  // 3. Item List Header
-  ctx.fillStyle = "#78716c";
-  ctx.font = `800 ${is58mm ? 9.5 : 10.5}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
-  ctx.textAlign = "left";
-  ctx.fillText("ITEM BARANG", paddingX, curY);
-  ctx.textAlign = "right";
-  ctx.fillText("SUBTOTAL", canvasWidth - paddingX, curY);
-
-  curY += 12;
-  ctx.strokeStyle = "#f5f5f4";
+  ctx.strokeStyle = "#000000";
   ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(paddingX, curY);
-  ctx.lineTo(canvasWidth - paddingX, curY);
-  ctx.stroke();
-
-  curY += 10;
-
-  // 4. Items Rows
-  items.forEach((item: any) => {
-    const disc = calculateItemDiscount(item.price, item.discountType, item.discountValue);
-    const itemTotal = item.subtotal ?? disc.unitPrice * item.qty;
-
-    // Item name
-    ctx.fillStyle = "#1c1917";
-    ctx.font = `700 ${is58mm ? 11.5 : 12.5}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
-    ctx.textAlign = "left";
-
-    const nameLines = wrapText(ctx, item.name, contentWidth - 90);
-    nameLines.forEach((line) => {
-      ctx.fillText(line, paddingX, curY);
-      curY += 14;
-    });
-
-    // Subtotal (aligned right)
-    ctx.fillStyle = "#1c1917";
-    ctx.font = `800 ${is58mm ? 11.5 : 12.5}px "JetBrains Mono", Consolas, monospace`;
-    ctx.textAlign = "right";
-    ctx.fillText(formatIDR(itemTotal), canvasWidth - paddingX, curY - 2);
-
-    // Qty and unit price
-    ctx.fillStyle = "#78716c";
-    ctx.font = `500 ${is58mm ? 10 : 11}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
-    ctx.textAlign = "left";
-    let qtyDesc = `${item.qty}x ${formatIDR(item.price)}`;
-    if (disc.hasDiscount) {
-      qtyDesc += ` (Disc ${disc.discountLabel} ➔ ${formatIDR(disc.unitPrice)})`;
-    }
-    ctx.fillText(qtyDesc, paddingX, curY);
-
-    curY += 16;
-  });
-
-  curY += 4;
-
-  // Dashed Separator
-  ctx.strokeStyle = "#d6d3d1";
-  ctx.lineWidth = 1.5;
   ctx.setLineDash([4, 4]);
   ctx.beginPath();
   ctx.moveTo(paddingX, curY);
@@ -495,20 +412,107 @@ export async function renderReceiptCanvas(
 
   curY += 12;
 
-  // 5. Subtotals & Discounts
+  // 2. Item List Header
+  ctx.fillStyle = "#000000";
+  ctx.font = `800 ${is58mm ? 9.5 : 10.5}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+  ctx.textAlign = "left";
+  ctx.fillText("ITEM BARANG", paddingX, curY);
+  ctx.textAlign = "right";
+  ctx.fillText("SUBTOTAL", canvasWidth - paddingX, curY);
+
+  curY += 8;
+  ctx.strokeStyle = "#000000";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(paddingX, curY);
+  ctx.lineTo(canvasWidth - paddingX, curY);
+  ctx.stroke();
+
+  curY += 10;
+
+  // 3. Items Rows (Showing Full Name)
+  items.forEach((item: any) => {
+    const disc = calculateItemDiscount(item.price, item.discountType, item.discountValue);
+    const itemTotal = item.subtotal ?? disc.unitPrice * item.qty;
+
+    // Subtotal width
+    const subtotalStr = formatIDR(itemTotal);
+    ctx.font = `800 ${is58mm ? 11.5 : 12.5}px "JetBrains Mono", Consolas, monospace`;
+    const subtotalWidth = ctx.measureText(subtotalStr).width;
+
+    // Available width for item name
+    const nameMaxWidth = contentWidth - subtotalWidth - 10;
+
+    ctx.fillStyle = "#000000";
+    ctx.font = `700 ${is58mm ? 11.5 : 12.5}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+    ctx.textAlign = "left";
+
+    const nameLines = wrapText(ctx, item.name, nameMaxWidth);
+    const firstLine = nameLines[0] || item.name;
+
+    // Print first line of name
+    ctx.fillText(firstLine, paddingX, curY);
+
+    // Print subtotal aligned with the first line
+    ctx.fillStyle = "#000000";
+    ctx.font = `800 ${is58mm ? 11.5 : 12.5}px "JetBrains Mono", Consolas, monospace`;
+    ctx.textAlign = "right";
+    ctx.fillText(subtotalStr, canvasWidth - paddingX, curY);
+
+    curY += 14;
+
+    // Print remaining name lines if wrapped
+    if (nameLines.length > 1) {
+      ctx.fillStyle = "#000000";
+      ctx.font = `700 ${is58mm ? 11.5 : 12.5}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+      ctx.textAlign = "left";
+      for (let l = 1; l < nameLines.length; l++) {
+        ctx.fillText(nameLines[l], paddingX, curY);
+        curY += 14;
+      }
+    }
+
+    // Qty and unit price
+    ctx.fillStyle = "#000000";
+    ctx.font = `500 ${is58mm ? 10 : 11}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+    ctx.textAlign = "left";
+    let qtyDesc = `${item.qty}x ${formatIDR(item.price)}`;
+    if (disc.hasDiscount) {
+      qtyDesc += ` (Disc ${disc.discountLabel} ➔ ${formatIDR(disc.unitPrice)})`;
+    }
+    ctx.fillText(qtyDesc, paddingX, curY);
+
+    curY += 14;
+  });
+
+  curY += 2;
+
+  // Dashed Separator
+  ctx.strokeStyle = "#000000";
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.moveTo(paddingX, curY);
+  ctx.lineTo(canvasWidth - paddingX, curY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  curY += 12;
+
+  // 4. Subtotals & Discounts
   if (tx.subtotal && tx.subtotal !== tx.total) {
-    ctx.fillStyle = "#57534e";
+    ctx.fillStyle = "#000000";
     ctx.font = `500 ${is58mm ? 11 : 12}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
     ctx.textAlign = "left";
     ctx.fillText("Subtotal Produk", paddingX, curY);
     ctx.textAlign = "right";
     ctx.font = `700 ${is58mm ? 11 : 12}px "JetBrains Mono", Consolas, monospace`;
     ctx.fillText(formatIDR(tx.subtotal), canvasWidth - paddingX, curY);
-    curY += 16;
+    curY += 15;
   }
 
   if (tx.discountAmount && tx.discountAmount > 0) {
-    ctx.fillStyle = "#ea580c";
+    ctx.fillStyle = "#000000";
     ctx.font = `700 ${is58mm ? 11 : 12}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
     ctx.textAlign = "left";
     const discLabel = tx.discountType === "percentage" ? `(${tx.discountValue}%)` : "";
@@ -516,11 +520,11 @@ export async function renderReceiptCanvas(
     ctx.textAlign = "right";
     ctx.font = `800 ${is58mm ? 11 : 12}px "JetBrains Mono", Consolas, monospace`;
     ctx.fillText(`-${formatIDR(tx.discountAmount)}`, canvasWidth - paddingX, curY);
-    curY += 16;
+    curY += 15;
   }
 
   // Payment Details
-  ctx.strokeStyle = "#e7e5e4";
+  ctx.strokeStyle = "#000000";
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(paddingX, curY);
@@ -528,62 +532,59 @@ export async function renderReceiptCanvas(
   ctx.stroke();
   curY += 10;
 
-  ctx.fillStyle = "#57534e";
+  ctx.fillStyle = "#000000";
   ctx.font = `500 ${is58mm ? 11 : 12}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
   ctx.textAlign = "left";
   ctx.fillText("Metode Bayar", paddingX, curY);
   ctx.textAlign = "right";
   ctx.font = `800 ${is58mm ? 11 : 12}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
-  ctx.fillStyle = "#1c1917";
   ctx.fillText(tx.paymentMethod === "cash" ? "Tunai (Cash)" : "QRIS Digital", canvasWidth - paddingX, curY);
-  curY += 16;
+  curY += 15;
 
   if (tx.paymentMethod === "cash") {
-    ctx.fillStyle = "#57534e";
+    ctx.fillStyle = "#000000";
     ctx.font = `500 ${is58mm ? 11 : 12}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
     ctx.textAlign = "left";
     ctx.fillText("Uang Diterima", paddingX, curY);
     ctx.textAlign = "right";
     ctx.font = `700 ${is58mm ? 11 : 12}px "JetBrains Mono", Consolas, monospace`;
-    ctx.fillStyle = "#1c1917";
     ctx.fillText(formatIDR(tx.cashPaid || tx.total), canvasWidth - paddingX, curY);
-    curY += 16;
+    curY += 15;
 
-    ctx.fillStyle = "#57534e";
+    ctx.fillStyle = "#000000";
     ctx.font = `500 ${is58mm ? 11 : 12}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
     ctx.textAlign = "left";
     ctx.fillText("Kembalian", paddingX, curY);
     ctx.textAlign = "right";
     ctx.font = `800 ${is58mm ? 11 : 12}px "JetBrains Mono", Consolas, monospace`;
-    ctx.fillStyle = "#047857";
     ctx.fillText(formatIDR(tx.change || 0), canvasWidth - paddingX, curY);
-    curY += 18;
+    curY += 16;
   }
 
-  // 6. Total Bayar Box
-  const totalBoxHeight = is58mm ? 46 : 52;
-  ctx.fillStyle = "#fff7ed";
+  // 5. Total Bayar Box (Pure B&W)
+  const totalBoxHeight = is58mm ? 40 : 44;
+  ctx.fillStyle = "#ffffff";
   ctx.beginPath();
-  ctx.roundRect(paddingX, curY, contentWidth, totalBoxHeight, 10);
+  ctx.roundRect(paddingX, curY, contentWidth, totalBoxHeight, 4);
   ctx.fill();
-  ctx.strokeStyle = "#ea580c";
+  ctx.strokeStyle = "#000000";
   ctx.lineWidth = 1.5;
   ctx.stroke();
 
-  ctx.fillStyle = "#ea580c";
-  ctx.font = `900 ${is58mm ? 10.5 : 12}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+  ctx.fillStyle = "#000000";
+  ctx.font = `900 ${is58mm ? 11 : 12}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
-  ctx.fillText("TOTAL BAYAR", paddingX + 14, curY + totalBoxHeight / 2);
+  ctx.fillText("TOTAL BAYAR", paddingX + 10, curY + totalBoxHeight / 2);
 
   ctx.textAlign = "right";
-  ctx.font = `900 ${is58mm ? 18 : 21}px "JetBrains Mono", Consolas, monospace`;
-  ctx.fillText(formatIDR(tx.total), canvasWidth - paddingX - 14, curY + totalBoxHeight / 2);
+  ctx.font = `900 ${is58mm ? 16 : 19}px "JetBrains Mono", Consolas, monospace`;
+  ctx.fillText(formatIDR(tx.total), canvasWidth - paddingX - 10, curY + totalBoxHeight / 2);
 
-  curY += totalBoxHeight + 16;
+  curY += totalBoxHeight + 14;
 
-  // 7. Authentic Code 39 Barcode
-  const barcodeHeight = is58mm ? 26 : 30;
+  // 6. Authentic Code 39 Barcode (Black)
+  const barcodeHeight = is58mm ? 24 : 28;
   const barcodeNarrowWidth = is58mm ? 1.15 : 1.3;
   const barcodeWideWidth = is58mm ? 2.8 : 3.2;
 
@@ -591,22 +592,39 @@ export async function renderReceiptCanvas(
     narrowWidth: barcodeNarrowWidth,
     wideWidth: barcodeWideWidth,
     height: barcodeHeight,
-    color: "#292524",
+    color: "#000000",
     showText: true,
   });
-  curY += 8;
+  curY += 6;
 
-  // Footer text
-  ctx.fillStyle = "#78716c";
-  ctx.font = `600 ${is58mm ? 10 : 10.5}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+  // Footer text (Black)
+  ctx.fillStyle = "#000000";
+  ctx.font = `600 ${is58mm ? 9.5 : 10}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "alphabetic";
   ctx.fillText("Terima kasih atas kunjungan Anda!", canvasWidth / 2, curY);
-  curY += 14;
+  curY += 13;
 
-  ctx.fillStyle = "#ea580c";
-  ctx.font = `800 ${is58mm ? 9.5 : 10}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+  ctx.fillStyle = "#000000";
+  ctx.font = `800 ${is58mm ? 9 : 9.5}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
   ctx.fillText("Toku POS · Kasir Digital UMKM", canvasWidth / 2, curY);
+
+  curY += 16; // bottom padding
+
+  // Crop canvas height dynamically to eliminate excessive bottom margin
+  const finalHeight = Math.ceil(curY);
+  const finalCanvas = document.createElement("canvas");
+  finalCanvas.width = canvasWidth * scale;
+  finalCanvas.height = finalHeight * scale;
+  const finalCtx = finalCanvas.getContext("2d");
+  if (finalCtx) {
+    finalCtx.drawImage(
+      canvas,
+      0, 0, canvasWidth * scale, finalHeight * scale,
+      0, 0, canvasWidth * scale, finalHeight * scale,
+    );
+    return finalCanvas;
+  }
 
   return canvas;
 }
@@ -669,6 +687,120 @@ export async function downloadReceiptImage(
     console.error("Error generating receipt image:", error);
     toast.dismiss(toastId);
     toast.error("Terjadi kesalahan saat membuat gambar struk");
+  }
+}
+
+/**
+ * Generates a crisp thermal receipt image and shares it to WhatsApp.
+ * - On Mobile / Web Share supported devices: shares the actual image file directly to WhatsApp / messaging apps.
+ * - On Desktop / unsupported devices: copies the image to clipboard, opens WhatsApp Web,
+ *   and notifies the user to paste (Ctrl+V) the image in the chat.
+ */
+export async function shareReceiptWhatsAppImage(
+  tx: any,
+  storeName: string,
+  storeAddress?: string,
+  paperWidth: "58mm" | "80mm" = "80mm",
+) {
+  if (!tx) return;
+
+  const now = new Date(tx.createdAt || Date.now());
+  const txId = tx._id
+    ? `TX-${String(tx._id).slice(-6).toUpperCase()}`
+    : `TX-${now.getTime().toString().slice(-6)}`;
+
+  const toastId = toast.loading("Memproses gambar struk WhatsApp...");
+
+  try {
+    const canvas = await renderReceiptCanvas(tx, storeName, storeAddress, paperWidth);
+
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, "image/png"),
+    );
+
+    if (!blob) {
+      toast.dismiss(toastId);
+      toast.error("Gagal membuat gambar struk. Mengalihkan ke teks...");
+      shareReceiptWhatsApp(tx, storeName, storeAddress);
+      return;
+    }
+
+    const filename = `struk-${txId}.png`;
+    const file = new File([blob], filename, { type: "image/png" });
+
+    // 1. Mobile Web Share API: Native file sharing
+    if (
+      typeof navigator !== "undefined" &&
+      navigator.canShare &&
+      navigator.canShare({ files: [file] })
+    ) {
+      toast.dismiss(toastId);
+      try {
+        await navigator.share({
+          files: [file],
+          title: `Struk Transaksi #${txId} - ${storeName}`,
+          text: `Halo, berikut struk transaksi #${txId} dari ${storeName}. Terima kasih! 🙏`,
+        });
+        toast.success("Membuka menu bagikan WhatsApp...");
+        return;
+      } catch (err: any) {
+        if (err?.name === "AbortError") {
+          return;
+        }
+      }
+    }
+
+    // 2. Desktop Fallback: Copy image to clipboard & open WhatsApp Web
+    let copiedToClipboard = false;
+    if (
+      typeof navigator !== "undefined" &&
+      navigator.clipboard &&
+      typeof ClipboardItem !== "undefined"
+    ) {
+      try {
+        await navigator.clipboard.write([
+          new ClipboardItem({ "image/png": blob }),
+        ]);
+        copiedToClipboard = true;
+      } catch (clipErr) {
+        console.warn("Clipboard image write not supported, falling back to download", clipErr);
+      }
+    }
+
+    // If clipboard write failed, trigger download so user has the file ready to attach
+    if (!copiedToClipboard) {
+      const downloadUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = downloadUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(downloadUrl);
+    }
+
+    toast.dismiss(toastId);
+
+    const introText = `Halo, berikut struk transaksi #${txId} dari ${storeName}:`;
+    const waUrl = `https://wa.me/?text=${encodeURIComponent(introText)}`;
+    window.open(waUrl, "_blank");
+
+    if (copiedToClipboard) {
+      toast.success("Gambar struk disalin ke clipboard! 📋", {
+        description: "Buka chat WhatsApp lalu tekan Ctrl+V (Paste) untuk mengirim gambar.",
+        duration: 7000,
+      });
+    } else {
+      toast.success("Gambar struk diunduh! 📥", {
+        description: "Buka chat WhatsApp lalu lampirkan gambar struk yang baru diunduh.",
+        duration: 7000,
+      });
+    }
+  } catch (error) {
+    console.error("Error sharing receipt image via WhatsApp:", error);
+    toast.dismiss(toastId);
+    toast.error("Terjadi kendala. Membuka WhatsApp versi teks...");
+    shareReceiptWhatsApp(tx, storeName, storeAddress);
   }
 }
 
@@ -763,3 +895,4 @@ export function shareReceiptWhatsApp(tx: any, storeName: string, storeAddress?: 
   window.open(waUrl, "_blank");
   toast.success("Membuka WhatsApp untuk mengirim struk...");
 }
+

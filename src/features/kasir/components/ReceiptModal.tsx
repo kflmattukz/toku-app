@@ -4,7 +4,7 @@ import { KasirReceipt } from "./KasirReceipt";
 import {
   printReceipt,
   downloadReceiptImage,
-  shareReceiptWhatsApp,
+  shareReceiptWhatsAppImage,
 } from "#/lib/print";
 import {
   PrinterIcon,
@@ -32,6 +32,7 @@ export function ReceiptModal({
 }: ReceiptModalProps) {
   const [paperWidth, setPaperWidth] = useState<"58mm" | "80mm">("80mm");
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
 
   if (!open || !tx) return null;
 
@@ -64,8 +65,13 @@ export function ReceiptModal({
     });
   };
 
-  const handleShareWhatsApp = () => {
-    shareReceiptWhatsApp(tx, storeName, storeAddress);
+  const handleShareWhatsApp = async () => {
+    setIsSharing(true);
+    try {
+      await shareReceiptWhatsAppImage(tx, storeName, storeAddress, paperWidth);
+    } finally {
+      setIsSharing(false);
+    }
   };
 
   return (
@@ -177,6 +183,8 @@ export function ReceiptModal({
             variant="outline"
             size="sm"
             fullWidth
+            loading={isSharing}
+            loadingText="Memproses..."
             leftIcon={<WhatsappLogoIcon size={16} weight="bold" className="text-emerald-600" />}
             onClick={handleShareWhatsApp}
           >

@@ -50,7 +50,7 @@ function ReceiptBarcode({ value, is58mm }: { value: string; is58mm: boolean }) {
               y={0}
               width={bar.width}
               height={height}
-              fill="#292524"
+              fill="#000000"
             />
           );
         })}
@@ -60,7 +60,7 @@ function ReceiptBarcode({ value, is58mm }: { value: string; is58mm: boolean }) {
           fontFamily: '"JetBrains Mono", Consolas, monospace',
           fontSize: is58mm ? 9.5 : 10.5,
           fontWeight: 600,
-          color: "#78716c",
+          color: "#000000",
           marginTop: 4,
           letterSpacing: "0.08em",
         }}
@@ -96,14 +96,15 @@ export function KasirReceipt({
         maxWidth: is58mm ? "280px" : "360px",
         margin: "0 auto",
         background: "#ffffff",
-        color: "#1c1917",
+        color: "#000000",
         fontFamily:
           "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
         fontSize: is58mm ? "11px" : "12.5px",
         lineHeight: 1.35,
-        padding: is58mm ? "18px 14px 24px" : "24px 18px 28px",
+        padding: is58mm ? "14px 12px 18px" : "18px 16px 22px",
         boxSizing: "border-box",
-        borderRadius: "14px",
+        borderRadius: "10px",
+        border: "1px solid #000000",
         height: "auto",
         minHeight: "fit-content",
       }}
@@ -112,40 +113,15 @@ export function KasirReceipt({
       <div
         style={{
           textAlign: "center",
-          borderBottom: "1.5px dashed #d6d3d1",
-          paddingBottom: 14,
-          marginBottom: 14,
+          borderBottom: "1px dashed #000000",
+          paddingBottom: 10,
+          marginBottom: 10,
         }}
       >
-        <div
-          style={{
-            width: is58mm ? 36 : 42,
-            height: is58mm ? 36 : 42,
-            borderRadius: "50%",
-            background: "#ea580c",
-            color: "#ffffff",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            margin: "0 auto 8px",
-            boxShadow: "0 4px 10px rgba(234, 88, 12, 0.2)",
-          }}
-        >
-          <img
-            src="/logo.png"
-            alt="Toku POS"
-            style={{
-              width: is58mm ? 22 : 26,
-              height: is58mm ? 22 : 26,
-              objectFit: "contain",
-            }}
-          />
-        </div>
-
         <strong
           style={{
-            fontSize: is58mm ? 15 : 17,
-            color: "#1c1917",
+            fontSize: is58mm ? 16 : 18,
+            color: "#000000",
             display: "block",
             letterSpacing: "-0.02em",
             fontWeight: 900,
@@ -155,12 +131,12 @@ export function KasirReceipt({
         </strong>
 
         {storeAddress && (
-          <div style={{ fontSize: 10.5, color: "#78716c", marginTop: 2 }}>
+          <div style={{ fontSize: 10.5, color: "#000000", marginTop: 2 }}>
             {storeAddress}
           </div>
         )}
 
-        <div style={{ fontSize: 10.5, color: "#78716c", marginTop: 4 }}>
+        <div style={{ fontSize: 10.5, color: "#000000", marginTop: 4 }}>
           {now.toLocaleDateString("id-ID", {
             day: "numeric",
             month: "short",
@@ -174,8 +150,8 @@ export function KasirReceipt({
         </div>
 
         {tx.cashierName && (
-          <div style={{ fontSize: 10.5, color: "#57534e", marginTop: 2 }}>
-            Kasir: <strong style={{ color: "#1c1917" }}>{tx.cashierName}</strong>
+          <div style={{ fontSize: 10.5, color: "#000000", marginTop: 2 }}>
+            Kasir: <strong style={{ color: "#000000" }}>{tx.cashierName}</strong>
           </div>
         )}
 
@@ -185,11 +161,11 @@ export function KasirReceipt({
             marginTop: 6,
             padding: "2px 8px",
             borderRadius: 99,
-            background: "#f5f5f4",
-            border: "1px solid #e7e5e4",
+            background: "#ffffff",
+            border: "1px solid #000000",
             fontSize: 10.5,
             fontWeight: 800,
-            color: "#ea580c",
+            color: "#000000",
             letterSpacing: "0.02em",
           }}
         >
@@ -198,18 +174,18 @@ export function KasirReceipt({
       </div>
 
       {/* Item List Header */}
-      <div style={{ marginBottom: 12 }}>
+      <div style={{ marginBottom: 10 }}>
         <div
           style={{
             display: "flex",
             justifyContent: "space-between",
             fontSize: 9.5,
             fontWeight: 800,
-            color: "#78716c",
+            color: "#000000",
             textTransform: "uppercase",
             letterSpacing: "0.08em",
             marginBottom: 6,
-            borderBottom: "1px solid #f5f5f4",
+            borderBottom: "1px solid #000000",
             paddingBottom: 4,
           }}
         >
@@ -229,8 +205,8 @@ export function KasirReceipt({
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "flex-start",
-                padding: "5px 0",
-                borderBottom: i === tx.items.length - 1 ? "none" : "1px dashed #f5f5f4",
+                padding: "4px 0",
+                borderBottom: i === tx.items.length - 1 ? "none" : "1px dashed #e5e5e5",
               }}
             >
               <div style={{ flex: 1, minWidth: 0, paddingRight: 8 }}>
@@ -238,7 +214,7 @@ export function KasirReceipt({
                   style={{
                     fontSize: is58mm ? 11.5 : 12.5,
                     fontWeight: 700,
-                    color: "#1c1917",
+                    color: "#000000",
                     wordBreak: "break-word",
                   }}
                 >
@@ -247,7 +223,7 @@ export function KasirReceipt({
                 <div
                   style={{
                     fontSize: 10.5,
-                    color: "#78716c",
+                    color: "#000000",
                     display: "flex",
                     alignItems: "center",
                     gap: 3,
@@ -259,7 +235,7 @@ export function KasirReceipt({
                     {item.qty}x {formatIDR(item.price)}
                   </span>
                   {disc.hasDiscount && (
-                    <span style={{ color: "#ea580c", fontWeight: 700 }}>
+                    <span style={{ color: "#000000", fontWeight: 700 }}>
                       (Disc {disc.discountLabel} ➔ {formatIDR(disc.unitPrice)})
                     </span>
                   )}
@@ -272,7 +248,7 @@ export function KasirReceipt({
                   style={{
                     fontSize: is58mm ? 11.5 : 12.5,
                     fontWeight: 800,
-                    color: "#1c1917",
+                    color: "#000000",
                   }}
                 >
                   {formatIDR(itemTotal)}
@@ -282,7 +258,7 @@ export function KasirReceipt({
                     className="price"
                     style={{
                       fontSize: 9.5,
-                      color: "#a8a29e",
+                      color: "#555555",
                       textDecoration: "line-through",
                     }}
                   >
@@ -298,9 +274,9 @@ export function KasirReceipt({
       {/* Subtotals & Discounts Breakdown */}
       <div
         style={{
-          borderTop: "1.5px dashed #d6d3d1",
-          paddingTop: 10,
-          marginBottom: 10,
+          borderTop: "1px dashed #000000",
+          paddingTop: 8,
+          marginBottom: 8,
         }}
       >
         {tx.subtotal && tx.subtotal !== tx.total && (
@@ -310,7 +286,7 @@ export function KasirReceipt({
               justifyContent: "space-between",
               marginBottom: 4,
               fontSize: is58mm ? 11 : 12,
-              color: "#57534e",
+              color: "#000000",
             }}
           >
             <span>Subtotal Produk</span>
@@ -325,7 +301,7 @@ export function KasirReceipt({
               justifyContent: "space-between",
               marginBottom: 4,
               fontSize: is58mm ? 11 : 12,
-              color: "#ea580c",
+              color: "#000000",
               fontWeight: 700,
             }}
           >
@@ -340,9 +316,9 @@ export function KasirReceipt({
       {/* Payment Details */}
       <div
         style={{
-          borderTop: "1px solid #e7e5e4",
+          borderTop: "1px solid #000000",
           paddingTop: 8,
-          marginBottom: 12,
+          marginBottom: 10,
         }}
       >
         <div
@@ -351,11 +327,11 @@ export function KasirReceipt({
             justifyContent: "space-between",
             marginBottom: 4,
             fontSize: is58mm ? 11 : 12,
-            color: "#57534e",
+            color: "#000000",
           }}
         >
           <span>Metode Bayar</span>
-          <span style={{ fontWeight: 800, color: "#1c1917" }}>
+          <span style={{ fontWeight: 800, color: "#000000" }}>
             {tx.paymentMethod === "cash" ? "Tunai (Cash)" : "QRIS Digital"}
           </span>
         </div>
@@ -368,11 +344,11 @@ export function KasirReceipt({
                 justifyContent: "space-between",
                 marginBottom: 3,
                 fontSize: is58mm ? 11 : 12,
-                color: "#57534e",
+                color: "#000000",
               }}
             >
               <span>Uang Diterima</span>
-              <span className="price" style={{ color: "#1c1917" }}>
+              <span className="price" style={{ color: "#000000" }}>
                 {formatIDR(tx.cashPaid || tx.total)}
               </span>
             </div>
@@ -382,11 +358,11 @@ export function KasirReceipt({
                 justifyContent: "space-between",
                 marginBottom: 4,
                 fontSize: is58mm ? 11 : 12,
-                color: "#57534e",
+                color: "#000000",
               }}
             >
               <span>Kembalian</span>
-              <span className="price" style={{ fontWeight: 800, color: "#047857" }}>
+              <span className="price" style={{ fontWeight: 800, color: "#000000" }}>
                 {formatIDR(tx.change || 0)}
               </span>
             </div>
@@ -394,17 +370,17 @@ export function KasirReceipt({
         )}
       </div>
 
-      {/* Total Banner */}
+      {/* Total Banner (Black & White) */}
       <div
         style={{
-          background: "#fff7ed",
-          border: "1.5px solid #ea580c",
-          borderRadius: "10px",
-          padding: is58mm ? "8px 12px" : "10px 14px",
+          background: "#ffffff",
+          border: "1.5px solid #000000",
+          borderRadius: "4px",
+          padding: is58mm ? "8px 10px" : "10px 12px",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          marginBottom: 16,
+          marginBottom: 14,
           boxSizing: "border-box",
           width: "100%",
         }}
@@ -413,7 +389,7 @@ export function KasirReceipt({
           style={{
             fontSize: is58mm ? 10.5 : 11.5,
             fontWeight: 800,
-            color: "#ea580c",
+            color: "#000000",
             textTransform: "uppercase",
             letterSpacing: "0.05em",
           }}
@@ -425,7 +401,7 @@ export function KasirReceipt({
           style={{
             fontSize: is58mm ? 17 : 20,
             fontWeight: 900,
-            color: "#ea580c",
+            color: "#000000",
           }}
         >
           {formatIDR(tx.total)}
@@ -433,12 +409,12 @@ export function KasirReceipt({
       </div>
 
       {/* Authentic Barcode Graphic & Footer */}
-      <div style={{ textAlign: "center", paddingTop: 4 }}>
+      <div style={{ textAlign: "center", paddingTop: 2 }}>
         <ReceiptBarcode value={txId} is58mm={is58mm} />
-        <div style={{ fontSize: 10, color: "#78716c", fontWeight: 600 }}>
+        <div style={{ fontSize: 10, color: "#000000", fontWeight: 600 }}>
           Terima kasih atas kunjungan Anda!
         </div>
-        <div style={{ fontSize: 9.5, color: "#ea580c", fontWeight: 800, marginTop: 3 }}>
+        <div style={{ fontSize: 9.5, color: "#000000", fontWeight: 800, marginTop: 2 }}>
           Toku POS · Kasir Digital UMKM
         </div>
       </div>
