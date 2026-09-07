@@ -273,7 +273,7 @@ export function CartDrawer({
       {showMobileCart && (
         <Modal onClose={() => setShowMobileCart(false)} maxWidth={480}>
           <div className="-m-3 flex max-h-[78vh] flex-col">
-            <div className="flex items-center justify-between border-b border-[var(--color-border)] p-4">
+            <div className="flex items-center justify-between border-b border-[var(--color-border)] p-4 pr-14">
               <h2 className="text-base font-extrabold text-[var(--color-text)]">
                 Keranjang Pesanan ({totalItems})
               </h2>
