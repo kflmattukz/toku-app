@@ -116,6 +116,7 @@ body {
 
   /* Custom Easing Curves */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
@@ -743,4 +744,121 @@ input,
 select,
 textarea {
   font-family: inherit;
+}
+
+/* ==========================================================================
+   Landing Page High-Craft Motion & Spotlight System
+   ========================================================================== */
+
+/* Cursor-Tracking Spotlight Card */
+.spotlight-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-xl);
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface);
+  transition:
+    transform 220ms var(--ease-spring),
+    border-color 220ms ease,
+    box-shadow 220ms ease;
+  will-change: transform;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .spotlight-card:hover {
+    border-color: rgba(234, 88, 12, 0.45);
+    box-shadow: 0 14px 34px -10px rgba(234, 88, 12, 0.16);
+    transform: translateY(-3px);
+  }
+}
+
+.spotlight-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    480px circle at var(--mouse-x, -999px) var(--mouse-y, -999px),
+    rgba(234, 88, 12, 0.12),
+    transparent 45%
+  );
+  opacity: 0;
+  transition: opacity 300ms ease;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.dark .spotlight-card::before {
+  background: radial-gradient(
+    480px circle at var(--mouse-x, -999px) var(--mouse-y, -999px),
+    rgba(249, 115, 22, 0.18),
+    transparent 45%
+  );
+}
+
+.spotlight-card:hover::before {
+  opacity: 1;
+}
+
+/* Scroll-triggered reveal system */
+.reveal-init {
+  opacity: 0;
+  transform: translateY(18px);
+  transition:
+    opacity 500ms var(--ease-spring),
+    transform 500ms var(--ease-spring);
+  will-change: opacity, transform;
+}
+
+.reveal-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Smooth CSS Grid Accordion Transition */
+.faq-grid-wrapper {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 260ms var(--ease-spring);
+}
+
+.faq-grid-wrapper.is-open {
+  grid-template-rows: 1fr;
+}
+
+.faq-grid-content {
+  overflow: hidden;
+}
+
+/* Thermal receipt slide-out effect */
+@keyframes receiptSlideDown {
+  0% {
+    opacity: 0;
+    transform: translateY(-24px) scale(0.96);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(4px) scale(1.01);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.receipt-dispense {
+  animation: receiptSlideDown 420ms var(--ease-spring) forwards;
+}
+
+/* Respect user preferences */
+@media (prefers-reduced-motion: reduce) {
+  .reveal-init,
+  .spotlight-card,
+  .receipt-dispense,
+  .faq-grid-wrapper {
+    transition: none !important;
+    animation: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+  }
 }
