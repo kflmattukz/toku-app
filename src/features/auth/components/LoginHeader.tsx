@@ -1,12 +1,16 @@
 import { ArrowLeftIcon, MoonIcon, SunIcon } from "@phosphor-icons/react";
 import { Link } from "@tanstack/react-router";
+import { useThemeSwitchAnimation } from "#/lib/useThemeSwitchAnimation";
 
 interface LoginHeaderProps {
-  dark: boolean;
-  onToggleTheme: () => void;
+  dark?: boolean;
+  onToggleTheme?: () => void;
 }
 
-export function LoginHeader({ dark, onToggleTheme }: LoginHeaderProps) {
+export function LoginHeader({ dark: propDark, onToggleTheme }: LoginHeaderProps) {
+  const { ref: themeButtonRef, toggleSwitchTheme, dark: activeDark } = useThemeSwitchAnimation();
+  const dark = propDark ?? activeDark;
+  const handleToggle = onToggleTheme ?? toggleSwitchTheme;
   return (
     <header
       style={{
@@ -46,7 +50,8 @@ export function LoginHeader({ dark, onToggleTheme }: LoginHeaderProps) {
 
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <button
-          onClick={onToggleTheme}
+          ref={themeButtonRef}
+          onClick={handleToggle}
           title={dark ? "Ubah ke Mode Terang" : "Ubah ke Mode Gelap"}
           aria-label="Toggle theme"
           className="press-tactile"

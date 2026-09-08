@@ -4,7 +4,7 @@ import { api } from "../../../convex/_generated/api";
 import { authClient } from "#/lib/auth-client";
 import { useAppStore } from "#/lib/store-context";
 import { useEffect, useState } from "react";
-import { isDarkMode, toggleTheme } from "#/lib/utils";
+import { useThemeSwitchAnimation } from "#/lib/useThemeSwitchAnimation";
 import { toast } from "sonner";
 import { CashierLockModal } from "#/components/CashierLockModal";
 import { Tabs } from "#/components/ui/Tabs";
@@ -66,7 +66,7 @@ function Pengaturan() {
   const [lowStockThreshold, setLowStockThreshold] = useState(5);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [dark, setDark] = useState(false);
+  const { ref: themeButtonRef, toggleSwitchTheme, dark } = useThemeSwitchAnimation();
 
   // Tab 2 (Cashiers) State
   const [isOwnerUnlocked, setIsOwnerUnlocked] = useState(false);
@@ -87,12 +87,6 @@ function Pengaturan() {
   const [isUpdatingBranch, setIsUpdatingBranch] = useState(false);
   const [isDeletingBranch, setIsDeletingBranch] = useState(false);
 
-  useEffect(() => {
-    setDark(isDarkMode());
-    const onTheme = (e: any) => setDark(e.detail);
-    window.addEventListener("toku_theme_change", onTheme);
-    return () => window.removeEventListener("toku_theme_change", onTheme);
-  }, []);
 
   useEffect(() => {
     if (currentStore) {
@@ -130,11 +124,6 @@ function Pengaturan() {
     } finally {
       setSaving(false);
     }
-  };
-
-  const handleToggleDark = () => {
-    const next = toggleTheme();
-    setDark(next);
   };
 
   const handleLogout = async () => {
@@ -292,8 +281,9 @@ function Pengaturan() {
         <div className="flex items-center gap-2">
           {/* Dark Mode Toggle */}
           <button
+            ref={themeButtonRef}
             type="button"
-            onClick={handleToggleDark}
+            onClick={toggleSwitchTheme}
             className="press-tactile flex h-9 items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-xs font-bold text-[var(--color-text)] shadow-xs transition-colors hover:bg-[var(--color-surface-2)]"
             title={dark ? "Beralih ke Mode Terang" : "Beralih ke Mode Gelap"}
           >
@@ -342,7 +332,6 @@ function Pengaturan() {
             saved={saved}
             onSave={handleSaveStore}
             dark={dark}
-            onToggleDark={handleToggleDark}
             session={session}
             onLogout={handleLogout}
           />

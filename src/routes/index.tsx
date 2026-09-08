@@ -1,5 +1,5 @@
 import { authClient } from "#/lib/auth-client";
-import { isDarkMode, toggleTheme } from "#/lib/utils";
+import { isDarkMode } from "#/lib/utils";
 import {
   LandingCategories,
   LandingComparison,
@@ -62,7 +62,6 @@ function Landing() {
       {/* Glass Pill Navbar */}
       <LandingNavbar
         dark={dark}
-        onToggleTheme={() => setDark(toggleTheme())}
         session={session}
         onGoogleLogin={handleGoogleLogin}
       />

@@ -1,16 +1,20 @@
 import { ArrowRightIcon, GoogleLogoIcon, MoonIcon, SunIcon } from "@phosphor-icons/react";
 import { Link } from "@tanstack/react-router";
 import { useNavbarScroll } from "../hooks/useNavbarScroll";
+import { useThemeSwitchAnimation } from "#/lib/useThemeSwitchAnimation";
 
 interface LandingNavbarProps {
-  dark: boolean;
-  onToggleTheme: () => void;
+  dark?: boolean;
+  onToggleTheme?: () => void;
   session: unknown;
   onGoogleLogin?: () => void;
 }
 
-export function LandingNavbar({ dark, onToggleTheme, session }: LandingNavbarProps) {
+export function LandingNavbar({ dark: propDark, onToggleTheme, session }: LandingNavbarProps) {
   const isScrolled = useNavbarScroll(20);
+  const { ref: themeButtonRef, toggleSwitchTheme, dark: activeDark } = useThemeSwitchAnimation();
+  const dark = propDark ?? activeDark;
+  const handleToggle = onToggleTheme ?? toggleSwitchTheme;
 
   return (
     <nav
@@ -87,7 +91,8 @@ export function LandingNavbar({ dark, onToggleTheme, session }: LandingNavbarPro
         {/* Right Action Group */}
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
           <button
-            onClick={onToggleTheme}
+            ref={themeButtonRef}
+            onClick={handleToggle}
             title={dark ? "Ubah ke Mode Terang" : "Ubah ke Mode Gelap"}
             aria-label="Toggle theme"
             className="press-tactile"

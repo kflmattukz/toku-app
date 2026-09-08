@@ -19,8 +19,8 @@ import {
   UserIcon,
 } from "@phosphor-icons/react";
 
-import { useState, useEffect } from "react";
-import { isDarkMode, toggleTheme } from "#/lib/utils";
+import { useState } from "react";
+import { useThemeSwitchAnimation } from "#/lib/useThemeSwitchAnimation";
 import { CATEGORY_LABELS } from "#/features/pengaturan";
 import type { ActiveCashier } from "#/lib/store-context";
 import type { Id } from "../../../../convex/_generated/dataModel";
@@ -65,14 +65,7 @@ export function SidebarNav({
   onSignOut,
 }: SidebarNavProps) {
   const [showStorePicker, setShowStorePicker] = useState(false);
-  const [dark, setDark] = useState(false);
-
-  useEffect(() => {
-    setDark(isDarkMode());
-    const onTheme = (e: any) => setDark(e.detail);
-    window.addEventListener("toku_theme_change", onTheme);
-    return () => window.removeEventListener("toku_theme_change", onTheme);
-  }, []);
+  const { ref: themeButtonRef, toggleSwitchTheme, dark } = useThemeSwitchAnimation();
 
   return (
     <div className="flex h-full flex-col bg-[var(--color-surface)] select-none">
@@ -245,11 +238,9 @@ export function SidebarNav({
 
           <div className="flex items-center gap-1">
             <button
+              ref={themeButtonRef}
               type="button"
-              onClick={() => {
-                const next = toggleTheme();
-                setDark(next);
-              }}
+              onClick={toggleSwitchTheme}
               className="press-tactile flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-text)] hover:bg-[var(--color-surface-3)]"
               title={dark ? "Mode Terang" : "Mode Gelap"}
             >

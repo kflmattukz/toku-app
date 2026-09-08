@@ -11,6 +11,7 @@ import {
 } from "@phosphor-icons/react";
 import { Button } from "#/components/ui";
 import { CategorySelectPicker } from "./CategorySelectPicker";
+import { useThemeSwitchAnimation } from "#/lib/useThemeSwitchAnimation";
 
 interface StoreProfileTabProps {
   name: string;
@@ -26,8 +27,8 @@ interface StoreProfileTabProps {
   saving: boolean;
   saved: boolean;
   onSave: (e: React.FormEvent) => void;
-  dark: boolean;
-  onToggleDark: () => void;
+  dark?: boolean;
+  onToggleDark?: () => void;
   session: any;
   onLogout: () => void;
 }
@@ -46,11 +47,13 @@ export function StoreProfileTab({
   saving,
   saved,
   onSave,
-  dark,
+  dark: propDark,
   onToggleDark,
   session,
   onLogout,
 }: StoreProfileTabProps) {
+  const { ref: themeButtonRef, toggleSwitchTheme, dark: activeDark } = useThemeSwitchAnimation();
+  const isDark = propDark ?? activeDark;
   return (
     <div className="flex flex-col gap-5">
       {/* Store Information */}
@@ -160,7 +163,7 @@ export function StoreProfileTab({
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex min-w-0 items-center gap-3">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-2)]">
-              {dark ? (
+              {isDark ? (
                 <MoonIcon size={22} weight="duotone" className="text-[var(--color-brand)]" />
               ) : (
                 <SunIcon size={22} weight="duotone" className="text-amber-500" />
@@ -176,18 +179,19 @@ export function StoreProfileTab({
             </div>
           </div>
           <button
+            ref={themeButtonRef}
             type="button"
-            onClick={onToggleDark}
+            onClick={onToggleDark ?? toggleSwitchTheme}
             aria-label="Toggle dark mode"
             className={`press-tactile relative h-8 w-14 shrink-0 cursor-pointer rounded-full border-none transition-all ${
-              dark
+              isDark
                 ? "shadow-primary-500/40 bg-[var(--color-brand)] shadow-sm"
                 : "bg-[var(--color-border)]"
             }`}
           >
             <div
               className={`absolute top-0.5 h-6.5 w-6.5 rounded-full bg-white shadow-xs transition-all ${
-                dark ? "left-7" : "left-0.5"
+                isDark ? "left-7" : "left-0.5"
               }`}
             />
           </button>

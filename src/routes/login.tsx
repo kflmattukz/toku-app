@@ -1,6 +1,6 @@
 import { LoginCard, LoginHeader, PosSimulationShowcase } from "#/features/auth";
 import { authClient } from "#/lib/auth-client";
-import { isDarkMode, toggleTheme } from "#/lib/utils";
+import { isDarkMode } from "#/lib/utils";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
@@ -114,7 +114,7 @@ function LoginPage() {
       />
 
       {/* Top Floating Glass Navigation Header */}
-      <LoginHeader dark={dark} onToggleTheme={() => setDark(toggleTheme())} />
+      <LoginHeader dark={dark} />
 
       {/* Main Split-Screen Canvas */}
       <main
