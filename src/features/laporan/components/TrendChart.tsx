@@ -213,27 +213,12 @@ export function TrendChart({
           strokeWidth: 2.5,
           curve: smoothCurve,
         }),
-        ...(activeBucket
+        ...(peakBucket && peakIdx !== -1 && peakVal > 0
           ? [
-              dot([activeBucket], {
-                key: (d: any) => `active-${d.id}`,
-                x: (d: any) => d.shortLabel,
-                y: (d: any) =>
-                  metric === "revenue" ? d.revenue : metric === "profit" ? d.profit : d.count,
-                r: 6,
-                fill: isProfit ? "#059669" : "var(--color-brand)",
-                stroke: "#ffffff",
-                strokeWidth: 2,
-              }),
-            ]
-          : []),
-        ...(peakBucket && peakBucket.id !== activeBucket?.id && peakVal > 0
-          ? [
-              dot([peakBucket], {
+              dot([chartData[peakIdx]], {
                 key: (d: any) => `peak-${d.id}`,
                 x: (d: any) => d.shortLabel,
-                y: (d: any) =>
-                  metric === "revenue" ? d.revenue : metric === "profit" ? d.profit : d.count,
+                y: (d: any) => d.value,
                 r: 4.5,
                 fill: isProfit ? "#10b981" : "var(--color-brand)",
                 stroke: "#ffffff",
@@ -279,7 +264,7 @@ export function TrendChart({
         },
       },
     });
-  }, [chartData, metric, activeIdx, peakIdx, range, buckets.length, smoothCurve]);
+  }, [chartData, metric, peakIdx, peakVal, peakBucket, range, buckets.length, smoothCurve]);
 
   return (
     <section className="doppelrand-shell mb-6" onMouseLeave={() => setActiveIdx(null)}>
