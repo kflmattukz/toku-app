@@ -14,13 +14,7 @@ import {
   BranchesTab,
   PengaturanSkeleton,
 } from "#/features/pengaturan";
-import {
-  StorefrontIcon,
-  UsersIcon,
-  BuildingsIcon,
-  SunIcon,
-  MoonIcon,
-} from "@phosphor-icons/react";
+import { StorefrontIcon, UsersIcon, BuildingsIcon, SunIcon, MoonIcon } from "@phosphor-icons/react";
 import type { Id } from "../../../convex/_generated/dataModel";
 
 export const Route = createFileRoute("/_app/pengaturan")({ component: Pengaturan });
@@ -86,7 +80,6 @@ function Pengaturan() {
   const [isAddingBranch, setIsAddingBranch] = useState(false);
   const [isUpdatingBranch, setIsUpdatingBranch] = useState(false);
   const [isDeletingBranch, setIsDeletingBranch] = useState(false);
-
 
   useEffect(() => {
     if (currentStore) {
@@ -160,7 +153,7 @@ function Pengaturan() {
 
   const handleUpdateCashier = async (
     id: Id<"cashiers">,
-    data: { name: string; pin: string; role: "cashier" | "manager" | "owner" }
+    data: { name: string; pin: string; role: "cashier" | "manager" | "owner" },
   ) => {
     if (!data.name.trim() || data.pin.length !== 4) {
       toast.error("Nama kasir dan PIN 4 digit wajib diisi.");
@@ -223,7 +216,7 @@ function Pengaturan() {
 
   const handleUpdateBranch = async (
     storeId: Id<"stores">,
-    values: { branchName: string; address?: string }
+    values: { branchName: string; address?: string },
   ) => {
     setIsUpdatingBranch(true);
     try {
@@ -269,10 +262,10 @@ function Pengaturan() {
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
           <div className="eyebrow-tag">KONTROL SISTEM</div>
-          <h1 className="mt-0.5 text-2xl font-black tracking-tight text-[var(--color-text)]">
+          <h1 className="mt-0.5 text-2xl font-black tracking-tight text-(--color-text)">
             Pengaturan Toko
           </h1>
-          <p className="mt-1 text-xs text-[var(--color-text-3)]">
+          <p className="mt-1 text-xs text-(--color-text-3)">
             Konfigurasi profil usaha, staf kasir PIN, dan multi-cabang outlet
           </p>
         </div>
@@ -284,7 +277,7 @@ function Pengaturan() {
             ref={themeButtonRef}
             type="button"
             onClick={toggleSwitchTheme}
-            className="press-tactile flex h-9 items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-xs font-bold text-[var(--color-text)] shadow-xs transition-colors hover:bg-[var(--color-surface-2)]"
+            className="press-tactile flex h-9 items-center gap-2 rounded-full border border-border bg-surface px-3 text-xs font-bold text-(--color-text) shadow-xs transition-colors hover:bg-surface-2"
             title={dark ? "Beralih ke Mode Terang" : "Beralih ke Mode Gelap"}
           >
             {dark ? (
@@ -294,7 +287,7 @@ function Pengaturan() {
               </>
             ) : (
               <>
-                <MoonIcon size={16} weight="bold" className="text-[var(--color-brand)]" />
+                <MoonIcon size={16} weight="bold" className="text-brand" />
                 <span>Gelap</span>
               </>
             )}

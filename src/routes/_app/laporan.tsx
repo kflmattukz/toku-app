@@ -96,20 +96,16 @@ function Laporan() {
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
           <div className="eyebrow-tag">RINGKASAN OMSET, HPP & LABA BERSIH</div>
-          <h1 className="mt-0.5 text-2xl font-black tracking-tight text-[var(--color-text)]">
+          <h1 className="mt-0.5 text-2xl font-black tracking-tight text-(--color-text)">
             Laporan Keuangan & Profit
           </h1>
-          <p className="mt-1 text-xs text-[var(--color-text-2)]">
+          <p className="mt-1 text-xs text-(--color-text-2)">
             Pantau performa bisnis, HPP, pengeluaran, dan laba riil toko secara real-time
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <ReportPeriodFilter
-            range={range}
-            onRangeChange={setRange}
-            isLoading={isFetching}
-          />
+          <ReportPeriodFilter range={range} onRangeChange={setRange} isLoading={isFetching} />
 
           <Button
             type="button"
@@ -127,8 +123,8 @@ function Laporan() {
             onClick={togglePrivacyMode}
             className={`press-tactile flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-bold transition-all ${
               privacyMode
-                ? "border-[var(--color-brand)] bg-[var(--color-brand-light)] text-[var(--color-brand)] shadow-xs"
-                : "border-[var(--color-border)] bg-[var(--color-surface-3)] text-[var(--color-text-2)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-text)]"
+                ? "border-brand bg-brand/10 text-brand shadow-xs"
+                : "border-border bg-surface-3 text-(--color-text-2) hover:bg-surface-2 hover:text-(--color-text)"
             }`}
             title={privacyMode ? "Tampilkan Angka Omset & Cuan" : "Sensor Angka Privasi"}
           >
