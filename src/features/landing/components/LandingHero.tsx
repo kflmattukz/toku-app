@@ -2,7 +2,6 @@ import {
   ArrowRightIcon,
   CheckCircleIcon,
   GoogleLogoIcon,
-  LightningIcon,
   StorefrontIcon,
   WifiHighIcon,
 } from "@phosphor-icons/react";

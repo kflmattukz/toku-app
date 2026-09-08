@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useForm } from "@tanstack/react-form";
 import { BuildingsIcon, PlusIcon, CheckCircleIcon, WarningCircleIcon } from "@phosphor-icons/react";
 import { Button } from "#/components/ui";
 import type { Id } from "../../../../convex/_generated/dataModel";
@@ -7,45 +8,38 @@ interface BranchesTabProps {
   currentStoreId: Id<"stores">;
   userStores: any[] | undefined;
   onSelectStore: (storeId: Id<"stores">) => void;
-  newBranchName: string;
-  setNewBranchName: (val: string) => void;
-  newBranchAddress: string;
-  setNewBranchAddress: (val: string) => void;
   isAddingBranch: boolean;
-  onCreateBranch: (e: React.FormEvent) => void;
+  onCreateBranch: (values: { name: string; address?: string }) => Promise<void> | void;
 }
 
 export function BranchesTab({
   currentStoreId,
   userStores,
   onSelectStore,
-  newBranchName,
-  setNewBranchName,
-  newBranchAddress,
-  setNewBranchAddress,
   isAddingBranch,
   onCreateBranch,
 }: BranchesTabProps) {
-  const [errors, setErrors] = useState<{ name?: string }>({});
   const [isShaking, setIsShaking] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newBranchName.trim()) {
-      setErrors({ name: "Nama cabang wajib diisi" });
-      setIsShaking(true);
-      setTimeout(() => setIsShaking(false), 350);
-      return;
-    }
-    if (newBranchName.trim().length < 2) {
-      setErrors({ name: "Nama cabang minimal 2 karakter" });
-      setIsShaking(true);
-      setTimeout(() => setIsShaking(false), 350);
-      return;
-    }
-    setErrors({});
-    onCreateBranch(e);
-  };
+  const form = useForm({
+    defaultValues: {
+      name: "",
+      address: "",
+    },
+    onSubmit: async ({ value }) => {
+      const trimmedName = value.name.trim();
+      if (!trimmedName || trimmedName.length < 2) {
+        setIsShaking(true);
+        setTimeout(() => setIsShaking(false), 350);
+        return;
+      }
+      await onCreateBranch({
+        name: trimmedName,
+        address: value.address.trim() || undefined,
+      });
+      form.reset();
+    },
+  });
 
   return (
     <div className="flex flex-col gap-5">
@@ -60,51 +54,80 @@ export function BranchesTab({
           <span>Tambah Cabang Baru</span>
         </h2>
 
-        <form onSubmit={handleSubmit} noValidate autoComplete="off">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            form.handleSubmit();
+          }}
+          noValidate
+          autoComplete="off"
+        >
           <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div>
-              <label className="mb-2 block text-xs font-bold text-[var(--color-text)]">
-                Nama Cabang
-              </label>
-              <input
-                type="text"
-                name="toku_new_branch_name"
-                autoComplete="off"
-                data-1p-ignore
-                value={newBranchName}
-                onChange={(e) => {
-                  setNewBranchName(e.target.value);
-                  if (errors.name) setErrors({});
-                }}
-                placeholder="Contoh: Cabang Boulevard"
-                className={`w-full rounded-xl border bg-[var(--color-surface)] px-3.5 py-2.5 text-sm font-medium text-[var(--color-text)] transition-colors focus:ring-2 focus:outline-none ${
-                  errors.name
-                    ? "border-rose-500 bg-rose-500/5 focus:border-rose-500 focus:ring-rose-500/20"
-                    : "border-[var(--color-border)] focus:border-primary-500 focus:ring-primary-500/20"
-                }`}
-              />
-              {errors.name && (
-                <p className="mt-1.5 flex items-center gap-1 text-[11px] font-semibold text-rose-500">
-                  <WarningCircleIcon size={13} weight="fill" />
-                  <span>{errors.name}</span>
-                </p>
+            <form.Field
+              name="name"
+              validators={{
+                onChange: ({ value }) => {
+                  if (!value.trim()) return "Nama cabang wajib diisi";
+                  if (value.trim().length < 2) return "Nama cabang minimal 2 karakter";
+                  return undefined;
+                },
+              }}
+            >
+              {(field) => {
+                const errorMsg = field.state.meta.errors[0];
+                const isInvalid = Boolean(field.state.meta.isTouched && errorMsg);
+                return (
+                  <div>
+                    <label className="mb-2 block text-xs font-bold text-[var(--color-text)]">
+                      Nama Cabang
+                    </label>
+                    <input
+                      type="text"
+                      name="toku_new_branch_name"
+                      autoComplete="off"
+                      data-1p-ignore
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      placeholder="Contoh: Cabang Boulevard"
+                      className={`w-full rounded-xl border bg-[var(--color-surface)] px-3.5 py-2.5 text-sm font-medium text-[var(--color-text)] transition-colors focus:ring-2 focus:outline-none ${
+                        isInvalid
+                          ? "border-rose-500 bg-rose-500/5 focus:border-rose-500 focus:ring-rose-500/20"
+                          : "border-[var(--color-border)] focus:border-primary-500 focus:ring-primary-500/20"
+                      }`}
+                    />
+                    {isInvalid && (
+                      <p className="mt-1.5 flex items-center gap-1 text-[11px] font-semibold text-rose-500">
+                        <WarningCircleIcon size={13} weight="fill" />
+                        <span>{errorMsg}</span>
+                      </p>
+                    )}
+                  </div>
+                );
+              }}
+            </form.Field>
+
+            <form.Field name="address">
+              {(field) => (
+                <div>
+                  <label className="mb-2 block text-xs font-bold text-[var(--color-text)]">
+                    Alamat Cabang (Opsional)
+                  </label>
+                  <input
+                    type="text"
+                    name="toku_new_branch_address"
+                    autoComplete="off"
+                    data-1p-ignore
+                    value={field.state.value}
+                    onBlur={field.handleBlur}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    placeholder="Jl. Boulevard Barat Blok A"
+                    className="focus:ring-primary-500/20 focus:border-primary-500 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 text-sm font-medium text-[var(--color-text)] focus:ring-2 focus:outline-none"
+                  />
+                </div>
               )}
-            </div>
-            <div>
-              <label className="mb-2 block text-xs font-bold text-[var(--color-text)]">
-                Alamat Cabang (Opsional)
-              </label>
-              <input
-                type="text"
-                name="toku_new_branch_address"
-                autoComplete="off"
-                data-1p-ignore
-                value={newBranchAddress}
-                onChange={(e) => setNewBranchAddress(e.target.value)}
-                placeholder="Jl. Boulevard Barat Blok A"
-                className="focus:ring-primary-500/20 focus:border-primary-500 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 text-sm font-medium text-[var(--color-text)] focus:ring-2 focus:outline-none"
-              />
-            </div>
+            </form.Field>
           </div>
 
           <Button

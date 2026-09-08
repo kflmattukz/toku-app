@@ -6,10 +6,10 @@ interface LandingNavbarProps {
   dark: boolean;
   onToggleTheme: () => void;
   session: unknown;
-  onGoogleLogin: () => void;
+  onGoogleLogin?: () => void;
 }
 
-export function LandingNavbar({ dark, onToggleTheme, session, onGoogleLogin }: LandingNavbarProps) {
+export function LandingNavbar({ dark, onToggleTheme, session }: LandingNavbarProps) {
   const isScrolled = useNavbarScroll(20);
 
   return (

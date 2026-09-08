@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useForm } from "@tanstack/react-form";
 import { Modal } from "#/components/Modal";
 import {
   LockKeyIcon,
@@ -57,25 +58,19 @@ interface CashierManagementTabProps {
   onOpenOwnerAuth: () => void;
   cashiers: any[] | undefined;
   activeOwners: any[];
-  newCashierName: string;
-  setNewCashierName: (val: string) => void;
-  newCashierPin: string;
-  setNewCashierPin: (val: string) => void;
-  newCashierRole: "cashier" | "manager" | "owner";
-  setNewCashierRole: (val: "cashier" | "manager" | "owner") => void;
   isAddingCashier: boolean;
-  onCreateCashier: (e: React.FormEvent) => void;
+  onCreateCashier: (data: {
+    name: string;
+    pin: string;
+    role: "cashier" | "manager" | "owner";
+  }) => Promise<void> | void;
   editingCashier: any;
   setEditingCashier: (c: any) => void;
-  editName: string;
-  setEditName: (val: string) => void;
-  editPin: string;
-  setEditPin: (val: string) => void;
-  editRole: "cashier" | "manager" | "owner";
-  setEditRole: (val: "cashier" | "manager" | "owner") => void;
   isUpdatingCashier: boolean;
-  onUpdateCashier: (e: React.FormEvent) => void;
-  onOpenEditCashier: (cashier: any) => void;
+  onUpdateCashier: (
+    id: Id<"cashiers">,
+    data: { name: string; pin: string; role: "cashier" | "manager" | "owner" }
+  ) => Promise<void> | void;
   deletingCashier: { id: Id<"cashiers">; name: string } | null;
   setDeletingCashier: (target: { id: Id<"cashiers">; name: string } | null) => void;
   isDeletingCashier: boolean;
@@ -87,25 +82,12 @@ export function CashierManagementTab({
   onOpenOwnerAuth,
   cashiers,
   activeOwners,
-  newCashierName,
-  setNewCashierName,
-  newCashierPin,
-  setNewCashierPin,
-  newCashierRole,
-  setNewCashierRole,
   isAddingCashier,
   onCreateCashier,
   editingCashier,
   setEditingCashier,
-  editName,
-  setEditName,
-  editPin,
-  setEditPin,
-  editRole,
-  setEditRole,
   isUpdatingCashier,
   onUpdateCashier,
-  onOpenEditCashier,
   deletingCashier,
   setDeletingCashier,
   isDeletingCashier,
@@ -113,41 +95,52 @@ export function CashierManagementTab({
 }: CashierManagementTabProps) {
   const [showNewCashierPin, setShowNewCashierPin] = useState(false);
   const [showEditPin, setShowEditPin] = useState(false);
-  const [errors, setErrors] = useState<{ name?: string; pin?: string; role?: string }>({});
   const [isShaking, setIsShaking] = useState(false);
-  const [editErrors, setEditErrors] = useState<{ name?: string; pin?: string; role?: string }>({});
   const [isEditShaking, setIsEditShaking] = useState(false);
 
-  const handleAddSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const newErrors: { name?: string; pin?: string; role?: string } = {};
+  const addForm = useForm({
+    defaultValues: {
+      name: "",
+      pin: "",
+      role: "cashier" as "cashier" | "manager" | "owner",
+    },
+    onSubmit: async ({ value }) => {
+      const trimmedName = value.name.trim();
+      if (!trimmedName || trimmedName.length < 2 || !/^\d{4}$/.test(value.pin) || !value.role) {
+        setIsShaking(true);
+        setTimeout(() => setIsShaking(false), 350);
+        return;
+      }
+      await onCreateCashier({
+        name: trimmedName,
+        pin: value.pin,
+        role: value.role,
+      });
+      addForm.reset();
+    },
+  });
 
-    if (!newCashierName.trim()) {
-      newErrors.name = "Nama staf wajib diisi";
-    } else if (newCashierName.trim().length < 2) {
-      newErrors.name = "Nama staf minimal 2 karakter";
-    }
-
-    if (!newCashierPin) {
-      newErrors.pin = "PIN 4 digit wajib diisi";
-    } else if (!/^\d{4}$/.test(newCashierPin)) {
-      newErrors.pin = "PIN harus tepat 4 digit angka";
-    }
-
-    if (!newCashierRole) {
-      newErrors.role = "Peran staf wajib dipilih";
-    }
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      setIsShaking(true);
-      setTimeout(() => setIsShaking(false), 350);
-      return;
-    }
-
-    setErrors({});
-    onCreateCashier(e);
-  };
+  const editForm = useForm({
+    defaultValues: {
+      name: editingCashier?.name || "",
+      pin: editingCashier?.pin || "",
+      role: (editingCashier?.role || "cashier") as "cashier" | "manager" | "owner",
+    },
+    onSubmit: async ({ value }) => {
+      if (!editingCashier) return;
+      const trimmedName = value.name.trim();
+      if (!trimmedName || trimmedName.length < 2 || !/^\d{4}$/.test(value.pin) || !value.role) {
+        setIsEditShaking(true);
+        setTimeout(() => setIsEditShaking(false), 350);
+        return;
+      }
+      await onUpdateCashier(editingCashier._id, {
+        name: trimmedName,
+        pin: value.pin,
+        role: value.role,
+      });
+    },
+  });
 
   const getRoleBadge = (role: string) => {
     switch (role) {
@@ -211,37 +204,6 @@ export function CashierManagementTab({
     );
   }
 
-  const handleEditSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const newEditErrors: { name?: string; pin?: string; role?: string } = {};
-
-    if (!editName.trim()) {
-      newEditErrors.name = "Nama staf wajib diisi";
-    } else if (editName.trim().length < 2) {
-      newEditErrors.name = "Nama staf minimal 2 karakter";
-    }
-
-    if (!editPin) {
-      newEditErrors.pin = "PIN 4 digit wajib diisi";
-    } else if (!/^\d{4}$/.test(editPin)) {
-      newEditErrors.pin = "PIN harus tepat 4 digit angka";
-    }
-
-    if (!editRole) {
-      newEditErrors.role = "Peran staf wajib dipilih";
-    }
-
-    if (Object.keys(newEditErrors).length > 0) {
-      setEditErrors(newEditErrors);
-      setIsEditShaking(true);
-      setTimeout(() => setIsEditShaking(false), 350);
-      return;
-    }
-
-    setEditErrors({});
-    onUpdateCashier(e);
-  };
-
   return (
     <div className="flex flex-col gap-5">
       {/* Add Cashier Form */}
@@ -255,101 +217,136 @@ export function CashierManagementTab({
           <span>Tambah Staf / Kasir Baru</span>
         </h2>
 
-        <form onSubmit={handleAddSubmit} noValidate autoComplete="off">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            addForm.handleSubmit();
+          }}
+          noValidate
+          autoComplete="off"
+        >
           <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <div>
-              <label className="mb-2 block text-xs font-bold text-[var(--color-text)]">
-                Nama Staf / Kasir
-              </label>
-              <input
-                type="text"
-                name="toku_new_cashier_name"
-                autoComplete="off"
-                data-1p-ignore
-                value={newCashierName}
-                onChange={(e) => {
-                  setNewCashierName(e.target.value);
-                  if (errors.name) setErrors((prev) => ({ ...prev, name: undefined }));
-                }}
-                placeholder="Contoh: Siti Rahma"
-                className={`w-full rounded-xl border bg-[var(--color-surface)] px-3.5 py-2.5 text-sm font-medium text-[var(--color-text)] transition-colors focus:ring-2 focus:outline-none ${
-                  errors.name
-                    ? "border-rose-500 bg-rose-500/5 focus:border-rose-500 focus:ring-rose-500/20"
-                    : "border-[var(--color-border)] focus:border-primary-500 focus:ring-primary-500/20"
-                }`}
-              />
-              {errors.name && (
-                <p className="mt-1.5 flex items-center gap-1 text-[11px] font-semibold text-rose-500">
-                  <WarningCircleIcon size={13} weight="fill" />
-                  <span>{errors.name}</span>
-                </p>
+            <addForm.Field
+              name="name"
+              validators={{
+                onChange: ({ value }) => {
+                  if (!value.trim()) return "Nama staf wajib diisi";
+                  if (value.trim().length < 2) return "Nama staf minimal 2 karakter";
+                  return undefined;
+                },
+              }}
+            >
+              {(field) => {
+                const errorMsg = field.state.meta.errors[0];
+                const isInvalid = Boolean(field.state.meta.isTouched && errorMsg);
+                return (
+                  <div>
+                    <label className="mb-2 block text-xs font-bold text-[var(--color-text)]">
+                      Nama Staf / Kasir
+                    </label>
+                    <input
+                      type="text"
+                      name="toku_new_cashier_name"
+                      autoComplete="off"
+                      data-1p-ignore
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      placeholder="Contoh: Siti Rahma"
+                      className={`w-full rounded-xl border bg-[var(--color-surface)] px-3.5 py-2.5 text-sm font-medium text-[var(--color-text)] transition-colors focus:ring-2 focus:outline-none ${
+                        isInvalid
+                          ? "border-rose-500 bg-rose-500/5 focus:border-rose-500 focus:ring-rose-500/20"
+                          : "border-[var(--color-border)] focus:border-primary-500 focus:ring-primary-500/20"
+                      }`}
+                    />
+                    {isInvalid && (
+                      <p className="mt-1.5 flex items-center gap-1 text-[11px] font-semibold text-rose-500">
+                        <WarningCircleIcon size={13} weight="fill" />
+                        <span>{errorMsg}</span>
+                      </p>
+                    )}
+                  </div>
+                );
+              }}
+            </addForm.Field>
+
+            <addForm.Field
+              name="pin"
+              validators={{
+                onChange: ({ value }) => {
+                  if (!value) return "PIN 4 digit wajib diisi";
+                  if (!/^\d{4}$/.test(value)) return "PIN harus tepat 4 digit angka";
+                  return undefined;
+                },
+              }}
+            >
+              {(field) => {
+                const errorMsg = field.state.meta.errors[0];
+                const isInvalid = Boolean(field.state.meta.isTouched && errorMsg);
+                return (
+                  <div>
+                    <label className="mb-2 block text-xs font-bold text-[var(--color-text)]">
+                      PIN Masuk (4 Digit)
+                    </label>
+                    <div className="relative flex items-center">
+                      <input
+                        type={showNewCashierPin ? "text" : "password"}
+                        name="toku_new_cashier_pin"
+                        autoComplete="new-password"
+                        data-1p-ignore
+                        maxLength={4}
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) => field.handleChange(e.target.value.replace(/\D/g, ""))}
+                        placeholder="••••"
+                        className={`w-full rounded-xl border bg-[var(--color-surface)] py-2.5 pr-10 pl-3.5 text-sm font-medium text-[var(--color-text)] transition-colors focus:ring-2 focus:outline-none ${
+                          isInvalid
+                            ? "border-rose-500 bg-rose-500/5 focus:border-rose-500 focus:ring-rose-500/20"
+                            : "border-[var(--color-border)] focus:border-primary-500 focus:ring-primary-500/20"
+                        }`}
+                        style={{ letterSpacing: showNewCashierPin ? "normal" : "0.2em" }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNewCashierPin(!showNewCashierPin)}
+                        className="absolute right-3 cursor-pointer text-[var(--color-text-3)] hover:text-[var(--color-text)]"
+                        aria-label={showNewCashierPin ? "Sembunyikan PIN" : "Tampilkan PIN"}
+                      >
+                        {showNewCashierPin ? (
+                          <EyeSlashIcon size={18} weight="bold" />
+                        ) : (
+                          <EyeIcon size={18} weight="bold" />
+                        )}
+                      </button>
+                    </div>
+                    {isInvalid && (
+                      <p className="mt-1.5 flex items-center gap-1 text-[11px] font-semibold text-rose-500">
+                        <WarningCircleIcon size={13} weight="fill" />
+                        <span>{errorMsg}</span>
+                      </p>
+                    )}
+                  </div>
+                );
+              }}
+            </addForm.Field>
+
+            <addForm.Field name="role">
+              {(field) => (
+                <div>
+                  <label className="mb-2 block text-xs font-bold text-[var(--color-text)]">
+                    Peran (Role)
+                  </label>
+                  <Select<"cashier" | "manager" | "owner">
+                    value={field.state.value}
+                    onChange={(val) => field.handleChange(val)}
+                    options={ROLE_OPTIONS}
+                    variant="form"
+                    size="md"
+                  />
+                </div>
               )}
-            </div>
-            <div>
-              <label className="mb-2 block text-xs font-bold text-[var(--color-text)]">
-                PIN Masuk (4 Digit)
-              </label>
-              <div className="relative flex items-center">
-                <input
-                  type={showNewCashierPin ? "text" : "password"}
-                  name="toku_new_cashier_pin"
-                  autoComplete="new-password"
-                  data-1p-ignore
-                  maxLength={4}
-                  value={newCashierPin}
-                  onChange={(e) => {
-                    setNewCashierPin(e.target.value.replace(/\D/g, ""));
-                    if (errors.pin) setErrors((prev) => ({ ...prev, pin: undefined }));
-                  }}
-                  placeholder="••••"
-                  className={`w-full rounded-xl border bg-[var(--color-surface)] py-2.5 pr-10 pl-3.5 text-sm font-medium text-[var(--color-text)] transition-colors focus:ring-2 focus:outline-none ${
-                    errors.pin
-                      ? "border-rose-500 bg-rose-500/5 focus:border-rose-500 focus:ring-rose-500/20"
-                      : "border-[var(--color-border)] focus:border-primary-500 focus:ring-primary-500/20"
-                  }`}
-                  style={{ letterSpacing: showNewCashierPin ? "normal" : "0.2em" }}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowNewCashierPin(!showNewCashierPin)}
-                  className="absolute right-3 cursor-pointer text-[var(--color-text-3)] hover:text-[var(--color-text)]"
-                  aria-label={showNewCashierPin ? "Sembunyikan PIN" : "Tampilkan PIN"}
-                >
-                  {showNewCashierPin ? (
-                    <EyeSlashIcon size={18} weight="bold" />
-                  ) : (
-                    <EyeIcon size={18} weight="bold" />
-                  )}
-                </button>
-              </div>
-              {errors.pin && (
-                <p className="mt-1.5 flex items-center gap-1 text-[11px] font-semibold text-rose-500">
-                  <WarningCircleIcon size={13} weight="fill" />
-                  <span>{errors.pin}</span>
-                </p>
-              )}
-            </div>
-            <div>
-              <label className="mb-2 block text-xs font-bold text-[var(--color-text)]">
-                Peran (Role)
-              </label>
-              <Select<"cashier" | "manager" | "owner">
-                value={newCashierRole}
-                onChange={(val) => {
-                  setNewCashierRole(val);
-                  if (errors.role) setErrors((prev) => ({ ...prev, role: undefined }));
-                }}
-                options={ROLE_OPTIONS}
-                variant="form"
-                size="md"
-              />
-              {errors.role && (
-                <p className="mt-1.5 flex items-center gap-1 text-[11px] font-semibold text-rose-500">
-                  <WarningCircleIcon size={13} weight="fill" />
-                  <span>{errors.role}</span>
-                </p>
-              )}
-            </div>
+            </addForm.Field>
           </div>
 
           <Button
@@ -370,49 +367,38 @@ export function CashierManagementTab({
       <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-xs">
         <h2 className="mb-4 flex items-center gap-2 text-base font-extrabold text-[var(--color-text)]">
           <UsersIcon size={20} weight="bold" className="text-[var(--color-brand)]" />
-          <span>Daftar Staf Kasir ({cashiers?.length ?? 0})</span>
+          <span>Daftar Staf Aktif ({cashiers?.length ?? 0})</span>
         </h2>
 
         <div className="flex flex-col gap-2.5">
           {cashiers && cashiers.length > 0 ? (
             cashiers.map((c) => {
-              const isLastOwner = c.role === "owner" && activeOwners.length <= 1;
               const badge = getRoleBadge(c.role || "cashier");
-              const BadgeIcon = badge.icon;
+              const isLastOwner = c.role === "owner" && activeOwners.length <= 1;
+
               return (
                 <div
                   key={c._id}
                   className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-2)] p-3.5"
                 >
-                  <div className="flex min-w-0 items-center gap-3">
+                  <div className="flex items-center gap-3">
                     <div
-                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-base font-extrabold"
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border text-[var(--color-brand)]"
                       style={{
                         background: badge.bg,
+                        borderColor: badge.border,
                         color: badge.color,
-                        border: badge.border,
                       }}
                     >
-                      {c.name.charAt(0).toUpperCase()}
+                      <badge.icon size={20} weight="duotone" />
                     </div>
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2 text-sm font-extrabold text-[var(--color-text)]">
-                        <span>{c.name}</span>
-                        <span
-                          className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-extrabold"
-                          style={{
-                            color: badge.color,
-                            background: badge.bg,
-                            border: badge.border,
-                          }}
-                        >
-                          <BadgeIcon size={12} weight="bold" />
-                          <span>{badge.label}</span>
+                    <div>
+                      <div className="text-sm font-extrabold text-[var(--color-text)]">{c.name}</div>
+                      <div className="flex items-center gap-1.5 text-xs text-[var(--color-text-3)]">
+                        <span style={{ color: badge.color }} className="font-bold">
+                          {badge.label}
                         </span>
-                      </div>
-                      <div className="mt-0.5 flex items-center gap-2 text-xs text-[var(--color-text-3)]">
-                        <span>PIN: ••••</span>
-                        {isLastOwner && (
+                        {c.role === "owner" && (
                           <>
                             <span>•</span>
                             <span className="font-bold text-[var(--color-brand)]">Owner Utama</span>
@@ -426,8 +412,12 @@ export function CashierManagementTab({
                     <button
                       type="button"
                       onClick={() => {
-                        setEditErrors({});
-                        onOpenEditCashier(c);
+                        setEditingCashier(c);
+                        editForm.reset({
+                          name: c.name || "",
+                          pin: c.pin || "",
+                          role: c.role || "cashier",
+                        });
                       }}
                       className="press-tactile flex cursor-pointer items-center gap-1.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-xs font-bold text-[var(--color-text)] hover:bg-[var(--color-surface-2)]"
                       title="Edit Staf / Ubah PIN"
@@ -473,107 +463,142 @@ export function CashierManagementTab({
             </div>
 
             <form
-              onSubmit={handleEditSubmit}
+              onSubmit={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                editForm.handleSubmit();
+              }}
               noValidate
               autoComplete="off"
               className={isEditShaking ? "animate-shake" : ""}
             >
               <div className="mb-3.5">
-                <label className="mb-2 block text-xs font-bold text-[var(--color-text)]">
-                  Nama Staf / Kasir
-                </label>
-                <input
-                  type="text"
-                  name="toku_edit_cashier_name"
-                  autoComplete="off"
-                  data-1p-ignore
-                  value={editName}
-                  onChange={(e) => {
-                    setEditName(e.target.value);
-                    if (editErrors.name) setEditErrors((prev) => ({ ...prev, name: undefined }));
+                <editForm.Field
+                  name="name"
+                  validators={{
+                    onChange: ({ value }) => {
+                      if (!value.trim()) return "Nama staf wajib diisi";
+                      if (value.trim().length < 2) return "Nama staf minimal 2 karakter";
+                      return undefined;
+                    },
                   }}
-                  className={`w-full rounded-xl border bg-[var(--color-surface)] px-3.5 py-2.5 text-sm font-medium text-[var(--color-text)] transition-colors focus:ring-2 focus:outline-none ${
-                    editErrors.name
-                      ? "border-rose-500 bg-rose-500/5 focus:border-rose-500 focus:ring-rose-500/20"
-                      : "border-[var(--color-border)] focus:border-primary-500 focus:ring-primary-500/20"
-                  }`}
-                />
-                {editErrors.name && (
-                  <p className="mt-1.5 flex items-center gap-1 text-[11px] font-semibold text-rose-500">
-                    <WarningCircleIcon size={13} weight="fill" />
-                    <span>{editErrors.name}</span>
-                  </p>
-                )}
+                >
+                  {(field) => {
+                    const errorMsg = field.state.meta.errors[0];
+                    const isInvalid = Boolean(field.state.meta.isTouched && errorMsg);
+                    return (
+                      <div>
+                        <label className="mb-2 block text-xs font-bold text-[var(--color-text)]">
+                          Nama Staf / Kasir
+                        </label>
+                        <input
+                          type="text"
+                          name="toku_edit_cashier_name"
+                          autoComplete="off"
+                          data-1p-ignore
+                          value={field.state.value}
+                          onBlur={field.handleBlur}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          className={`w-full rounded-xl border bg-[var(--color-surface)] px-3.5 py-2.5 text-sm font-medium text-[var(--color-text)] transition-colors focus:ring-2 focus:outline-none ${
+                            isInvalid
+                              ? "border-rose-500 bg-rose-500/5 focus:border-rose-500 focus:ring-rose-500/20"
+                              : "border-[var(--color-border)] focus:border-primary-500 focus:ring-primary-500/20"
+                          }`}
+                        />
+                        {isInvalid && (
+                          <p className="mt-1.5 flex items-center gap-1 text-[11px] font-semibold text-rose-500">
+                            <WarningCircleIcon size={13} weight="fill" />
+                            <span>{errorMsg}</span>
+                          </p>
+                        )}
+                      </div>
+                    );
+                  }}
+                </editForm.Field>
               </div>
 
               <div className="mb-3.5">
-                <label className="mb-2 block text-xs font-bold text-[var(--color-text)]">
-                  PIN Masuk (4 Digit Angka Unik)
-                </label>
-                <div className="relative flex items-center">
-                  <input
-                    type={showEditPin ? "text" : "password"}
-                    name="toku_edit_cashier_pin"
-                    autoComplete="new-password"
-                    data-1p-ignore
-                    maxLength={4}
-                    value={editPin}
-                    onChange={(e) => {
-                      setEditPin(e.target.value.replace(/\D/g, ""));
-                      if (editErrors.pin) setEditErrors((prev) => ({ ...prev, pin: undefined }));
-                    }}
-                    className={`w-full rounded-xl border bg-[var(--color-surface)] py-2.5 pr-10 pl-3.5 text-sm font-medium text-[var(--color-text)] transition-colors focus:ring-2 focus:outline-none ${
-                      editErrors.pin
-                        ? "border-rose-500 bg-rose-500/5 focus:border-rose-500 focus:ring-rose-500/20"
-                        : "border-[var(--color-border)] focus:border-primary-500 focus:ring-primary-500/20"
-                    }`}
-                    style={{ letterSpacing: showEditPin ? "normal" : "0.2em" }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowEditPin(!showEditPin)}
-                    className="absolute right-3 cursor-pointer text-[var(--color-text-3)] hover:text-[var(--color-text)]"
-                    aria-label={showEditPin ? "Sembunyikan PIN" : "Tampilkan PIN"}
-                  >
-                    {showEditPin ? (
-                      <EyeSlashIcon size={18} weight="bold" />
-                    ) : (
-                      <EyeIcon size={18} weight="bold" />
-                    )}
-                  </button>
-                </div>
-                {editErrors.pin ? (
-                  <p className="mt-1.5 flex items-center gap-1 text-[11px] font-semibold text-rose-500">
-                    <WarningCircleIcon size={13} weight="fill" />
-                    <span>{editErrors.pin}</span>
-                  </p>
-                ) : (
-                  <span className="mt-1 block text-[11px] text-[var(--color-text-3)]">
-                    Pastikan PIN tidak sama dengan staf lain agar akun tidak tertukar.
-                  </span>
-                )}
+                <editForm.Field
+                  name="pin"
+                  validators={{
+                    onChange: ({ value }) => {
+                      if (!value) return "PIN 4 digit wajib diisi";
+                      if (!/^\d{4}$/.test(value)) return "PIN harus tepat 4 digit angka";
+                      return undefined;
+                    },
+                  }}
+                >
+                  {(field) => {
+                    const errorMsg = field.state.meta.errors[0];
+                    const isInvalid = Boolean(field.state.meta.isTouched && errorMsg);
+                    return (
+                      <div>
+                        <label className="mb-2 block text-xs font-bold text-[var(--color-text)]">
+                          PIN Masuk (4 Digit Angka Unik)
+                        </label>
+                        <div className="relative flex items-center">
+                          <input
+                            type={showEditPin ? "text" : "password"}
+                            name="toku_edit_cashier_pin"
+                            autoComplete="new-password"
+                            data-1p-ignore
+                            maxLength={4}
+                            value={field.state.value}
+                            onBlur={field.handleBlur}
+                            onChange={(e) => field.handleChange(e.target.value.replace(/\D/g, ""))}
+                            className={`w-full rounded-xl border bg-[var(--color-surface)] py-2.5 pr-10 pl-3.5 text-sm font-medium text-[var(--color-text)] transition-colors focus:ring-2 focus:outline-none ${
+                              isInvalid
+                                ? "border-rose-500 bg-rose-500/5 focus:border-rose-500 focus:ring-rose-500/20"
+                                : "border-[var(--color-border)] focus:border-primary-500 focus:ring-primary-500/20"
+                            }`}
+                            style={{ letterSpacing: showEditPin ? "normal" : "0.2em" }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowEditPin(!showEditPin)}
+                            className="absolute right-3 cursor-pointer text-[var(--color-text-3)] hover:text-[var(--color-text)]"
+                            aria-label={showEditPin ? "Sembunyikan PIN" : "Tampilkan PIN"}
+                          >
+                            {showEditPin ? (
+                              <EyeSlashIcon size={18} weight="bold" />
+                            ) : (
+                              <EyeIcon size={18} weight="bold" />
+                            )}
+                          </button>
+                        </div>
+                        {isInvalid ? (
+                          <p className="mt-1.5 flex items-center gap-1 text-[11px] font-semibold text-rose-500">
+                            <WarningCircleIcon size={13} weight="fill" />
+                            <span>{errorMsg}</span>
+                          </p>
+                        ) : (
+                          <span className="mt-1 block text-[11px] text-[var(--color-text-3)]">
+                            Pastikan PIN tidak sama dengan staf lain agar akun tidak tertukar.
+                          </span>
+                        )}
+                      </div>
+                    );
+                  }}
+                </editForm.Field>
               </div>
 
               <div className="mb-5">
-                <label className="mb-2 block text-xs font-bold text-[var(--color-text)]">
-                  Peran (Role)
-                </label>
-                <Select<"cashier" | "manager" | "owner">
-                  value={editRole}
-                  onChange={(val) => {
-                    setEditRole(val);
-                    if (editErrors.role) setEditErrors((prev) => ({ ...prev, role: undefined }));
-                  }}
-                  options={ROLE_OPTIONS}
-                  variant="form"
-                  size="md"
-                />
-                {editErrors.role && (
-                  <p className="mt-1.5 flex items-center gap-1 text-[11px] font-semibold text-rose-500">
-                    <WarningCircleIcon size={13} weight="fill" />
-                    <span>{editErrors.role}</span>
-                  </p>
-                )}
+                <editForm.Field name="role">
+                  {(field) => (
+                    <div>
+                      <label className="mb-2 block text-xs font-bold text-[var(--color-text)]">
+                        Peran (Role)
+                      </label>
+                      <Select<"cashier" | "manager" | "owner">
+                        value={field.state.value}
+                        onChange={(val) => field.handleChange(val)}
+                        options={ROLE_OPTIONS}
+                        variant="form"
+                        size="md"
+                      />
+                    </div>
+                  )}
+                </editForm.Field>
               </div>
 
               <div className="grid grid-cols-2 gap-3">

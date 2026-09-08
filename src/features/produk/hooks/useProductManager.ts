@@ -89,17 +89,21 @@ export function useProductManager({ storeId }: UseProductManagerProps) {
     }
   };
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSave = async (overrideForm?: ProductFormState | React.FormEvent) => {
+    if (overrideForm && "preventDefault" in overrideForm) {
+      overrideForm.preventDefault();
+    }
     if (!storeId) return;
     if (imageUploading) {
       toast.error("Mohon tunggu proses upload foto selesai");
       return;
     }
-    const priceNum = parseIDRInput(form.price);
-    const costPriceNum = form.costPrice.trim() ? parseIDRInput(form.costPrice) : undefined;
-    const stockNum = parseInt(form.stock, 10) || 0;
-    if (!form.name.trim() || !form.category.trim() || priceNum <= 0) {
+    const currentData =
+      overrideForm && "name" in overrideForm ? (overrideForm as ProductFormState) : form;
+    const priceNum = parseIDRInput(currentData.price);
+    const costPriceNum = currentData.costPrice.trim() ? parseIDRInput(currentData.costPrice) : undefined;
+    const stockNum = parseInt(currentData.stock, 10) || 0;
+    if (!currentData.name.trim() || !currentData.category.trim() || priceNum <= 0) {
       toast.error("Mohon lengkapi nama, kategori, dan harga yang valid");
       return;
     }
@@ -107,14 +111,14 @@ export function useProductManager({ storeId }: UseProductManagerProps) {
     let discountTypeVal: "percentage" | "nominal" | undefined = undefined;
     let discountNum: number | undefined = undefined;
 
-    if (form.discountType === "percentage") {
-      const pct = Math.min(100, Math.max(0, parseInt(form.discountValue, 10) || 0));
+    if (currentData.discountType === "percentage") {
+      const pct = Math.min(100, Math.max(0, parseInt(currentData.discountValue, 10) || 0));
       if (pct > 0) {
         discountTypeVal = "percentage";
         discountNum = pct;
       }
-    } else if (form.discountType === "nominal") {
-      const nom = parseIDRInput(form.discountValue);
+    } else if (currentData.discountType === "nominal") {
+      const nom = parseIDRInput(currentData.discountValue);
       if (nom > 0) {
         discountTypeVal = "nominal";
         discountNum = Math.min(priceNum, nom);
@@ -126,31 +130,31 @@ export function useProductManager({ storeId }: UseProductManagerProps) {
       if (editId) {
         await updateProduct({
           id: editId,
-          name: form.name.trim(),
-          category: form.category.trim(),
+          name: currentData.name.trim(),
+          category: currentData.category.trim(),
           price: priceNum,
           costPrice: costPriceNum,
           stock: stockNum,
-          barcode: form.barcode.trim() || undefined,
-          imageId: form.imageId.trim() || undefined,
+          barcode: currentData.barcode.trim() || undefined,
+          imageId: currentData.imageId.trim() || undefined,
           discountType: discountTypeVal,
           discountValue: discountNum,
         });
-        toast.success(`Produk "${form.name}" berhasil diperbarui`);
+        toast.success(`Produk "${currentData.name}" berhasil diperbarui`);
       } else {
         await createProduct({
           storeId,
-          name: form.name.trim(),
-          category: form.category.trim(),
+          name: currentData.name.trim(),
+          category: currentData.category.trim(),
           price: priceNum,
           costPrice: costPriceNum,
           stock: stockNum,
-          barcode: form.barcode.trim() || undefined,
-          imageId: form.imageId.trim() || undefined,
+          barcode: currentData.barcode.trim() || undefined,
+          imageId: currentData.imageId.trim() || undefined,
           discountType: discountTypeVal,
           discountValue: discountNum,
         });
-        toast.success(`Produk "${form.name}" berhasil ditambahkan`);
+        toast.success(`Produk "${currentData.name}" berhasil ditambahkan`);
       }
       setShowModal(false);
     } catch {

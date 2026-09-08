@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useForm } from "@tanstack/react-form";
 import { Modal } from "#/components/Modal";
 import { formatIDRInput, parseIDRInput, formatIDR, calculateItemDiscount } from "#/lib/utils";
 import {
@@ -27,7 +28,7 @@ interface ProductFormModalProps {
   imageUploading: boolean;
   onImageFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   saving: boolean;
-  onSave: (e: React.FormEvent) => void;
+  onSave: (formData?: ProductFormState | React.FormEvent) => void;
 }
 
 export function ProductFormModal({
@@ -46,42 +47,39 @@ export function ProductFormModal({
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
+  const productForm = useForm({
+    defaultValues: form,
+    onSubmit: async ({ value }) => {
+      setSubmitted(true);
+      const priceNum = parseIDRInput(value.price);
+      if (!value.name.trim() || !value.category.trim() || priceNum <= 0) {
+        if (!value.name.trim()) {
+          document.getElementById("input-product-name")?.focus();
+        } else if (!value.category.trim()) {
+          document.getElementById("input-product-category")?.focus();
+        } else if (priceNum <= 0) {
+          document.getElementById("input-product-price")?.focus();
+        }
+        return;
+      }
+      onSave(value);
+    },
+  });
+
   useEffect(() => {
     if (open) {
       setSubmitted(false);
+      productForm.reset(form);
     }
   }, [open, editId]);
 
-  if (!open) return null;
-
-  const priceNum = parseIDRInput(form.price);
-  const discountValNum =
-    form.discountType === "percentage"
-      ? parseInt(form.discountValue, 10) || 0
-      : parseIDRInput(form.discountValue);
-
-  const preview = calculateItemDiscount(priceNum, form.discountType, discountValNum);
-
-  const isNameInvalid = submitted && !form.name.trim();
-  const isCategoryInvalid = submitted && !form.category.trim();
-  const isPriceInvalid = submitted && priceNum <= 0;
-  const hasErrors = isNameInvalid || isCategoryInvalid || isPriceInvalid;
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitted(true);
-    if (!form.name.trim() || !form.category.trim() || priceNum <= 0) {
-      if (!form.name.trim()) {
-        document.getElementById("input-product-name")?.focus();
-      } else if (!form.category.trim()) {
-        document.getElementById("input-product-category")?.focus();
-      } else if (priceNum <= 0) {
-        document.getElementById("input-product-price")?.focus();
-      }
-      return;
+  useEffect(() => {
+    if (form.imageId !== productForm.getFieldValue("imageId")) {
+      productForm.setFieldValue("imageId", form.imageId);
     }
-    onSave(e);
-  };
+  }, [form.imageId]);
+
+  if (!open) return null;
 
   return (
     <Modal onClose={onClose} maxWidth={540} showCloseButton={false}>
@@ -103,17 +101,47 @@ export function ProductFormModal({
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} noValidate className="flex flex-col">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setSubmitted(true);
+          productForm.handleSubmit();
+        }}
+        noValidate
+        className="flex flex-col"
+      >
         {/* Contained Form Card with Inset Scroll */}
         <div className="custom-scrollbar max-h-[56vh] overflow-x-hidden overflow-y-auto rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-2)] p-3 shadow-inner sm:max-h-[60vh] sm:p-4">
           <div className="flex flex-col gap-4">
             {/* Error Banner when form submission fails */}
-            {submitted && hasErrors && (
-              <div className="flex items-center gap-2.5 rounded-xl border border-rose-500/40 bg-rose-500/10 p-3 text-xs font-bold text-rose-600 dark:text-rose-400">
-                <WarningCircleIcon size={18} weight="fill" className="shrink-0 text-rose-500" />
-                <span>Mohon lengkapi bagian bertanda merah sebelum menyimpan produk.</span>
-              </div>
-            )}
+            <productForm.Subscribe
+              selector={(state) => ({
+                name: state.values.name,
+                category: state.values.category,
+                price: state.values.price,
+              })}
+            >
+              {({ name, category, price }) => {
+                const priceNum = parseIDRInput(price);
+                const hasErrors =
+                  submitted && (!name.trim() || !category.trim() || priceNum <= 0);
+
+                if (!hasErrors) return null;
+
+                return (
+                  <div className="flex items-center gap-2.5 rounded-xl border border-rose-500/40 bg-rose-500/10 p-3 text-xs font-bold text-rose-600 dark:text-rose-400">
+                    <WarningCircleIcon
+                      size={18}
+                      weight="fill"
+                      className="shrink-0 text-rose-500"
+                    />
+                    <span>Mohon lengkapi bagian bertanda merah sebelum menyimpan produk.</span>
+                  </div>
+                );
+              }}
+            </productForm.Subscribe>
+
             {/* Foto Produk / Upload Box */}
             <div>
               <label className="mb-1.5 block text-xs font-bold text-[var(--color-text)]">
@@ -171,6 +199,7 @@ export function ProductFormModal({
                   <button
                     type="button"
                     onClick={() => {
+                      productForm.setFieldValue("imageId", "");
                       onChangeForm((prev) => ({ ...prev, imageId: "" }));
                     }}
                     className="cursor-pointer p-1 text-[var(--color-text-3)] hover:text-rose-600"
@@ -183,199 +212,280 @@ export function ProductFormModal({
             </div>
 
             {/* Nama Produk */}
-            <div>
-              <label className="mb-1.5 flex items-center justify-between text-xs font-bold text-[var(--color-text)]">
-                <span>
-                  Nama Produk / Jasa <span className="text-rose-500">*</span>
-                </span>
-                {isNameInvalid && (
-                  <span className="text-[10px] font-extrabold text-rose-500">Wajib diisi</span>
-                )}
-              </label>
-              <input
-                id="input-product-name"
-                type="text"
-                placeholder="Contoh: Kopi Susu Aren 250ml"
-                value={form.name}
-                onChange={(e) => onChangeForm((p) => ({ ...p, name: e.target.value }))}
-                className={`w-full rounded-xl border bg-[var(--color-surface)] px-3.5 py-2.5 text-sm font-medium transition-colors focus:ring-2 focus:outline-none ${
-                  isNameInvalid
-                    ? "border-rose-500 text-[var(--color-text)] focus:border-rose-500 focus:ring-rose-500/20"
-                    : "focus:border-primary-500 focus:ring-primary-500/20 border-[var(--color-border)] text-[var(--color-text)]"
-                }`}
-              />
-              {isNameInvalid && (
-                <p className="mt-1 flex items-center gap-1 text-[11px] font-bold text-rose-500">
-                  <WarningCircleIcon size={14} weight="fill" className="shrink-0" />
-                  Nama produk tidak boleh kosong
-                </p>
-              )}
-            </div>
+            <productForm.Field
+              name="name"
+              validators={{
+                onChange: ({ value }) => (!value.trim() ? "Nama produk tidak boleh kosong" : undefined),
+              }}
+            >
+              {(field) => {
+                const isInvalid = Boolean(submitted && !field.state.value.trim());
+                return (
+                  <div>
+                    <label className="mb-1.5 flex items-center justify-between text-xs font-bold text-[var(--color-text)]">
+                      <span>
+                        Nama Produk / Jasa <span className="text-rose-500">*</span>
+                      </span>
+                      {isInvalid && (
+                        <span className="text-[10px] font-extrabold text-rose-500">Wajib diisi</span>
+                      )}
+                    </label>
+                    <input
+                      id="input-product-name"
+                      type="text"
+                      placeholder="Contoh: Kopi Susu Aren 250ml"
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => {
+                        field.handleChange(e.target.value);
+                        onChangeForm((p) => ({ ...p, name: e.target.value }));
+                      }}
+                      className={`w-full rounded-xl border bg-[var(--color-surface)] px-3.5 py-2.5 text-sm font-medium transition-colors focus:ring-2 focus:outline-none ${
+                        isInvalid
+                          ? "border-rose-500 text-[var(--color-text)] focus:border-rose-500 focus:ring-rose-500/20"
+                          : "focus:border-primary-500 focus:ring-primary-500/20 border-[var(--color-border)] text-[var(--color-text)]"
+                      }`}
+                    />
+                    {isInvalid && (
+                      <p className="mt-1 flex items-center gap-1 text-[11px] font-bold text-rose-500">
+                        <WarningCircleIcon size={14} weight="fill" className="shrink-0" />
+                        Nama produk tidak boleh kosong
+                      </p>
+                    )}
+                  </div>
+                );
+              }}
+            </productForm.Field>
 
             {/* Kategori & Barcode Grid */}
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div>
-                <label className="mb-1.5 flex items-center justify-between text-xs font-bold text-[var(--color-text)]">
-                  <span>
-                    Kategori <span className="text-rose-500">*</span>
-                  </span>
-                  {isCategoryInvalid && (
-                    <span className="text-[10px] font-extrabold text-rose-500">Wajib diisi</span>
-                  )}
-                </label>
-                <input
-                  id="input-product-category"
-                  type="text"
-                  placeholder="Contoh: Minuman, Makanan, Servis"
-                  value={form.category}
-                  onChange={(e) => onChangeForm((p) => ({ ...p, category: e.target.value }))}
-                  className={`w-full rounded-xl border bg-[var(--color-surface)] px-3.5 py-2.5 text-sm font-medium transition-colors focus:ring-2 focus:outline-none ${
-                    isCategoryInvalid
-                      ? "border-rose-500 text-[var(--color-text)] focus:border-rose-500 focus:ring-rose-500/20"
-                      : "focus:border-primary-500 focus:ring-primary-500/20 border-[var(--color-border)] text-[var(--color-text)]"
-                  }`}
-                />
-                {isCategoryInvalid && (
-                  <p className="mt-1 flex items-center gap-1 text-[11px] font-bold text-rose-500">
-                    <WarningCircleIcon size={14} weight="fill" className="shrink-0" />
-                    Kategori produk wajib diisi
-                  </p>
-                )}
-              </div>
+              <productForm.Field
+                name="category"
+                validators={{
+                  onChange: ({ value }) =>
+                    !value.trim() ? "Kategori produk wajib diisi" : undefined,
+                }}
+              >
+                {(field) => {
+                  const isInvalid = Boolean(submitted && !field.state.value.trim());
+                  return (
+                    <div>
+                      <label className="mb-1.5 flex items-center justify-between text-xs font-bold text-[var(--color-text)]">
+                        <span>
+                          Kategori <span className="text-rose-500">*</span>
+                        </span>
+                        {isInvalid && (
+                          <span className="text-[10px] font-extrabold text-rose-500">Wajib diisi</span>
+                        )}
+                      </label>
+                      <input
+                        id="input-product-category"
+                        type="text"
+                        placeholder="Contoh: Minuman, Makanan, Servis"
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) => {
+                          field.handleChange(e.target.value);
+                          onChangeForm((p) => ({ ...p, category: e.target.value }));
+                        }}
+                        className={`w-full rounded-xl border bg-[var(--color-surface)] px-3.5 py-2.5 text-sm font-medium transition-colors focus:ring-2 focus:outline-none ${
+                          isInvalid
+                            ? "border-rose-500 text-[var(--color-text)] focus:border-rose-500 focus:ring-rose-500/20"
+                            : "focus:border-primary-500 focus:ring-primary-500/20 border-[var(--color-border)] text-[var(--color-text)]"
+                        }`}
+                      />
+                      {isInvalid && (
+                        <p className="mt-1 flex items-center gap-1 text-[11px] font-bold text-rose-500">
+                          <WarningCircleIcon size={14} weight="fill" className="shrink-0" />
+                          Kategori produk wajib diisi
+                        </p>
+                      )}
+                    </div>
+                  );
+                }}
+              </productForm.Field>
 
-              <div>
-                <label className="mb-1.5 block text-xs font-bold text-[var(--color-text)]">
-                  Barcode / SKU (Opsional)
-                </label>
-                <div className="relative flex items-center">
-                  <input
-                    type="text"
-                    placeholder="Contoh: 89912345678"
-                    value={form.barcode}
-                    onChange={(e) => onChangeForm((p) => ({ ...p, barcode: e.target.value }))}
-                    className="focus:ring-primary-500/20 focus:border-primary-500 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] py-2.5 pr-24 pl-3.5 text-sm font-medium text-[var(--color-text)] focus:ring-2 focus:outline-none"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowBarcodeScanner(true)}
-                    className="press-tactile absolute right-1.5 flex cursor-pointer items-center gap-1.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-2)] px-2.5 py-1.5 text-xs font-bold text-[var(--color-brand)] hover:bg-[var(--color-surface-3)]"
-                    title="Pindai barcode dengan kamera"
-                  >
-                    <BarcodeIcon size={16} weight="bold" />
-                    <span>Scan</span>
-                  </button>
-                </div>
-              </div>
+              <productForm.Field name="barcode">
+                {(field) => (
+                  <div>
+                    <label className="mb-1.5 block text-xs font-bold text-[var(--color-text)]">
+                      Barcode / SKU (Opsional)
+                    </label>
+                    <div className="relative flex items-center">
+                      <input
+                        type="text"
+                        placeholder="Contoh: 89912345678"
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) => {
+                          field.handleChange(e.target.value);
+                          onChangeForm((p) => ({ ...p, barcode: e.target.value }));
+                        }}
+                        className="focus:ring-primary-500/20 focus:border-primary-500 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] py-2.5 pr-24 pl-3.5 text-sm font-medium text-[var(--color-text)] focus:ring-2 focus:outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowBarcodeScanner(true)}
+                        className="press-tactile absolute right-1.5 flex cursor-pointer items-center gap-1.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-2)] px-2.5 py-1.5 text-xs font-bold text-[var(--color-brand)] hover:bg-[var(--color-surface-3)]"
+                        title="Pindai barcode dengan kamera"
+                      >
+                        <BarcodeIcon size={16} weight="bold" />
+                        <span>Scan</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </productForm.Field>
             </div>
 
             {/* Harga Jual, Modal (HPP), dan Stok */}
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div>
-                <label className="mb-1.5 flex items-center justify-between text-xs font-bold text-[var(--color-text)]">
-                  <span>
-                    Harga Jual Normal (IDR) <span className="text-rose-500">*</span>
-                  </span>
-                  {isPriceInvalid && (
-                    <span className="text-[10px] font-extrabold text-rose-500">Wajib &gt; 0</span>
-                  )}
-                </label>
-                <div className="relative flex items-center">
-                  <span
-                    className={`absolute left-3.5 text-xs font-extrabold ${isPriceInvalid ? "text-rose-500" : "text-[var(--color-brand)]"}`}
-                  >
-                    Rp
-                  </span>
-                  <input
-                    id="input-product-price"
-                    type="text"
-                    inputMode="numeric"
-                    placeholder="15.000"
-                    value={form.price}
-                    onChange={(e) =>
-                      onChangeForm((p) => ({ ...p, price: formatIDRInput(e.target.value) }))
-                    }
-                    className={`w-full rounded-xl border bg-[var(--color-surface)] py-2.5 pr-3.5 pl-10 text-sm font-extrabold transition-colors focus:ring-2 focus:outline-none ${
-                      isPriceInvalid
-                        ? "border-rose-500 text-[var(--color-text)] focus:border-rose-500 focus:ring-rose-500/20"
-                        : "focus:border-primary-500 focus:ring-primary-500/20 border-[var(--color-border)] text-[var(--color-text)]"
-                    }`}
-                  />
-                </div>
-                {isPriceInvalid && (
-                  <p className="mt-1 flex items-center gap-1 text-[11px] font-bold text-rose-500">
-                    <WarningCircleIcon size={14} weight="fill" className="shrink-0" />
-                    Harga jual harus lebih dari Rp 0
-                  </p>
-                )}
-              </div>
+              <productForm.Field
+                name="price"
+                validators={{
+                  onChange: ({ value }) =>
+                    parseIDRInput(value) <= 0 ? "Harga jual harus lebih dari Rp 0" : undefined,
+                }}
+              >
+                {(field) => {
+                  const priceNum = parseIDRInput(field.state.value);
+                  const isInvalid = Boolean(submitted && priceNum <= 0);
+                  return (
+                    <div>
+                      <label className="mb-1.5 flex items-center justify-between text-xs font-bold text-[var(--color-text)]">
+                        <span>
+                          Harga Jual Normal (IDR) <span className="text-rose-500">*</span>
+                        </span>
+                        {isInvalid && (
+                          <span className="text-[10px] font-extrabold text-rose-500">Wajib &gt; 0</span>
+                        )}
+                      </label>
+                      <div className="relative flex items-center">
+                        <span
+                          className={`absolute left-3.5 text-xs font-extrabold ${isInvalid ? "text-rose-500" : "text-[var(--color-brand)]"}`}
+                        >
+                          Rp
+                        </span>
+                        <input
+                          id="input-product-price"
+                          type="text"
+                          inputMode="numeric"
+                          placeholder="15.000"
+                          value={field.state.value}
+                          onBlur={field.handleBlur}
+                          onChange={(e) => {
+                            const formatted = formatIDRInput(e.target.value);
+                            field.handleChange(formatted);
+                            onChangeForm((p) => ({ ...p, price: formatted }));
+                          }}
+                          className={`w-full rounded-xl border bg-[var(--color-surface)] py-2.5 pr-3.5 pl-10 text-sm font-extrabold transition-colors focus:ring-2 focus:outline-none ${
+                            isInvalid
+                              ? "border-rose-500 text-[var(--color-text)] focus:border-rose-500 focus:ring-rose-500/20"
+                              : "focus:border-primary-500 focus:ring-primary-500/20 border-[var(--color-border)] text-[var(--color-text)]"
+                          }`}
+                        />
+                      </div>
+                      {isInvalid && (
+                        <p className="mt-1 flex items-center gap-1 text-[11px] font-bold text-rose-500">
+                          <WarningCircleIcon size={14} weight="fill" className="shrink-0" />
+                          Harga jual harus lebih dari Rp 0
+                        </p>
+                      )}
+                    </div>
+                  );
+                }}
+              </productForm.Field>
 
-              <div>
-                <label className="mb-1.5 flex items-center justify-between text-xs font-bold text-[var(--color-text)]">
-                  <span>Harga Modal / Beli (HPP)</span>
-                  <span className="text-[10px] font-normal text-[var(--color-text-3)]">
-                    Opsional
-                  </span>
-                </label>
-                <div className="relative flex items-center">
-                  <span className="absolute left-3.5 text-xs font-extrabold text-[var(--color-text-3)]">
-                    Rp
-                  </span>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    placeholder="Contoh: 10.000"
-                    value={form.costPrice}
-                    onChange={(e) =>
-                      onChangeForm((p) => ({ ...p, costPrice: formatIDRInput(e.target.value) }))
-                    }
-                    className="focus:ring-primary-500/20 focus:border-primary-500 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] py-2.5 pr-3.5 pl-10 text-sm font-bold text-[var(--color-text)] focus:ring-2 focus:outline-none"
-                  />
-                </div>
-              </div>
+              <productForm.Field name="costPrice">
+                {(field) => (
+                  <div>
+                    <label className="mb-1.5 flex items-center justify-between text-xs font-bold text-[var(--color-text)]">
+                      <span>Harga Modal / Beli (HPP)</span>
+                      <span className="text-[10px] font-normal text-[var(--color-text-3)]">
+                        Opsional
+                      </span>
+                    </label>
+                    <div className="relative flex items-center">
+                      <span className="absolute left-3.5 text-xs font-extrabold text-[var(--color-text-3)]">
+                        Rp
+                      </span>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        placeholder="Contoh: 10.000"
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) => {
+                          const formatted = formatIDRInput(e.target.value);
+                          field.handleChange(formatted);
+                          onChangeForm((p) => ({ ...p, costPrice: formatted }));
+                        }}
+                        className="focus:ring-primary-500/20 focus:border-primary-500 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] py-2.5 pr-3.5 pl-10 text-sm font-bold text-[var(--color-text)] focus:ring-2 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                )}
+              </productForm.Field>
             </div>
 
             {/* Live Estimasi Cuan/Margin per pcs */}
-            {(() => {
-              const costNum = parseIDRInput(form.costPrice);
-              if (priceNum > 0 && costNum > 0) {
-                const profitPerPcs = priceNum - costNum;
-                const marginPct = ((profitPerPcs / priceNum) * 100).toFixed(1);
-                const isLoss = profitPerPcs < 0;
-                return (
-                  <div
-                    className={`flex items-center justify-between rounded-xl border p-2.5 text-xs font-bold ${
-                      isLoss
-                        ? "border-rose-500/30 bg-rose-500/10 text-rose-600"
-                        : "border-emerald-500/30 bg-emerald-500/10 text-emerald-600"
-                    }`}
-                  >
-                    <span>
-                      {isLoss ? "⚠️ Peringatan Rugi:" : "💡 Estimasi Laba Kotor per pcs:"}
-                    </span>
-                    <span className="price font-black">
-                      {formatIDR(profitPerPcs)} ({marginPct}%)
-                    </span>
-                  </div>
-                );
-              }
-              return null;
-            })()}
+            <productForm.Subscribe
+              selector={(state) => ({
+                price: state.values.price,
+                costPrice: state.values.costPrice,
+              })}
+            >
+              {({ price, costPrice }) => {
+                const priceNum = parseIDRInput(price);
+                const costNum = parseIDRInput(costPrice);
+                if (priceNum > 0 && costNum > 0) {
+                  const profitPerPcs = priceNum - costNum;
+                  const marginPct = ((profitPerPcs / priceNum) * 100).toFixed(1);
+                  const isLoss = profitPerPcs < 0;
+                  return (
+                    <div
+                      className={`flex items-center justify-between rounded-xl border p-2.5 text-xs font-bold ${
+                        isLoss
+                          ? "border-rose-500/30 bg-rose-500/10 text-rose-600"
+                          : "border-emerald-500/30 bg-emerald-500/10 text-emerald-600"
+                      }`}
+                    >
+                      <span>
+                        {isLoss ? "⚠️ Peringatan Rugi:" : "💡 Estimasi Laba Kotor per pcs:"}
+                      </span>
+                      <span className="price font-black">
+                        {formatIDR(profitPerPcs)} ({marginPct}%)
+                      </span>
+                    </div>
+                  );
+                }
+                return null;
+              }}
+            </productForm.Subscribe>
 
             {/* Stok Barang */}
-            <div>
-              <label className="mb-1.5 block text-xs font-bold text-[var(--color-text)]">
-                Jumlah Stok Tersedia
-              </label>
-              <input
-                type="number"
-                min="0"
-                placeholder="Contoh: 50"
-                value={form.stock}
-                onChange={(e) => onChangeForm((p) => ({ ...p, stock: e.target.value }))}
-                required
-                className="focus:ring-primary-500/20 focus:border-primary-500 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 text-sm font-bold text-[var(--color-text)] focus:ring-2 focus:outline-none"
-              />
-            </div>
+            <productForm.Field name="stock">
+              {(field) => (
+                <div>
+                  <label className="mb-1.5 block text-xs font-bold text-[var(--color-text)]">
+                    Jumlah Stok Tersedia
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="Contoh: 50"
+                    value={field.state.value}
+                    onBlur={field.handleBlur}
+                    onChange={(e) => {
+                      field.handleChange(e.target.value);
+                      onChangeForm((p) => ({ ...p, stock: e.target.value }));
+                    }}
+                    required
+                    className="focus:ring-primary-500/20 focus:border-primary-500 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 text-sm font-bold text-[var(--color-text)] focus:ring-2 focus:outline-none"
+                  />
+                </div>
+              )}
+            </productForm.Field>
 
             {/* Diskon Produk Section */}
             <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3.5">
@@ -383,88 +493,127 @@ export function ProductFormModal({
                 Diskon Khusus Produk
               </label>
 
-              <div className="mb-2.5 flex gap-1.5">
-                {[
-                  { key: "none", label: "Tanpa Diskon" },
-                  { key: "percentage", label: "Persen (%)" },
-                  { key: "nominal", label: "Nominal (Rp)" },
-                ].map((t) => {
-                  const active = form.discountType === t.key;
-                  return (
-                    <button
-                      key={t.key}
-                      type="button"
-                      onClick={() =>
-                        onChangeForm((p) => ({
-                          ...p,
-                          discountType: t.key as any,
-                          discountValue: t.key === p.discountType ? p.discountValue : "",
-                        }))
-                      }
-                      className={`press-tactile min-w-0 flex-1 cursor-pointer rounded-full border px-1 py-1.5 text-center text-[11px] font-bold transition-all sm:text-xs ${
-                        active
-                          ? "border-[var(--color-brand)] bg-[var(--color-brand-light)] text-[var(--color-brand)]"
-                          : "border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-text-2)]"
-                      }`}
-                    >
-                      <span className="truncate">{t.label}</span>
-                    </button>
-                  );
+              <productForm.Field name="discountType">
+                {(typeField) => (
+                  <div className="mb-2.5 flex gap-1.5">
+                    {[
+                      { key: "none", label: "Tanpa Diskon" },
+                      { key: "percentage", label: "Persen (%)" },
+                      { key: "nominal", label: "Nominal (Rp)" },
+                    ].map((t) => {
+                      const active = typeField.state.value === t.key;
+                      return (
+                        <button
+                          key={t.key}
+                          type="button"
+                          onClick={() => {
+                            typeField.handleChange(t.key as any);
+                            if (t.key !== typeField.state.value) {
+                              productForm.setFieldValue("discountValue", "");
+                            }
+                            onChangeForm((p) => ({
+                              ...p,
+                              discountType: t.key as any,
+                              discountValue: t.key === p.discountType ? p.discountValue : "",
+                            }));
+                          }}
+                          className={`press-tactile min-w-0 flex-1 cursor-pointer rounded-full border px-1 py-1.5 text-center text-[11px] font-bold transition-all sm:text-xs ${
+                            active
+                              ? "border-[var(--color-brand)] bg-[var(--color-brand-light)] text-[var(--color-brand)]"
+                              : "border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-text-2)]"
+                          }`}
+                        >
+                          <span className="truncate">{t.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </productForm.Field>
+
+              <productForm.Subscribe
+                selector={(state) => ({
+                  discountType: state.values.discountType,
+                  discountValue: state.values.discountValue,
+                  price: state.values.price,
                 })}
-              </div>
+              >
+                {({ discountType, discountValue, price }) => {
+                  const priceNum = parseIDRInput(price);
+                  const discountValNum =
+                    discountType === "percentage"
+                      ? parseInt(discountValue, 10) || 0
+                      : parseIDRInput(discountValue);
+                  const preview = calculateItemDiscount(priceNum, discountType, discountValNum);
 
-              {form.discountType === "percentage" && (
-                <div>
-                  <div className="relative flex items-center">
-                    <input
-                      type="number"
-                      min="1"
-                      max="100"
-                      placeholder="Contoh: 10"
-                      value={form.discountValue}
-                      onChange={(e) =>
-                        onChangeForm((p) => ({ ...p, discountValue: e.target.value }))
-                      }
-                      className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] py-2 pr-10 pl-3.5 text-xs font-extrabold text-[var(--color-text)]"
-                    />
-                    <span className="absolute right-3.5 text-xs font-extrabold text-[var(--color-brand)]">
-                      %
-                    </span>
-                  </div>
-                </div>
-              )}
+                  return (
+                    <>
+                      {discountType === "percentage" && (
+                        <productForm.Field name="discountValue">
+                          {(valField) => (
+                            <div>
+                              <div className="relative flex items-center">
+                                <input
+                                  type="number"
+                                  min="1"
+                                  max="100"
+                                  placeholder="Contoh: 10"
+                                  value={valField.state.value}
+                                  onBlur={valField.handleBlur}
+                                  onChange={(e) => {
+                                    valField.handleChange(e.target.value);
+                                    onChangeForm((p) => ({ ...p, discountValue: e.target.value }));
+                                  }}
+                                  className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] py-2 pr-10 pl-3.5 text-xs font-extrabold text-[var(--color-text)]"
+                                />
+                                <span className="absolute right-3.5 text-xs font-extrabold text-[var(--color-brand)]">
+                                  %
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                        </productForm.Field>
+                      )}
 
-              {form.discountType === "nominal" && (
-                <div>
-                  <div className="relative flex items-center">
-                    <span className="absolute left-3.5 text-xs font-extrabold text-[var(--color-brand)]">
-                      Rp
-                    </span>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      placeholder="Contoh: 5.000"
-                      value={form.discountValue}
-                      onChange={(e) =>
-                        onChangeForm((p) => ({
-                          ...p,
-                          discountValue: formatIDRInput(e.target.value),
-                        }))
-                      }
-                      className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] py-2 pr-3.5 pl-10 text-xs font-extrabold text-[var(--color-text)]"
-                    />
-                  </div>
-                </div>
-              )}
+                      {discountType === "nominal" && (
+                        <productForm.Field name="discountValue">
+                          {(valField) => (
+                            <div>
+                              <div className="relative flex items-center">
+                                <span className="absolute left-3.5 text-xs font-extrabold text-[var(--color-brand)]">
+                                  Rp
+                                </span>
+                                <input
+                                  type="text"
+                                  inputMode="numeric"
+                                  placeholder="Contoh: 5.000"
+                                  value={valField.state.value}
+                                  onBlur={valField.handleBlur}
+                                  onChange={(e) => {
+                                    const formatted = formatIDRInput(e.target.value);
+                                    valField.handleChange(formatted);
+                                    onChangeForm((p) => ({ ...p, discountValue: formatted }));
+                                  }}
+                                  className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] py-2 pr-3.5 pl-10 text-xs font-extrabold text-[var(--color-text)]"
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </productForm.Field>
+                      )}
 
-              {form.discountType !== "none" && preview.hasDiscount && (
-                <div className="mt-2.5 flex items-center justify-between rounded-xl border border-[var(--color-brand)] bg-[var(--color-brand-light)] p-2.5 text-xs">
-                  <span className="font-semibold text-[var(--color-text-2)]">Harga Akhir:</span>
-                  <span className="price font-black text-[var(--color-brand)]">
-                    {formatIDR(preview.unitPrice)}
-                  </span>
-                </div>
-              )}
+                      {discountType !== "none" && preview.hasDiscount && (
+                        <div className="mt-2.5 flex items-center justify-between rounded-xl border border-[var(--color-brand)] bg-[var(--color-brand-light)] p-2.5 text-xs">
+                          <span className="font-semibold text-[var(--color-text-2)]">Harga Akhir:</span>
+                          <span className="price font-black text-[var(--color-brand)]">
+                            {formatIDR(preview.unitPrice)}
+                          </span>
+                        </div>
+                      )}
+                    </>
+                  );
+                }}
+              </productForm.Subscribe>
             </div>
           </div>
         </div>
@@ -501,7 +650,7 @@ export function ProductFormModal({
         imageUrl={imagePreview}
         title={form.name || "Preview Foto Produk"}
         category={form.category}
-        price={priceNum}
+        price={parseIDRInput(form.price)}
       />
 
       {/* Barcode Camera Scanner */}
@@ -512,6 +661,7 @@ export function ProductFormModal({
         title="Pindai Barcode Produk"
         subtitle="Arahkan kamera ke barcode untuk mengisi otomatis"
         onScanSuccess={(code) => {
+          productForm.setFieldValue("barcode", code);
           onChangeForm((p) => ({ ...p, barcode: code }));
           triggerScanFeedback(true);
           toast.success(`Barcode ${code} berhasil dipindai`);

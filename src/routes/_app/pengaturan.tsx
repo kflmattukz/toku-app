@@ -59,16 +59,10 @@ function Pengaturan() {
   // Tab 2 (Cashiers) State
   const [isOwnerUnlocked, setIsOwnerUnlocked] = useState(false);
   const [showOwnerAuthModal, setShowOwnerAuthModal] = useState(false);
-  const [newCashierName, setNewCashierName] = useState("");
-  const [newCashierPin, setNewCashierPin] = useState("");
-  const [newCashierRole, setNewCashierRole] = useState<"cashier" | "manager" | "owner">("cashier");
   const [isAddingCashier, setIsAddingCashier] = useState(false);
 
   // Edit / Delete Cashier State
   const [editingCashier, setEditingCashier] = useState<any | null>(null);
-  const [editName, setEditName] = useState("");
-  const [editPin, setEditPin] = useState("");
-  const [editRole, setEditRole] = useState<"cashier" | "manager" | "owner">("cashier");
   const [isUpdatingCashier, setIsUpdatingCashier] = useState(false);
   const [deletingCashier, setDeletingCashier] = useState<{
     id: Id<"cashiers">;
@@ -77,8 +71,6 @@ function Pengaturan() {
   const [isDeletingCashier, setIsDeletingCashier] = useState(false);
 
   // Tab 3 (Branches) State
-  const [newBranchName, setNewBranchName] = useState("");
-  const [newBranchAddress, setNewBranchAddress] = useState("");
   const [isAddingBranch, setIsAddingBranch] = useState(false);
 
   useEffect(() => {
@@ -138,9 +130,12 @@ function Pengaturan() {
     window.location.href = "/";
   };
 
-  const handleCreateCashier = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!currentStore || !newCashierName.trim() || newCashierPin.length !== 4) {
+  const handleCreateCashier = async (data: {
+    name: string;
+    pin: string;
+    role: "cashier" | "manager" | "owner";
+  }) => {
+    if (!currentStore || !data.name.trim() || data.pin.length !== 4) {
       toast.error("Nama kasir dan PIN 4-digit wajib diisi.");
       return;
     }
@@ -148,14 +143,11 @@ function Pengaturan() {
     try {
       await createCashier({
         storeId: currentStore._id,
-        name: newCashierName.trim(),
-        pin: newCashierPin,
-        role: newCashierRole,
+        name: data.name.trim(),
+        pin: data.pin,
+        role: data.role,
       });
-      toast.success(`Staf ${newCashierName} (${newCashierRole}) berhasil ditambahkan!`);
-      setNewCashierName("");
-      setNewCashierPin("");
-      setNewCashierRole("cashier");
+      toast.success(`Staf ${data.name} (${data.role}) berhasil ditambahkan!`);
     } catch (err: any) {
       toast.error(err.message || "Gagal menambahkan staf.");
     } finally {
@@ -163,28 +155,23 @@ function Pengaturan() {
     }
   };
 
-  const handleOpenEditCashier = (c: any) => {
-    setEditingCashier(c);
-    setEditName(c.name);
-    setEditPin(c.pin);
-    setEditRole(c.role || "cashier");
-  };
-
-  const handleUpdateCashier = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingCashier || !editName.trim() || editPin.length !== 4) {
+  const handleUpdateCashier = async (
+    id: Id<"cashiers">,
+    data: { name: string; pin: string; role: "cashier" | "manager" | "owner" }
+  ) => {
+    if (!data.name.trim() || data.pin.length !== 4) {
       toast.error("Nama kasir dan PIN 4 digit wajib diisi.");
       return;
     }
     setIsUpdatingCashier(true);
     try {
       await updateCashier({
-        id: editingCashier._id,
-        name: editName.trim(),
-        pin: editPin,
-        role: editRole,
+        id,
+        name: data.name.trim(),
+        pin: data.pin,
+        role: data.role,
       });
-      toast.success(`Data staf ${editName} berhasil diperbarui!`);
+      toast.success(`Data staf ${data.name} berhasil diperbarui!`);
       setEditingCashier(null);
     } catch (err: any) {
       toast.error(err.message || "Gagal memperbarui staf.");
@@ -207,9 +194,8 @@ function Pengaturan() {
     }
   };
 
-  const handleCreateBranch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!session?.user || !newBranchName.trim()) {
+  const handleCreateBranch = async (values: { name: string; address?: string }) => {
+    if (!session?.user || !values.name.trim()) {
       toast.error("Nama cabang wajib diisi.");
       return;
     }
@@ -219,13 +205,11 @@ function Pengaturan() {
         userId: session.user.id,
         userEmail: session.user.email || undefined,
         name: currentStore?.name || "Toko Baru",
-        branchName: newBranchName.trim(),
+        branchName: values.name.trim(),
         category: (currentStore?.category as any) || "kuliner_resto",
-        address: newBranchAddress.trim() || undefined,
+        address: values.address?.trim() || undefined,
       });
-      toast.success(`Cabang "${newBranchName}" berhasil dibuat!`);
-      setNewBranchName("");
-      setNewBranchAddress("");
+      toast.success(`Cabang "${values.name}" berhasil dibuat!`);
       setSelectedStoreId(newStoreId);
     } catch (err: any) {
       toast.error(err.message || "Gagal membuat cabang baru.");
@@ -293,25 +277,12 @@ function Pengaturan() {
             onOpenOwnerAuth={() => setShowOwnerAuthModal(true)}
             cashiers={cashiers}
             activeOwners={activeOwners}
-            newCashierName={newCashierName}
-            setNewCashierName={setNewCashierName}
-            newCashierPin={newCashierPin}
-            setNewCashierPin={setNewCashierPin}
-            newCashierRole={newCashierRole}
-            setNewCashierRole={setNewCashierRole}
             isAddingCashier={isAddingCashier}
             onCreateCashier={handleCreateCashier}
             editingCashier={editingCashier}
             setEditingCashier={setEditingCashier}
-            editName={editName}
-            setEditName={setEditName}
-            editPin={editPin}
-            setEditPin={setEditPin}
-            editRole={editRole}
-            setEditRole={setEditRole}
             isUpdatingCashier={isUpdatingCashier}
             onUpdateCashier={handleUpdateCashier}
-            onOpenEditCashier={handleOpenEditCashier}
             deletingCashier={deletingCashier}
             setDeletingCashier={setDeletingCashier}
             isDeletingCashier={isDeletingCashier}
@@ -327,10 +298,6 @@ function Pengaturan() {
               setSelectedStoreId(stId);
               toast.success("Beralih ke cabang yang dipilih");
             }}
-            newBranchName={newBranchName}
-            setNewBranchName={setNewBranchName}
-            newBranchAddress={newBranchAddress}
-            setNewBranchAddress={setNewBranchAddress}
             isAddingBranch={isAddingBranch}
             onCreateBranch={handleCreateBranch}
           />
