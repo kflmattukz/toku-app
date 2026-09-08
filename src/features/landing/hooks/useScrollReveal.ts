@@ -55,9 +55,10 @@ export function useScrollReveal<T extends HTMLElement = HTMLDivElement>(
     });
 
     return () => {
+      observer.disconnect();
+      items.forEach((item) => observer.unobserve(item));
       timerIds.forEach((id) => clearTimeout(id));
       timerIds.clear();
-      observer.disconnect();
     };
   }, [threshold, rootMargin, staggerDelay]);
 
