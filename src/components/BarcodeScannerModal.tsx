@@ -222,17 +222,19 @@ export function BarcodeScannerModal({
   if (!open) return null;
 
   return (
-    <Modal onClose={onClose} maxWidth={460} showCloseButton={false} noPadding>
+    <Modal onClose={onClose} maxWidth={440} showCloseButton={false} noPadding>
       <div className="relative flex flex-col overflow-hidden rounded-[var(--radius-xl)] bg-[var(--color-surface)]">
-        {/* Header */}
+        {/* Minimalist Header */}
         <div className="flex items-center justify-between border-b border-[var(--color-border)] px-4 py-3 sm:px-5">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--color-brand-light)] text-[var(--color-brand)]">
-              <BarcodeIcon size={20} weight="bold" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-text)]">
+              <BarcodeIcon size={18} weight="regular" />
             </div>
             <div>
-              <h3 className="text-sm font-black text-[var(--color-text)] sm:text-base">{title}</h3>
-              <p className="text-[11px] font-semibold text-[var(--color-text-3)]">
+              <h3 className="text-xs font-semibold tracking-tight text-[var(--color-text)] sm:text-sm">
+                {title}
+              </h3>
+              <p className="text-[11px] text-[var(--color-text-3)]">
                 {continuous ? "Mode Berkelanjutan (Multi-Scan)" : subtitle}
               </p>
             </div>
@@ -241,46 +243,69 @@ export function BarcodeScannerModal({
           <button
             type="button"
             onClick={onClose}
-            className="press-tactile flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-text-2)] hover:bg-[var(--color-surface-3)] hover:text-[var(--color-text)]"
+            className="press-tactile flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-2)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-text)] transition-colors"
             aria-label="Tutup"
           >
-            <XIcon size={16} weight="bold" />
+            <XIcon size={14} weight="bold" />
           </button>
         </div>
 
         {/* Scanner Viewport */}
-        <div className="relative aspect-[4/3] w-full overflow-hidden bg-black sm:aspect-[16/11]">
+        <div className="relative aspect-[4/3] w-full overflow-hidden bg-neutral-950 sm:aspect-[16/11]">
           {/* html5-qrcode target container */}
           <div
             id={scannerContainerId}
             className="h-full w-full object-cover [&_video]:h-full! [&_video]:w-full! [&_video]:object-cover!"
           />
 
+          {/* Subtle status pill in continuous mode */}
+          {continuous && lastScannedInfo && (
+            <div className="pointer-events-none absolute top-3 inset-x-0 z-20 flex justify-center px-4">
+              <div
+                className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-medium backdrop-blur-md transition-all ${
+                  lastScannedInfo.success
+                    ? "border-emerald-500/30 bg-emerald-950/80 text-emerald-300"
+                    : "border-rose-500/30 bg-rose-950/80 text-rose-300"
+                }`}
+              >
+                {lastScannedInfo.success ? (
+                  <CheckCircleIcon size={13} weight="fill" className="shrink-0 text-emerald-400" />
+                ) : (
+                  <WarningCircleIcon size={13} weight="fill" className="shrink-0 text-rose-400" />
+                )}
+                <span className="truncate max-w-[240px]">
+                  {lastScannedInfo.success
+                    ? (lastScannedInfo.name ?? lastScannedInfo.code)
+                    : `Tidak ditemukan: ${lastScannedInfo.code}`}
+                </span>
+              </div>
+            </div>
+          )}
+
           {/* Target Viewfinder Overlay */}
           {!cameraError && (
             <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-6">
-              {/* Darkened corner mask */}
               <div
-                className={`relative flex h-36 w-64 items-center justify-center rounded-2xl border-2 transition-all duration-200 sm:h-44 sm:w-72 ${
+                className={`relative flex h-36 w-64 items-center justify-center rounded-xl transition-all duration-300 sm:h-44 sm:w-72 ${
                   scanFlash
-                    ? "border-emerald-400 bg-emerald-500/20 shadow-[0_0_30px_rgba(52,211,153,0.8)]"
-                    : "border-white/70 shadow-[0_0_0_9999px_rgba(0,0,0,0.45)]"
+                    ? "ring-2 ring-emerald-400/80 bg-emerald-500/10"
+                    : "shadow-[0_0_0_9999px_rgba(0,0,0,0.45)]"
                 }`}
               >
-                {/* Target Reticles (Corner brackets) */}
-                <div className="absolute -top-1.5 -left-1.5 h-4 w-4 rounded-tl-md border-t-4 border-l-4 border-[var(--color-brand)]" />
-                <div className="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-tr-md border-t-4 border-r-4 border-[var(--color-brand)]" />
-                <div className="absolute -bottom-1.5 -left-1.5 h-4 w-4 rounded-bl-md border-b-4 border-l-4 border-[var(--color-brand)]" />
-                <div className="absolute -right-1.5 -bottom-1.5 h-4 w-4 rounded-br-md border-r-4 border-b-4 border-[var(--color-brand)]" />
+                {/* Thin Corner Reticles */}
+                <div className="absolute top-0 left-0 h-3.5 w-3.5 rounded-tl-xs border-t-2 border-l-2 border-white/80" />
+                <div className="absolute top-0 right-0 h-3.5 w-3.5 rounded-tr-xs border-t-2 border-r-2 border-white/80" />
+                <div className="absolute bottom-0 left-0 h-3.5 w-3.5 rounded-bl-xs border-b-2 border-l-2 border-white/80" />
+                <div className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-br-xs border-r-2 border-b-2 border-white/80" />
 
-                {/* Animated Red Laser Scanning Line */}
-                <div className="absolute inset-x-2 h-0.5 animate-pulse bg-gradient-to-r from-transparent via-red-500 to-transparent shadow-[0_0_8px_rgba(239,68,68,0.9)]" />
+                {/* Subtle Minimalist Sweep Line */}
+                <div className="absolute inset-x-3 h-[1px] bg-gradient-to-r from-transparent via-white/80 to-transparent animate-scanner-sweep" />
 
                 {isInitializing && (
-                  <div className="flex flex-col items-center gap-2 text-white/90">
-                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                    <span className="text-[11px] font-bold tracking-wide">
-                      Menyiapkan Kamera...
+                  <div className="flex flex-col items-center gap-2 text-white/80">
+                    <div className="h-5 w-5 animate-spin rounded-full border border-white/30 border-t-white" />
+                    <span className="text-[11px] font-medium tracking-wide">
+                      Menyiapkan kamera...
                     </span>
                   </div>
                 )}
@@ -288,101 +313,73 @@ export function BarcodeScannerModal({
             </div>
           )}
 
-          {/* Flash feedback overlay */}
+          {/* Scan Flash Feedback */}
           {scanFlash && (
-            <div className="pointer-events-none absolute inset-0 animate-ping bg-emerald-500/30 transition-opacity" />
+            <div className="pointer-events-none absolute inset-0 bg-emerald-500/15 transition-opacity duration-300" />
           )}
 
           {/* Camera Error Message */}
           {cameraError && (
             <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center text-white">
-              <WarningCircleIcon size={44} weight="duotone" className="mb-2 text-rose-400" />
-              <p className="max-w-xs text-xs leading-relaxed font-semibold text-rose-200">
+              <WarningCircleIcon size={36} weight="regular" className="mb-2 text-neutral-400" />
+              <p className="max-w-xs text-xs leading-relaxed text-neutral-200">
                 {cameraError}
               </p>
-              <p className="mt-3 text-[11px] text-white/60">
+              <p className="mt-2 text-[11px] text-neutral-400">
                 Gunakan input barcode manual di bawah ini.
               </p>
             </div>
           )}
 
-          {/* Quick Floating Controls (Camera Flip & Torch) */}
+          {/* Minimalist Floating Controls (Camera Flip & Torch) */}
           {!cameraError && !isInitializing && (
-            <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-2.5 rounded-full bg-black/60 px-3 py-1.5 backdrop-blur-md">
+            <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-white/15 bg-black/50 p-1 backdrop-blur-md">
               <button
                 type="button"
                 onClick={toggleCameraFacing}
-                className="press-tactile flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-white/90 hover:bg-white/20 hover:text-white"
+                className="press-tactile flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-white/80 hover:bg-white/15 hover:text-white transition-colors"
                 title="Ganti Kamera (Depan / Belakang)"
               >
-                <CameraRotateIcon size={18} weight="bold" />
+                <CameraRotateIcon size={15} weight="bold" />
               </button>
 
               {hasTorchSupport && (
                 <button
                   type="button"
                   onClick={toggleTorch}
-                  className={`press-tactile flex h-8 w-8 cursor-pointer items-center justify-center rounded-full transition-colors ${
+                  className={`press-tactile flex h-7 w-7 cursor-pointer items-center justify-center rounded-full transition-colors ${
                     torchOn
-                      ? "bg-amber-400 text-black"
-                      : "text-white/90 hover:bg-white/20 hover:text-white"
+                      ? "bg-white text-black"
+                      : "text-white/80 hover:bg-white/15 hover:text-white"
                   }`}
                   title={torchOn ? "Matikan Lampu" : "Nyalakan Lampu Senter"}
                 >
-                  <FlashlightIcon size={18} weight="bold" />
+                  <FlashlightIcon size={15} weight="bold" />
                 </button>
               )}
             </div>
           )}
         </div>
 
-        {/* Live Feedback Banner (Continuous Kasir Mode) */}
-        {continuous && lastScannedInfo && (
-          <div
-            className={`flex items-center gap-2.5 border-b px-4 py-2.5 text-xs font-bold transition-all ${
-              lastScannedInfo.success
-                ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                : "border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400"
-            }`}
-          >
-            {lastScannedInfo.success ? (
-              <CheckCircleIcon size={18} weight="fill" className="shrink-0 text-emerald-500" />
-            ) : (
-              <WarningCircleIcon size={18} weight="fill" className="shrink-0 text-rose-500" />
-            )}
-            <div className="min-w-0 flex-1 truncate">
-              {lastScannedInfo.success ? (
-                <span>
-                  Berhasil discan: <strong>{lastScannedInfo.name ?? lastScannedInfo.code}</strong>
-                </span>
-              ) : (
-                <span>
-                  Tidak ditemukan: <strong>{lastScannedInfo.code}</strong>
-                </span>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Manual Barcode Input Fallback */}
-        <div className="border-t border-[var(--color-border)] bg-[var(--color-surface-2)] p-3 sm:p-4">
+        {/* Minimalist Manual Barcode Input Fallback */}
+        <div className="border-t border-[var(--color-border)] bg-[var(--color-surface)] p-3 sm:p-3.5">
           <form onSubmit={handleManualSubmit} className="flex items-center gap-2">
             <div className="relative flex-1">
               <input
                 type="text"
-                placeholder="Atau ketik barcode manual di sini..."
+                placeholder="Ketik barcode manual..."
                 value={manualCode}
                 onChange={(e) => setManualCode(e.target.value)}
-                className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2 text-xs font-semibold text-[var(--color-text)] placeholder-[var(--color-text-3)] focus:border-[var(--color-brand)] focus:outline-none"
+                className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-2)] px-3 py-1.5 text-xs font-mono text-[var(--color-text)] placeholder-[var(--color-text-3)] focus:border-[var(--color-text)] focus:outline-none transition-colors"
               />
             </div>
             <button
               type="submit"
               disabled={!manualCode.trim()}
-              className="press-tactile flex cursor-pointer items-center gap-1.5 rounded-xl bg-[var(--color-brand)] px-3.5 py-2 text-xs font-bold text-white shadow-xs transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
+              className="press-tactile flex cursor-pointer items-center gap-1 rounded-lg bg-[var(--color-text)] px-3 py-1.5 text-xs font-medium text-[var(--color-surface)] transition-opacity disabled:cursor-not-allowed disabled:opacity-30"
             >
               <span>Input</span>
-              <ArrowRightIcon size={14} weight="bold" />
+              <ArrowRightIcon size={12} weight="bold" />
             </button>
           </form>
         </div>

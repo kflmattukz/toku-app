@@ -953,11 +953,27 @@ textarea {
   animation: receiptSlideDown 420ms var(--ease-spring) forwards;
 }
 
+@keyframes scannerSweep {
+  0%, 100% {
+    top: 6%;
+    opacity: 0.3;
+  }
+  50% {
+    top: 94%;
+    opacity: 0.9;
+  }
+}
+
+.animate-scanner-sweep {
+  animation: scannerSweep 2.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
 /* Respect user preferences */
 @media (prefers-reduced-motion: reduce) {
   .reveal-init,
   .spotlight-card,
   .receipt-dispense,
+  .animate-scanner-sweep,
   .faq-grid-wrapper {
     transition: none !important;
     animation: none !important;

@@ -89,7 +89,13 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       >
         <ConvexProvider>
           {children}
-          <Toaster position="top-right" richColors closeButton theme={dark ? "dark" : "light"} />
+          <Toaster
+            position="top-right"
+            richColors
+            closeButton
+            theme={dark ? "dark" : "light"}
+            style={{ zIndex: 100000 }}
+          />
           <TanStackDevtools
             config={{ position: "bottom-right" }}
             plugins={[{ name: "Tanstack Router", render: <TanStackRouterDevtoolsPanel /> }]}

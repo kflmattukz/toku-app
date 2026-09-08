@@ -2,10 +2,12 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { PackageIcon } from "@phosphor-icons/react";
 import { api } from "../../../convex/_generated/api";
 import { useAppStore } from "#/lib/store-context";
 import { BarcodeScannerModal } from "#/components/BarcodeScannerModal";
 import { triggerScanFeedback } from "#/lib/scan-feedback";
+import { formatIDR } from "#/lib/utils";
 import {
   useOfflineSync,
   useKasirCart,
@@ -118,6 +120,50 @@ function Kasir() {
       addToCart(found);
       triggerScanFeedback(true);
       setLastScannedInfo({ code, name: found.name, success: true });
+
+      toast.custom(
+        (t) => (
+          <div
+            onClick={() => toast.dismiss(t)}
+            className="flex w-full max-w-[340px] cursor-pointer items-center gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-2.5 shadow-sm transition-opacity hover:opacity-95"
+          >
+            <div className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-2)]">
+              {found.imageUrl ? (
+                <img
+                  src={found.imageUrl}
+                  alt={found.name}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <PackageIcon size={20} weight="duotone" className="text-[var(--color-text-3)]" />
+              )}
+            </div>
+
+            <div className="min-w-0 flex-1">
+              <h4 className="truncate text-xs font-semibold text-[var(--color-text)]">
+                {found.name}
+              </h4>
+              <div className="mt-0.5 flex items-center gap-2">
+                <span className="text-xs font-bold text-[var(--color-text)]">
+                  {formatIDR(found.price)}
+                </span>
+                {found.barcode && (
+                  <span className="font-mono text-[10px] text-[var(--color-text-3)]">
+                    {found.barcode}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="flex shrink-0 items-center">
+              <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                +1
+              </span>
+            </div>
+          </div>
+        ),
+        { duration: 2500 },
+      );
     } else {
       triggerScanFeedback(false);
       setLastScannedInfo({ code, success: false });
