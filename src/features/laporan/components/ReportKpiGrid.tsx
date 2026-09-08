@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from "react";
 import {
   MoneyIcon,
   ShoppingCartIcon,
@@ -8,7 +9,7 @@ import {
   PackageIcon,
   ScalesIcon,
 } from "@phosphor-icons/react";
-import { formatIDR } from "#/lib/utils";
+import NumberFlow, { continuous } from "@number-flow/react";
 import type { Range } from "../types";
 
 interface ReportKpiGridProps {
@@ -25,6 +26,45 @@ interface ReportKpiGridProps {
   cancelledCount: number;
   cancelledTotal: number;
   privacyMode?: boolean;
+}
+
+const FLOW_PROPS = {
+  plugins: [continuous],
+  respectMotionPreference: false,
+  transformTiming: { duration: 750, easing: "cubic-bezier(0.16, 1, 0.3, 1)" },
+  spinTiming: { duration: 750, easing: "cubic-bezier(0.16, 1, 0.3, 1)" },
+  opacityTiming: { duration: 300, easing: "ease-out" },
+};
+
+function useAnimatedNumber(value: number, rangeKey: string): number {
+  const [displayValue, setDisplayValue] = useState(0);
+  const prevRangeRef = useRef(rangeKey);
+  const prevValueRef = useRef(value);
+
+  // Animate in from 0 on initial mount
+  useEffect(() => {
+    setDisplayValue(value);
+  }, []);
+
+  useEffect(() => {
+    const rangeChanged = prevRangeRef.current !== rangeKey;
+    const valueChanged = prevValueRef.current !== value;
+    prevRangeRef.current = rangeKey;
+    prevValueRef.current = value;
+
+    if (valueChanged) {
+      setDisplayValue(value);
+    } else if (rangeChanged) {
+      // When period filter changes, ensure visible number roll even if database values are identical
+      setDisplayValue((v) => (v > 0 ? Math.floor(v * 0.88) : 1));
+      const raf = requestAnimationFrame(() => {
+        setDisplayValue(value);
+      });
+      return () => cancelAnimationFrame(raf);
+    }
+  }, [value, rangeKey]);
+
+  return displayValue;
 }
 
 export function ReportKpiGrid({
@@ -45,9 +85,33 @@ export function ReportKpiGrid({
   const periodLabel =
     range === "hari" ? "hari ini" : range === "minggu" ? "minggu ini" : "bulan ini";
 
+  // Animated values reacting to value changes and period filter switches
+  const animRevenue = useAnimatedNumber(totalRevenue, range);
+  const animCogs = useAnimatedNumber(totalCogs, range);
+  const animExpenses = useAnimatedNumber(totalExpenses, range);
+  const animNetProfit = useAnimatedNumber(netProfit, range);
+  const animGrossProfit = useAnimatedNumber(grossProfit, range);
+  const animGrossMargin = useAnimatedNumber(grossMargin, range);
+  const animNetMargin = useAnimatedNumber(netMargin, range);
+  const animTransactions = useAnimatedNumber(totalTransactions, range);
+  const animItems = useAnimatedNumber(totalItems, range);
+  const animCancelledCount = useAnimatedNumber(cancelledCount, range);
+  const animCancelledTotal = useAnimatedNumber(cancelledTotal, range);
+
+  const cogsPct = totalRevenue > 0 ? Math.round((totalCogs / totalRevenue) * 100) : 0;
+  const animCogsPct = useAnimatedNumber(cogsPct, range);
+
   const renderMoney = (amount: number, prefix: string = "") => {
-    if (privacyMode) return "Rp ••••••";
-    return `${prefix}${formatIDR(amount)}`;
+    if (privacyMode) return <span>Rp ••••••</span>;
+    return (
+      <NumberFlow
+        value={amount}
+        locales="id-ID"
+        format={{ style: "currency", currency: "IDR", maximumFractionDigits: 0 }}
+        prefix={amount > 0 ? prefix : ""}
+        {...FLOW_PROPS}
+      />
+    );
   };
 
   // Status Kesehatan Bisnis
@@ -71,7 +135,7 @@ export function ReportKpiGrid({
             </div>
             <div className="mb-1 text-xs font-bold text-[var(--color-text-2)]">Total Penjualan</div>
             <div className="price mb-1 text-2xl font-black tracking-tight text-[var(--color-text)] sm:text-2xl">
-              {renderMoney(totalRevenue)}
+              {renderMoney(animRevenue)}
             </div>
             <div className="text-[11px] font-medium text-[var(--color-text-3)]">
               Periode {periodLabel}
@@ -94,12 +158,17 @@ export function ReportKpiGrid({
               Modal Barang Terjual
             </div>
             <div className="price mb-1 text-2xl font-black tracking-tight text-amber-600 sm:text-2xl">
-              {renderMoney(totalCogs, "-")}
+              {renderMoney(animCogs, "-")}
             </div>
             <div className="text-[11px] font-medium text-[var(--color-text-3)]">
-              {totalRevenue > 0
-                ? `${Math.round((totalCogs / totalRevenue) * 100)}% dari omset`
-                : "Biaya pokok barang"}
+              {totalRevenue > 0 ? (
+                <>
+                  <NumberFlow value={animCogsPct} locales="id-ID" suffix="%" {...FLOW_PROPS} /> dari
+                  omset
+                </>
+              ) : (
+                "Biaya pokok barang"
+              )}
             </div>
           </div>
         </div>
@@ -119,7 +188,7 @@ export function ReportKpiGrid({
               Beban & Pengeluaran
             </div>
             <div className="price mb-1 text-2xl font-black tracking-tight text-rose-600 sm:text-2xl">
-              {renderMoney(totalExpenses, "-")}
+              {renderMoney(animExpenses, "-")}
             </div>
             <div className="text-[11px] font-medium text-[var(--color-text-3)]">
               Gaji, listrik, sewa & operasional
@@ -171,7 +240,7 @@ export function ReportKpiGrid({
               isHealthy ? "text-emerald-600" : isLoss ? "text-rose-600" : "text-amber-600"
             }`}
           >
-            {renderMoney(netProfit)}
+            {renderMoney(animNetProfit)}
           </div>
 
           <div className="flex items-center gap-1.5 text-[11px] font-extrabold">
@@ -184,11 +253,43 @@ export function ReportKpiGrid({
                     : "bg-amber-500/20 text-amber-700"
               }`}
             >
-              {isHealthy
-                ? `🟢 Prima (${netMargin.toFixed(1)}% Margin)`
-                : isLoss
-                  ? `🔴 Rugi Operasional (${netMargin.toFixed(1)}%)`
-                  : `🟡 Tipis (${netMargin.toFixed(1)}% Margin)`}
+              {isHealthy ? (
+                <>
+                  🟢 Prima (
+                  <NumberFlow
+                    value={animNetMargin}
+                    locales="id-ID"
+                    format={{ minimumFractionDigits: 1, maximumFractionDigits: 1 }}
+                    suffix="%"
+                    {...FLOW_PROPS}
+                  />{" "}
+                  Margin)
+                </>
+              ) : isLoss ? (
+                <>
+                  🔴 Rugi Operasional (
+                  <NumberFlow
+                    value={animNetMargin}
+                    locales="id-ID"
+                    format={{ minimumFractionDigits: 1, maximumFractionDigits: 1 }}
+                    suffix="%"
+                    {...FLOW_PROPS}
+                  />
+                  )
+                </>
+              ) : (
+                <>
+                  🟡 Tipis (
+                  <NumberFlow
+                    value={animNetMargin}
+                    locales="id-ID"
+                    format={{ minimumFractionDigits: 1, maximumFractionDigits: 1 }}
+                    suffix="%"
+                    {...FLOW_PROPS}
+                  />{" "}
+                  Margin)
+                </>
+              )}
             </span>
           </div>
         </div>
@@ -202,10 +303,17 @@ export function ReportKpiGrid({
             <span>Laba Kotor (Gross)</span>
           </div>
           <div className="price mt-1 text-base font-black text-[var(--color-text)]">
-            {renderMoney(grossProfit)}
+            {renderMoney(animGrossProfit)}
           </div>
           <div className="text-[10px] text-[var(--color-text-3)]">
-            Margin Kotor: {grossMargin.toFixed(1)}%
+            Margin Kotor:{" "}
+            <NumberFlow
+              value={animGrossMargin}
+              locales="id-ID"
+              format={{ minimumFractionDigits: 1, maximumFractionDigits: 1 }}
+              suffix="%"
+              {...FLOW_PROPS}
+            />
           </div>
         </div>
 
@@ -215,7 +323,12 @@ export function ReportKpiGrid({
             <span>Nota Berhasil</span>
           </div>
           <div className="mt-1 text-base font-black text-[var(--color-text)]">
-            {totalTransactions} Transaksi
+            <NumberFlow
+              value={animTransactions}
+              locales="id-ID"
+              suffix=" Transaksi"
+              {...FLOW_PROPS}
+            />
           </div>
           <div className="text-[10px] text-[var(--color-text-3)]">Rata-rata nota selesai</div>
         </div>
@@ -225,7 +338,9 @@ export function ReportKpiGrid({
             <ChartLineUpIcon size={14} weight="bold" className="text-amber-600" />
             <span>Unit Terjual</span>
           </div>
-          <div className="mt-1 text-base font-black text-[var(--color-text)]">{totalItems} pcs</div>
+          <div className="mt-1 text-base font-black text-[var(--color-text)]">
+            <NumberFlow value={animItems} locales="id-ID" suffix=" pcs" {...FLOW_PROPS} />
+          </div>
           <div className="text-[10px] text-[var(--color-text-3)]">Total item keluar</div>
         </div>
 
@@ -235,10 +350,15 @@ export function ReportKpiGrid({
             <span>Retur / Batal</span>
           </div>
           <div className="mt-1 text-base font-black text-[var(--color-text)]">
-            {cancelledCount} Transaksi
+            <NumberFlow
+              value={animCancelledCount}
+              locales="id-ID"
+              suffix=" Transaksi"
+              {...FLOW_PROPS}
+            />
           </div>
           <div className="truncate text-[10px] text-[var(--color-text-3)]">
-            {cancelledTotal > 0 ? renderMoney(cancelledTotal) : "Nihil"}
+            {cancelledTotal > 0 ? renderMoney(animCancelledTotal) : "Nihil"}
           </div>
         </div>
       </div>

@@ -147,25 +147,25 @@ function Laporan() {
         </div>
       </div>
 
-      {/* Dynamic Content with Arrival Animation */}
-      <div key={dataVersion} className="animate-data-arrival">
-        {/* Main KPI Stat Cards (P&L Breakdown) */}
-        <ReportKpiGrid
-          range={range}
-          totalRevenue={totalRevenue}
-          totalCogs={totalCogs}
-          grossProfit={grossProfit}
-          grossMargin={grossMargin}
-          totalExpenses={totalExpenses}
-          netProfit={netProfit}
-          netMargin={netMargin}
-          totalTransactions={totalTransactions}
-          totalItems={totalItems}
-          cancelledCount={summary.cancelledCount ?? 0}
-          cancelledTotal={summary.cancelledTotal ?? 0}
-          privacyMode={privacyMode}
-        />
+      {/* Main KPI Stat Cards (P&L Breakdown) with continuous NumberFlow animations */}
+      <ReportKpiGrid
+        range={range}
+        totalRevenue={totalRevenue}
+        totalCogs={totalCogs}
+        grossProfit={grossProfit}
+        grossMargin={grossMargin}
+        totalExpenses={totalExpenses}
+        netProfit={netProfit}
+        netMargin={netMargin}
+        totalTransactions={totalTransactions}
+        totalItems={totalItems}
+        cancelledCount={summary.cancelledCount ?? 0}
+        cancelledTotal={summary.cancelledTotal ?? 0}
+        privacyMode={privacyMode}
+      />
 
+      {/* Dynamic Charts & Ranking Content with Arrival Animation */}
+      <div key={dataVersion} className="animate-data-arrival">
         {/* Interactive Sales & Profit Trend Chart */}
         <TrendChart
           txs={txs}
