@@ -4,7 +4,8 @@
  * Upgrade to IndexedDB if queue size becomes an issue.
  */
 
-const QUEUE_KEY = "toku_offline_queue";
+const QUEUE_KEY = "toku_offline_queue_v1";
+const LEGACY_QUEUE_KEY = "toku_offline_queue";
 
 export type OfflineTx = {
   storeId: string;
@@ -36,7 +37,8 @@ export function enqueueOfflineTx(tx: OfflineTx): void {
 
 export function getOfflineQueue(): OfflineTx[] {
   try {
-    return JSON.parse(localStorage.getItem(QUEUE_KEY) ?? "[]");
+    const raw = localStorage.getItem(QUEUE_KEY) ?? localStorage.getItem(LEGACY_QUEUE_KEY);
+    return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
   }

@@ -127,11 +127,11 @@ export function UpgradeProModal({
         toast.success(
           `Pembayaran Rp ${order.amount.toLocaleString("id-ID")} Berhasil! Akun Anda kini PRO.`,
         );
-        setIsLoading(false);
         onClose();
       }
     } catch (err: any) {
       toast.error(err.message || "Gagal memproses pembayaran");
+    } finally {
       setIsLoading(false);
     }
   };
@@ -146,10 +146,10 @@ export function UpgradeProModal({
       });
       await simulatePayment({ orderId: order.orderId });
       toast.success("✅ Simulasi Pembayaran Sukses! Fitur PRO Aktif.");
-      setIsLoading(false);
       onClose();
     } catch (err: any) {
       toast.error(err.message || "Gagal simulasi pembayaran");
+    } finally {
       setIsLoading(false);
     }
   };
@@ -196,6 +196,7 @@ export function UpgradeProModal({
         {/* Close Button */}
         <button
           onClick={onClose}
+          aria-label="Tutup modal upgrade"
           className="press-tactile"
           style={{
             position: "absolute",
@@ -361,10 +362,10 @@ export function UpgradeProModal({
             Fitur yang Didapatkan di Toku Pro:
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {PRO_FEATURES.map((f, i) => {
+            {PRO_FEATURES.map((f) => {
               const Icon = f.icon;
               return (
-                <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+                <div key={f.title} style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
                   <div
                     style={{
                       width: 28,

@@ -60,10 +60,10 @@ export function ShiftModal({ isOpen, onClose, storeId, currentCashier }: ShiftMo
         startingCash: amount,
       });
       toast.success("Shift kasir berhasil dibuka! Selamat bertransaksi.");
-      setIsLoading(false);
       onClose();
     } catch (err: any) {
       toast.error(err.message || "Gagal membuka shift");
+    } finally {
       setIsLoading(false);
     }
   };
@@ -81,9 +81,9 @@ export function ShiftModal({ isOpen, onClose, storeId, currentCashier }: ShiftMo
       });
       setSummaryResult(res);
       toast.success("Shift kasir berhasil ditutup!");
-      setIsLoading(false);
     } catch (err: any) {
       toast.error(err.message || "Gagal menutup shift");
+    } finally {
       setIsLoading(false);
     }
   };

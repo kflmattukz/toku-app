@@ -266,11 +266,9 @@ function AppShell() {
   }, []);
 
   const togglePrivacyMode = () => {
-    setPrivacyMode((prev) => {
-      const next = !prev;
-      safeSetStorage("toku_privacy_mode", String(next));
-      return next;
-    });
+    const next = !privacyMode;
+    setPrivacyMode(next);
+    safeSetStorage("toku_privacy_mode", String(next));
   };
 
   const storeContextValue = useMemo(

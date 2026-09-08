@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   XIcon,
@@ -31,6 +31,20 @@ export function ImagePreviewModal({
   const [mounted, setMounted] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(0);
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+
+  if (isOpen !== prevIsOpen) {
+    setPrevIsOpen(isOpen);
+    if (isOpen) {
+      setZoom(1);
+      setRotation(0);
+    }
+  }
+
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  });
 
   useEffect(() => {
     setMounted(true);
@@ -46,23 +60,15 @@ export function ImagePreviewModal({
     };
   }, [isOpen]);
 
-  // Reset zoom & rotation when modal opens/closes
-  useEffect(() => {
-    if (isOpen) {
-      setZoom(1);
-      setRotation(0);
-    }
-  }, [isOpen]);
-
   // Handle ESC key to close
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") onCloseRef.current();
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   if (!mounted || !isOpen || !imageUrl || typeof document === "undefined") {
     return null;

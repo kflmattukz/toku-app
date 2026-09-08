@@ -259,9 +259,9 @@ export function PaymentModal({
             <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
               {Array.from(new Set([total, 10000, 20000, 50000, 100000, 200000]))
                 .filter((v) => v >= total)
-                .map((preset, idx) => (
+                .map((preset) => (
                   <button
-                    key={`${preset}-${idx}`}
+                    key={preset}
                     type="button"
                     onClick={() => onCashInputChange(String(preset))}
                     className="press-tactile price cursor-pointer rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] px-3.5 py-2 text-xs font-extrabold whitespace-nowrap text-[var(--color-text)] hover:bg-[var(--color-surface)]"

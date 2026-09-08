@@ -1,4 +1,4 @@
-import { forwardRef } from "react";
+import { forwardRef, useMemo } from "react";
 import { formatIDR } from "#/lib/utils";
 import { getLaymanHealthDiagnosis, type ReportExportData } from "../lib/report-export";
 import { SparkleIcon } from "@phosphor-icons/react";
@@ -12,6 +12,7 @@ export const PrintableReport = forwardRef<HTMLDivElement, PrintableReportProps>(
   ({ data, includeTransactions }, ref) => {
     const diagnosis = getLaymanHealthDiagnosis(data.totalRevenue, data.netProfit, data.netMargin);
     const sortedProducts = [...data.topProducts].sort((a, b) => b.totalRevenue - a.totalRevenue);
+    const printedAt = useMemo(() => new Date().toLocaleString("id-ID"), []);
 
     return (
       <div
@@ -47,7 +48,7 @@ export const PrintableReport = forwardRef<HTMLDivElement, PrintableReportProps>(
               {data.dateLabel}
             </div>
             <div className="text-[10px] text-neutral-400 mt-1.5">
-              Waktu Cetak: {new Date().toLocaleString("id-ID")}
+              Waktu Cetak: {printedAt}
             </div>
           </div>
         </div>
@@ -265,7 +266,7 @@ export const PrintableReport = forwardRef<HTMLDivElement, PrintableReportProps>(
               </thead>
               <tbody>
                 {data.transactions.slice(0, 50).map((tx, idx) => (
-                  <tr key={idx} className="border-b border-neutral-150 last:border-0">
+                  <tr key={tx._id || tx.invoiceNumber || idx} className="border-b border-neutral-150 last:border-0">
                     <td className="py-2 px-3 text-neutral-500">{idx + 1}</td>
                     <td className="py-2 px-3 text-neutral-700 whitespace-nowrap">
                       {new Date(tx.createdAt).toLocaleTimeString("id-ID", {

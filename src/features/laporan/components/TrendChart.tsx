@@ -53,9 +53,14 @@ export function TrendChart({
         count: 0,
       }));
 
+      const bucketMap = new Map<number, TrendBucket>();
+      for (let i = 0; i < hours.length; i++) {
+        bucketMap.set(hours[i], b[i]);
+      }
+
       for (const tx of txs) {
         const txHour = new Date(tx.createdAt).getHours();
-        const target = b.find((item) => item.id === `h-${txHour}`);
+        const target = bucketMap.get(txHour);
         if (target) {
           target.revenue += tx.total;
           const txCogs = tx.items.reduce((s, i) => s + (i.costPrice ?? 0) * i.qty, 0);

@@ -49,6 +49,7 @@ function Onboarding() {
     } catch {
       setError("Gagal menyimpan toko. Silakan coba lagi.");
       toast.error("Gagal membuat toko. Silakan periksa koneksi.");
+    } finally {
       setSaving(false);
     }
   };
@@ -61,10 +62,11 @@ function Onboarding() {
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
           {/* Store Name Input */}
           <div>
-            <label className="mb-2 block text-xs font-bold text-[var(--color-text)]">
+            <label htmlFor="store-name-input" className="mb-2 block text-xs font-bold text-[var(--color-text)]">
               Nama Toko / Usaha
             </label>
             <input
+              id="store-name-input"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}

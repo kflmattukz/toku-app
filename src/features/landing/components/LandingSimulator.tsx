@@ -44,15 +44,13 @@ export function LandingSimulator() {
   const updateQty = (id: string, delta: number) => {
     if (isPaid) setIsPaid(false);
     setCart((prev) =>
-      prev
-        .map((c) => {
-          if (c.item.id === id) {
-            const nextQty = c.qty + delta;
-            return nextQty > 0 ? { ...c, qty: nextQty } : null;
-          }
-          return c;
-        })
-        .filter(Boolean) as CartItem[],
+      prev.flatMap((c) => {
+        if (c.item.id === id) {
+          const nextQty = c.qty + delta;
+          return nextQty > 0 ? [{ ...c, qty: nextQty }] : [];
+        }
+        return [c];
+      }),
     );
   };
 

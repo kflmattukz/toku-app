@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import {
   formatIDR,
@@ -17,43 +17,59 @@ export function useKasirCart(products: Product[] = []) {
   const [basketDiscountValue, setBasketDiscountValue] = useState<string>("");
 
   const [itemDiscountModal, setItemDiscountModal] = useState<ItemDiscountModalState>(null);
+  const cartRef = useRef(cart);
+  useEffect(() => {
+    cartRef.current = cart;
+  });
 
   // Sync cart quantities when products stock updates in real-time
   useEffect(() => {
-    if (!products || products.length === 0) return;
+    if (!products || products.length === 0 || cartRef.current.length === 0) return;
 
-    setCart((prev) => {
-      let changed = false;
-      const nextCart: CartItem[] = [];
+    const productsById = new Map<string, Product>(products.map((p) => [p._id, p]));
+    let changed = false;
+    const nextCart: CartItem[] = [];
+    const notifications: Array<
+      | { type: "out_of_stock"; name: string }
+      | { type: "adjusted"; name: string; stock: number }
+    > = [];
 
-      for (const item of prev) {
-        const prod = products.find((p) => p._id === item.productId);
-        if (!prod) {
-          nextCart.push(item);
-          continue;
-        }
-
-        if (prod.stock <= 0) {
-          changed = true;
-          toast.warning(`Stok ${item.name} habis`, {
-            description: "Produk otomatis dikeluarkan dari keranjang",
-          });
-          continue;
-        }
-
-        if (item.qty > prod.stock) {
-          changed = true;
-          toast.warning(`Stok ${item.name} disesuaikan`, {
-            description: `Jumlah dikurangi menjadi ${prod.stock} pcs sesuai stok toko saat ini`,
-          });
-          nextCart.push({ ...item, qty: prod.stock });
-        } else {
-          nextCart.push(item);
-        }
+    for (const item of cartRef.current) {
+      const prod = productsById.get(item.productId);
+      if (!prod) {
+        nextCart.push(item);
+        continue;
       }
 
-      return changed ? nextCart : prev;
-    });
+      if (prod.stock <= 0) {
+        changed = true;
+        notifications.push({ type: "out_of_stock", name: item.name });
+        continue;
+      }
+
+      if (item.qty > prod.stock) {
+        changed = true;
+        notifications.push({ type: "adjusted", name: item.name, stock: prod.stock });
+        nextCart.push({ ...item, qty: prod.stock });
+      } else {
+        nextCart.push(item);
+      }
+    }
+
+    if (changed) {
+      setCart(nextCart);
+      for (const notif of notifications) {
+        if (notif.type === "out_of_stock") {
+          toast.warning(`Stok ${notif.name} habis`, {
+            description: "Produk otomatis dikeluarkan dari keranjang",
+          });
+        } else {
+          toast.warning(`Stok ${notif.name} disesuaikan`, {
+            description: `Jumlah dikurangi menjadi ${notif.stock} pcs sesuai stok toko saat ini`,
+          });
+        }
+      }
+    }
   }, [products]);
 
   const addToCart = (product: Product) => {

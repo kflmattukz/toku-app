@@ -137,7 +137,6 @@ export function ExpenseFormModal({
                     value={field.state.value}
                     onChange={(e) => field.handleChange(formatIDRInput(e.target.value))}
                     onBlur={field.handleBlur}
-                    autoFocus
                     className={`w-full rounded-xl border bg-[var(--color-surface)] py-3 pr-3.5 pl-10 text-base font-extrabold text-[var(--color-text)] transition-colors focus:ring-2 focus:outline-none ${
                       error
                         ? "border-rose-500 bg-rose-500/5 focus:border-rose-500 focus:ring-rose-500/20"

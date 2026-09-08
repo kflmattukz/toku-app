@@ -39,13 +39,13 @@ function ReceiptBarcode({ value, is58mm }: { value: string; is58mm: boolean }) {
         viewBox={`0 0 ${totalWidth} ${height}`}
         style={{ display: "block", maxWidth: "100%", height: "auto" }}
       >
-        {bars.map((bar, idx) => {
+        {bars.map((bar) => {
           const x = curX;
           curX += bar.width;
           if (!bar.isBar) return null;
           return (
             <rect
-              key={idx}
+              key={`bar-${x}`}
               x={x}
               y={0}
               width={bar.width}
@@ -200,7 +200,7 @@ export function KasirReceipt({
 
           return (
             <div
-              key={i}
+              key={item._id || item.productId || i}
               style={{
                 display: "flex",
                 justifyContent: "space-between",

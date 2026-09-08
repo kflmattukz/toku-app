@@ -112,17 +112,21 @@ export function StoreProfileTab({
           </div>
 
           <div className="mb-6">
-            <label className="mb-2 block flex items-center gap-1.5 text-xs font-bold text-[var(--color-text)]">
+            <label htmlFor="low-stock-threshold" className="mb-2 block flex items-center gap-1.5 text-xs font-bold text-[var(--color-text)]">
               <BellRingingIcon size={16} weight="bold" className="text-[var(--color-brand)]" />
               <span>Batas Peringatan Stok Menipis (Auto Restock Alert)</span>
             </label>
             <div className="flex items-center gap-3">
               <input
+                id="low-stock-threshold"
                 type="number"
                 min="1"
                 max="1000"
                 value={lowStockThreshold}
-                onChange={(e) => setLowStockThreshold(Number(e.target.value))}
+                onChange={(e) => {
+                  const val = Number(e.target.value);
+                  setLowStockThreshold(Number.isNaN(val) ? 0 : val);
+                }}
                 className="focus:ring-primary-500/20 focus:border-primary-500 w-36 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 text-sm font-bold text-[var(--color-text)] focus:ring-2 focus:outline-none"
               />
               <span className="text-xs font-semibold text-[var(--color-text-2)]">Unit / Pcs</span>

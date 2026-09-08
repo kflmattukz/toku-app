@@ -5,6 +5,7 @@ import React, {
   useRef,
   useEffect,
   useCallback,
+  useMemo,
   useId,
   type ReactNode,
 } from "react";
@@ -224,25 +225,42 @@ export function Select<T extends string | number = string>({
   }, [disabled, isOpen]);
 
   // Context value
-  const contextValue: SelectContextValue<T> = {
-    value: rawValue,
-    onValueChange: handleValueChange,
-    isOpen,
-    setIsOpen,
-    toggleOpen,
-    size,
-    variant,
-    disabled,
-    triggerRef,
-    searchQuery,
-    setSearchQuery,
-    activeDescendant,
-    setActiveDescendant,
-    registerItem,
-    unregisterItem,
-    isMultiple: multiple,
-    selectId,
-  };
+  const contextValue: SelectContextValue<T> = useMemo(
+    () => ({
+      value: rawValue,
+      onValueChange: handleValueChange,
+      isOpen,
+      setIsOpen,
+      toggleOpen,
+      size,
+      variant,
+      disabled,
+      triggerRef,
+      searchQuery,
+      setSearchQuery,
+      activeDescendant,
+      setActiveDescendant,
+      registerItem,
+      unregisterItem,
+      isMultiple: multiple,
+      selectId,
+    }),
+    [
+      rawValue,
+      handleValueChange,
+      isOpen,
+      toggleOpen,
+      size,
+      variant,
+      disabled,
+      searchQuery,
+      activeDescendant,
+      registerItem,
+      unregisterItem,
+      multiple,
+      selectId,
+    ],
+  );
 
   // Find selected label for shorthand rendering
   const renderShorthandLabel = () => {
@@ -261,17 +279,17 @@ export function Select<T extends string | number = string>({
               >
                 {opt?.icon && <span className="text-xs">{opt.icon}</span>}
                 <span>{opt?.label ?? String(v)}</span>
-                <span
-                  role="button"
-                  tabIndex={0}
-                  className="cursor-pointer text-[var(--color-text-3)] hover:text-rose-500"
+                <button
+                  type="button"
+                  aria-label={`Hapus ${opt?.label ?? String(v)}`}
+                  className="cursor-pointer border-0 bg-transparent p-0 text-[var(--color-text-3)] hover:text-rose-500"
                   onClick={(e) => {
                     e.stopPropagation();
                     handleValueChange(v);
                   }}
                 >
                   <XIcon size={12} weight="bold" />
-                </span>
+                </button>
               </span>
             );
           })}
@@ -508,7 +526,7 @@ export function SelectContent({ className = "", children, maxHeight = 280 }: Sel
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("touchstart", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside, { passive: true });
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("touchstart", handleClickOutside);
@@ -638,6 +656,7 @@ export function SelectSearchInput({
         <input
           ref={inputRef}
           type="text"
+          aria-label={placeholder || "Cari opsi"}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder={placeholder}
@@ -646,6 +665,7 @@ export function SelectSearchInput({
         {searchQuery && (
           <button
             type="button"
+            aria-label="Hapus pencarian"
             onClick={() => setSearchQuery("")}
             className="absolute right-2 cursor-pointer p-0.5 text-[var(--color-text-3)] hover:text-[var(--color-text)]"
           >

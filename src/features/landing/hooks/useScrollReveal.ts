@@ -26,15 +26,19 @@ export function useScrollReveal<T extends HTMLElement = HTMLDivElement>(
       return;
     }
 
+    const timerIds = new Set<ReturnType<typeof setTimeout>>();
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             const target = entry.target as HTMLElement;
             const index = Number(target.dataset.revealIndex || 0);
-            setTimeout(() => {
+            const timerId = setTimeout(() => {
               target.classList.add("reveal-visible");
+              timerIds.delete(timerId);
             }, index * staggerDelay);
+            timerIds.add(timerId);
             observer.unobserve(target);
           }
         });
@@ -51,6 +55,8 @@ export function useScrollReveal<T extends HTMLElement = HTMLDivElement>(
     });
 
     return () => {
+      timerIds.forEach((id) => clearTimeout(id));
+      timerIds.clear();
       observer.disconnect();
     };
   }, [threshold, rootMargin, staggerDelay]);
