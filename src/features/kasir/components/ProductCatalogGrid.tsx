@@ -125,23 +125,30 @@ export function ProductCatalogGrid({
       {/* Product Grid */}
       <div className="grid flex-1 grid-cols-2 content-start gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5">
         {filtered.length === 0 ? (
-          <div className="col-span-full flex flex-col items-center justify-center rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-16 text-center text-[var(--color-text-3)]">
+          <div className="catalog-empty-animate col-span-full flex flex-col items-center justify-center rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-16 text-center text-[var(--color-text-3)]">
             <PackageIcon size={52} className="mb-3 opacity-30" />
             <p className="m-0 text-sm font-semibold">
               Tidak ada produk{search ? ` untuk "${search}"` : ""}
             </p>
           </div>
         ) : (
-          filtered.map((product) => {
+          filtered.map((product, idx) => {
             const inCart = cart.find((i) => i.productId === product._id);
             return (
-              <KasirProductCard
-                key={product._id}
-                product={product}
-                inCart={inCart}
-                onAddToCart={onAddToCart}
-                onUpdateQty={onUpdateQty}
-              />
+              <div
+                key={`${categoryFilter}-${product._id}`}
+                className="catalog-card-animate flex h-full flex-col"
+                style={{
+                  animationDelay: `${Math.min(idx * 20, 160)}ms`,
+                }}
+              >
+                <KasirProductCard
+                  product={product}
+                  inCart={inCart}
+                  onAddToCart={onAddToCart}
+                  onUpdateQty={onUpdateQty}
+                />
+              </div>
             );
           })
         )}

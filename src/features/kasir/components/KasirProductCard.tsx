@@ -38,7 +38,7 @@ export function KasirProductCard({
         }
         onAddToCart(product);
       }}
-      className={`squircle-card relative flex min-h-[190px] flex-col justify-between rounded-2xl p-3 select-none transition-all ${
+      className={`squircle-card relative flex h-full min-h-[190px] flex-col justify-between rounded-2xl p-3 select-none transition-all ${
         isOutOfStock
           ? "cursor-not-allowed border-dashed opacity-50 grayscale-[50%]"
           : "product-card-interactive cursor-pointer"
