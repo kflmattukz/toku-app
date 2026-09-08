@@ -8,8 +8,15 @@ import { isDarkMode, toggleTheme } from "#/lib/utils";
 import { toast } from "sonner";
 import { CashierLockModal } from "#/components/CashierLockModal";
 import { Tabs } from "#/components/ui/Tabs";
-import { StorefrontIcon, UsersIcon, BuildingsIcon, UserIcon } from "@phosphor-icons/react";
 import { StoreProfileTab, CashierManagementTab, BranchesTab } from "#/features/pengaturan";
+import {
+  StorefrontIcon,
+  UsersIcon,
+  BuildingsIcon,
+  UserIcon,
+  SunIcon,
+  MoonIcon,
+} from "@phosphor-icons/react";
 import type { Id } from "../../../convex/_generated/dataModel";
 
 export const Route = createFileRoute("/_app/pengaturan")({ component: Pengaturan });
@@ -26,8 +33,9 @@ function Pengaturan() {
 
   const currentStore = store ?? cachedStore;
   const { data: session } = authClient.useSession();
-  const updateStore = useMutation(api.stores.update);
+  const updateStore = useMutation<typeof api.stores.update>(api.stores.update);
   const createBranchMutation = useMutation(api.stores.createBranch);
+  const deleteBranchMutation = useMutation(api.stores.deleteBranch);
   const userStores = useQuery(
     api.stores.listUserStores,
     session?.user
@@ -72,6 +80,8 @@ function Pengaturan() {
 
   // Tab 3 (Branches) State
   const [isAddingBranch, setIsAddingBranch] = useState(false);
+  const [isUpdatingBranch, setIsUpdatingBranch] = useState(false);
+  const [isDeletingBranch, setIsDeletingBranch] = useState(false);
 
   useEffect(() => {
     setDark(isDarkMode());
@@ -218,6 +228,46 @@ function Pengaturan() {
     }
   };
 
+  const handleUpdateBranch = async (
+    storeId: Id<"stores">,
+    values: { branchName: string; address?: string }
+  ) => {
+    setIsUpdatingBranch(true);
+    try {
+      await updateStore({
+        id: storeId,
+        branchName: values.branchName.trim(),
+        address: values.address?.trim() || undefined,
+      });
+      toast.success(`Cabang "${values.branchName}" berhasil diperbarui!`);
+    } catch (err: any) {
+      toast.error(err.message || "Gagal memperbarui cabang.");
+    } finally {
+      setIsUpdatingBranch(false);
+    }
+  };
+
+  const handleDeleteBranch = async (storeId: Id<"stores">) => {
+    setIsDeletingBranch(true);
+    try {
+      await deleteBranchMutation({ id: storeId });
+      toast.success("Cabang berhasil dihapus.");
+
+      // If active branch was deleted, switch to the main branch or first available
+      if (currentStore?._id === storeId) {
+        const remaining = (userStores || []).filter((s: any) => s._id !== storeId);
+        const main = remaining.find((s: any) => s.isMainBranch) || remaining[0];
+        if (main) {
+          setSelectedStoreId(main._id);
+        }
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Gagal menghapus cabang.");
+    } finally {
+      setIsDeletingBranch(false);
+    }
+  };
+
   if (!currentStore) return <PengaturanLoader />;
 
   return (
@@ -233,19 +283,42 @@ function Pengaturan() {
             Konfigurasi profil usaha, staf kasir PIN, dan multi-cabang outlet
           </p>
         </div>
+
+        {/* Action Pills */}
+        <div className="flex items-center gap-2">
+          {/* Dark Mode Toggle */}
+          <button
+            type="button"
+            onClick={handleToggleDark}
+            className="press-tactile flex h-9 items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-xs font-bold text-[var(--color-text)] shadow-xs transition-colors hover:bg-[var(--color-surface-2)]"
+            title={dark ? "Beralih ke Mode Terang" : "Beralih ke Mode Gelap"}
+          >
+            {dark ? (
+              <>
+                <SunIcon size={16} weight="bold" className="text-amber-400" />
+                <span>Terang</span>
+              </>
+            ) : (
+              <>
+                <MoonIcon size={16} weight="bold" className="text-[var(--color-brand)]" />
+                <span>Gelap</span>
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
-      {/* Compound Tabs */}
+      {/* Settings Navigation Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <Tabs.List className="mb-6">
           <Tabs.Trigger value="store" icon={StorefrontIcon}>
             Profil Toko
           </Tabs.Trigger>
           <Tabs.Trigger value="cashiers" icon={UsersIcon}>
-            Staf & Kasir PIN
+            Staf & PIN Kasir
           </Tabs.Trigger>
           <Tabs.Trigger value="branches" icon={BuildingsIcon}>
-            Cabang / Outlet
+            Cabang ({userStores?.length ?? 1})
           </Tabs.Trigger>
         </Tabs.List>
 
@@ -300,6 +373,10 @@ function Pengaturan() {
             }}
             isAddingBranch={isAddingBranch}
             onCreateBranch={handleCreateBranch}
+            isUpdatingBranch={isUpdatingBranch}
+            onUpdateBranch={handleUpdateBranch}
+            isDeletingBranch={isDeletingBranch}
+            onDeleteBranch={handleDeleteBranch}
           />
         </Tabs.Content>
       </Tabs>

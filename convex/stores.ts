@@ -284,3 +284,78 @@ export const update = mutation({
     await ctx.db.patch(id, patch);
   },
 });
+
+export const deleteBranch = mutation({
+  args: {
+    id: v.id("stores"),
+  },
+  handler: async (ctx, { id }) => {
+    const store = await ctx.db.get(id);
+    if (!store) {
+      throw new Error("Cabang tidak ditemukan.");
+    }
+
+    if (store.isMainBranch) {
+      throw new Error("Cabang utama tidak dapat dihapus.");
+    }
+
+    // Verify user still has other branches
+    const userStores = await ctx.db
+      .query("stores")
+      .withIndex("by_userId", (q) => q.eq("userId", store.userId))
+      .collect();
+
+    if (userStores.length <= 1) {
+      throw new Error("Tidak dapat menghapus satu-satunya cabang toko Anda.");
+    }
+
+    // Cascade delete products
+    const products = await ctx.db
+      .query("products")
+      .withIndex("by_storeId", (q) => q.eq("storeId", id))
+      .collect();
+    for (const p of products) {
+      await ctx.db.delete(p._id);
+    }
+
+    // Cascade delete transactions
+    const transactions = await ctx.db
+      .query("transactions")
+      .withIndex("by_storeId", (q) => q.eq("storeId", id))
+      .collect();
+    for (const t of transactions) {
+      await ctx.db.delete(t._id);
+    }
+
+    // Cascade delete cashiers
+    const cashiers = await ctx.db
+      .query("cashiers")
+      .withIndex("by_storeId", (q) => q.eq("storeId", id))
+      .collect();
+    for (const c of cashiers) {
+      await ctx.db.delete(c._id);
+    }
+
+    // Cascade delete shifts
+    const shifts = await ctx.db
+      .query("shifts")
+      .withIndex("by_storeId", (q) => q.eq("storeId", id))
+      .collect();
+    for (const s of shifts) {
+      await ctx.db.delete(s._id);
+    }
+
+    // Cascade delete expenses
+    const expenses = await ctx.db
+      .query("expenses")
+      .withIndex("by_storeId", (q) => q.eq("storeId", id))
+      .collect();
+    for (const e of expenses) {
+      await ctx.db.delete(e._id);
+    }
+
+    // Finally delete the store
+    await ctx.db.delete(id);
+  },
+});
+
