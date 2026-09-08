@@ -113,6 +113,41 @@ export function CashierManagementTab({
 }: CashierManagementTabProps) {
   const [showNewCashierPin, setShowNewCashierPin] = useState(false);
   const [showEditPin, setShowEditPin] = useState(false);
+  const [errors, setErrors] = useState<{ name?: string; pin?: string; role?: string }>({});
+  const [isShaking, setIsShaking] = useState(false);
+  const [editErrors, setEditErrors] = useState<{ name?: string; pin?: string; role?: string }>({});
+  const [isEditShaking, setIsEditShaking] = useState(false);
+
+  const handleAddSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const newErrors: { name?: string; pin?: string; role?: string } = {};
+
+    if (!newCashierName.trim()) {
+      newErrors.name = "Nama staf wajib diisi";
+    } else if (newCashierName.trim().length < 2) {
+      newErrors.name = "Nama staf minimal 2 karakter";
+    }
+
+    if (!newCashierPin) {
+      newErrors.pin = "PIN 4 digit wajib diisi";
+    } else if (!/^\d{4}$/.test(newCashierPin)) {
+      newErrors.pin = "PIN harus tepat 4 digit angka";
+    }
+
+    if (!newCashierRole) {
+      newErrors.role = "Peran staf wajib dipilih";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      setIsShaking(true);
+      setTimeout(() => setIsShaking(false), 350);
+      return;
+    }
+
+    setErrors({});
+    onCreateCashier(e);
+  };
 
   const getRoleBadge = (role: string) => {
     switch (role) {
@@ -176,16 +211,51 @@ export function CashierManagementTab({
     );
   }
 
+  const handleEditSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const newEditErrors: { name?: string; pin?: string; role?: string } = {};
+
+    if (!editName.trim()) {
+      newEditErrors.name = "Nama staf wajib diisi";
+    } else if (editName.trim().length < 2) {
+      newEditErrors.name = "Nama staf minimal 2 karakter";
+    }
+
+    if (!editPin) {
+      newEditErrors.pin = "PIN 4 digit wajib diisi";
+    } else if (!/^\d{4}$/.test(editPin)) {
+      newEditErrors.pin = "PIN harus tepat 4 digit angka";
+    }
+
+    if (!editRole) {
+      newEditErrors.role = "Peran staf wajib dipilih";
+    }
+
+    if (Object.keys(newEditErrors).length > 0) {
+      setEditErrors(newEditErrors);
+      setIsEditShaking(true);
+      setTimeout(() => setIsEditShaking(false), 350);
+      return;
+    }
+
+    setEditErrors({});
+    onUpdateCashier(e);
+  };
+
   return (
     <div className="flex flex-col gap-5">
       {/* Add Cashier Form */}
-      <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-xs">
+      <section
+        className={`rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-xs transition-transform ${
+          isShaking ? "animate-shake" : ""
+        }`}
+      >
         <h2 className="mb-4 flex items-center gap-2 text-base font-extrabold text-[var(--color-text)]">
           <UsersIcon size={20} weight="bold" className="text-[var(--color-brand)]" />
           <span>Tambah Staf / Kasir Baru</span>
         </h2>
 
-        <form onSubmit={onCreateCashier}>
+        <form onSubmit={handleAddSubmit} noValidate autoComplete="off">
           <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div>
               <label className="mb-2 block text-xs font-bold text-[var(--color-text)]">
@@ -193,12 +263,27 @@ export function CashierManagementTab({
               </label>
               <input
                 type="text"
+                name="toku_new_cashier_name"
+                autoComplete="off"
+                data-1p-ignore
                 value={newCashierName}
-                onChange={(e) => setNewCashierName(e.target.value)}
+                onChange={(e) => {
+                  setNewCashierName(e.target.value);
+                  if (errors.name) setErrors((prev) => ({ ...prev, name: undefined }));
+                }}
                 placeholder="Contoh: Siti Rahma"
-                required
-                className="focus:ring-primary-500/20 focus:border-primary-500 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 text-sm font-medium text-[var(--color-text)] focus:ring-2 focus:outline-none"
+                className={`w-full rounded-xl border bg-[var(--color-surface)] px-3.5 py-2.5 text-sm font-medium text-[var(--color-text)] transition-colors focus:ring-2 focus:outline-none ${
+                  errors.name
+                    ? "border-rose-500 bg-rose-500/5 focus:border-rose-500 focus:ring-rose-500/20"
+                    : "border-[var(--color-border)] focus:border-primary-500 focus:ring-primary-500/20"
+                }`}
               />
+              {errors.name && (
+                <p className="mt-1.5 flex items-center gap-1 text-[11px] font-semibold text-rose-500">
+                  <WarningCircleIcon size={13} weight="fill" />
+                  <span>{errors.name}</span>
+                </p>
+              )}
             </div>
             <div>
               <label className="mb-2 block text-xs font-bold text-[var(--color-text)]">
@@ -207,12 +292,21 @@ export function CashierManagementTab({
               <div className="relative flex items-center">
                 <input
                   type={showNewCashierPin ? "text" : "password"}
+                  name="toku_new_cashier_pin"
+                  autoComplete="new-password"
+                  data-1p-ignore
                   maxLength={4}
                   value={newCashierPin}
-                  onChange={(e) => setNewCashierPin(e.target.value.replace(/\D/g, ""))}
+                  onChange={(e) => {
+                    setNewCashierPin(e.target.value.replace(/\D/g, ""));
+                    if (errors.pin) setErrors((prev) => ({ ...prev, pin: undefined }));
+                  }}
                   placeholder="••••"
-                  required
-                  className="focus:ring-primary-500/20 focus:border-primary-500 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] py-2.5 pr-10 pl-3.5 text-sm font-medium text-[var(--color-text)] focus:ring-2 focus:outline-none"
+                  className={`w-full rounded-xl border bg-[var(--color-surface)] py-2.5 pr-10 pl-3.5 text-sm font-medium text-[var(--color-text)] transition-colors focus:ring-2 focus:outline-none ${
+                    errors.pin
+                      ? "border-rose-500 bg-rose-500/5 focus:border-rose-500 focus:ring-rose-500/20"
+                      : "border-[var(--color-border)] focus:border-primary-500 focus:ring-primary-500/20"
+                  }`}
                   style={{ letterSpacing: showNewCashierPin ? "normal" : "0.2em" }}
                 />
                 <button
@@ -228,6 +322,12 @@ export function CashierManagementTab({
                   )}
                 </button>
               </div>
+              {errors.pin && (
+                <p className="mt-1.5 flex items-center gap-1 text-[11px] font-semibold text-rose-500">
+                  <WarningCircleIcon size={13} weight="fill" />
+                  <span>{errors.pin}</span>
+                </p>
+              )}
             </div>
             <div>
               <label className="mb-2 block text-xs font-bold text-[var(--color-text)]">
@@ -235,11 +335,20 @@ export function CashierManagementTab({
               </label>
               <Select<"cashier" | "manager" | "owner">
                 value={newCashierRole}
-                onChange={(val) => setNewCashierRole(val)}
+                onChange={(val) => {
+                  setNewCashierRole(val);
+                  if (errors.role) setErrors((prev) => ({ ...prev, role: undefined }));
+                }}
                 options={ROLE_OPTIONS}
                 variant="form"
                 size="md"
               />
+              {errors.role && (
+                <p className="mt-1.5 flex items-center gap-1 text-[11px] font-semibold text-rose-500">
+                  <WarningCircleIcon size={13} weight="fill" />
+                  <span>{errors.role}</span>
+                </p>
+              )}
             </div>
           </div>
 
@@ -316,7 +425,10 @@ export function CashierManagementTab({
                   <div className="ml-auto flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => onOpenEditCashier(c)}
+                      onClick={() => {
+                        setEditErrors({});
+                        onOpenEditCashier(c);
+                      }}
                       className="press-tactile flex cursor-pointer items-center gap-1.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1.5 text-xs font-bold text-[var(--color-text)] hover:bg-[var(--color-surface-2)]"
                       title="Edit Staf / Ubah PIN"
                     >
@@ -360,18 +472,38 @@ export function CashierManagementTab({
               </h3>
             </div>
 
-            <form onSubmit={onUpdateCashier}>
+            <form
+              onSubmit={handleEditSubmit}
+              noValidate
+              autoComplete="off"
+              className={isEditShaking ? "animate-shake" : ""}
+            >
               <div className="mb-3.5">
                 <label className="mb-2 block text-xs font-bold text-[var(--color-text)]">
                   Nama Staf / Kasir
                 </label>
                 <input
                   type="text"
+                  name="toku_edit_cashier_name"
+                  autoComplete="off"
+                  data-1p-ignore
                   value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  required
-                  className="focus:ring-primary-500/20 focus:border-primary-500 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 text-sm font-medium text-[var(--color-text)] focus:ring-2 focus:outline-none"
+                  onChange={(e) => {
+                    setEditName(e.target.value);
+                    if (editErrors.name) setEditErrors((prev) => ({ ...prev, name: undefined }));
+                  }}
+                  className={`w-full rounded-xl border bg-[var(--color-surface)] px-3.5 py-2.5 text-sm font-medium text-[var(--color-text)] transition-colors focus:ring-2 focus:outline-none ${
+                    editErrors.name
+                      ? "border-rose-500 bg-rose-500/5 focus:border-rose-500 focus:ring-rose-500/20"
+                      : "border-[var(--color-border)] focus:border-primary-500 focus:ring-primary-500/20"
+                  }`}
                 />
+                {editErrors.name && (
+                  <p className="mt-1.5 flex items-center gap-1 text-[11px] font-semibold text-rose-500">
+                    <WarningCircleIcon size={13} weight="fill" />
+                    <span>{editErrors.name}</span>
+                  </p>
+                )}
               </div>
 
               <div className="mb-3.5">
@@ -381,11 +513,20 @@ export function CashierManagementTab({
                 <div className="relative flex items-center">
                   <input
                     type={showEditPin ? "text" : "password"}
+                    name="toku_edit_cashier_pin"
+                    autoComplete="new-password"
+                    data-1p-ignore
                     maxLength={4}
                     value={editPin}
-                    onChange={(e) => setEditPin(e.target.value.replace(/\D/g, ""))}
-                    required
-                    className="focus:ring-primary-500/20 focus:border-primary-500 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] py-2.5 pr-10 pl-3.5 text-sm font-medium text-[var(--color-text)] focus:ring-2 focus:outline-none"
+                    onChange={(e) => {
+                      setEditPin(e.target.value.replace(/\D/g, ""));
+                      if (editErrors.pin) setEditErrors((prev) => ({ ...prev, pin: undefined }));
+                    }}
+                    className={`w-full rounded-xl border bg-[var(--color-surface)] py-2.5 pr-10 pl-3.5 text-sm font-medium text-[var(--color-text)] transition-colors focus:ring-2 focus:outline-none ${
+                      editErrors.pin
+                        ? "border-rose-500 bg-rose-500/5 focus:border-rose-500 focus:ring-rose-500/20"
+                        : "border-[var(--color-border)] focus:border-primary-500 focus:ring-primary-500/20"
+                    }`}
                     style={{ letterSpacing: showEditPin ? "normal" : "0.2em" }}
                   />
                   <button
@@ -401,9 +542,16 @@ export function CashierManagementTab({
                     )}
                   </button>
                 </div>
-                <span className="mt-1 block text-[11px] text-[var(--color-text-3)]">
-                  Pastikan PIN tidak sama dengan staf lain agar akun tidak tertukar.
-                </span>
+                {editErrors.pin ? (
+                  <p className="mt-1.5 flex items-center gap-1 text-[11px] font-semibold text-rose-500">
+                    <WarningCircleIcon size={13} weight="fill" />
+                    <span>{editErrors.pin}</span>
+                  </p>
+                ) : (
+                  <span className="mt-1 block text-[11px] text-[var(--color-text-3)]">
+                    Pastikan PIN tidak sama dengan staf lain agar akun tidak tertukar.
+                  </span>
+                )}
               </div>
 
               <div className="mb-5">
@@ -412,11 +560,20 @@ export function CashierManagementTab({
                 </label>
                 <Select<"cashier" | "manager" | "owner">
                   value={editRole}
-                  onChange={(val) => setEditRole(val)}
+                  onChange={(val) => {
+                    setEditRole(val);
+                    if (editErrors.role) setEditErrors((prev) => ({ ...prev, role: undefined }));
+                  }}
                   options={ROLE_OPTIONS}
                   variant="form"
                   size="md"
                 />
+                {editErrors.role && (
+                  <p className="mt-1.5 flex items-center gap-1 text-[11px] font-semibold text-rose-500">
+                    <WarningCircleIcon size={13} weight="fill" />
+                    <span>{editErrors.role}</span>
+                  </p>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-3">

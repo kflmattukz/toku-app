@@ -153,7 +153,7 @@ Tabs.Content = function TabsContent({
       id={panelId}
       aria-labelledby={tabId}
       hidden={!isSelected}
-      className={cn("w-full", className)}
+      className={cn("w-full animate-tab-panel", className)}
     >
       {children}
     </div>

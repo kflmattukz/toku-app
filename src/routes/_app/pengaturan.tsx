@@ -16,6 +16,15 @@ export const Route = createFileRoute("/_app/pengaturan")({ component: Pengaturan
 
 function Pengaturan() {
   const { store, currentCashier, setSelectedStoreId } = useAppStore();
+  const [cachedStore, setCachedStore] = useState(store);
+
+  useEffect(() => {
+    if (store) {
+      setCachedStore(store);
+    }
+  }, [store]);
+
+  const currentStore = store ?? cachedStore;
   const { data: session } = authClient.useSession();
   const updateStore = useMutation(api.stores.update);
   const createBranchMutation = useMutation(api.stores.createBranch);
@@ -26,7 +35,10 @@ function Pengaturan() {
       : "skip",
   );
 
-  const cashiers = useQuery(api.cashiers.listByStore, store ? { storeId: store._id } : "skip");
+  const cashiers = useQuery(
+    api.cashiers.listByStore,
+    currentStore ? { storeId: currentStore._id } : "skip",
+  );
   const createCashier = useMutation(api.cashiers.create);
   const updateCashier = useMutation(api.cashiers.update);
   const removeCashier = useMutation(api.cashiers.remove);
@@ -77,14 +89,14 @@ function Pengaturan() {
   }, []);
 
   useEffect(() => {
-    if (store) {
-      setName(store.name || "");
-      setBranchName(store.branchName || "");
-      setCategory(store.category || "kuliner_resto");
-      setAddress(store.address || "");
-      setLowStockThreshold(store.lowStockThreshold ?? 5);
+    if (currentStore) {
+      setName(currentStore.name || "");
+      setBranchName(currentStore.branchName || "");
+      setCategory(currentStore.category || "kuliner_resto");
+      setAddress(currentStore.address || "");
+      setLowStockThreshold(currentStore.lowStockThreshold ?? 5);
     }
-  }, [store]);
+  }, [currentStore]);
 
   const isOwner =
     currentCashier?.role === "owner" || isOwnerUnlocked || (cashiers && cashiers.length === 0);
@@ -93,11 +105,11 @@ function Pengaturan() {
 
   const handleSaveStore = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!store) return;
+    if (!currentStore) return;
     setSaving(true);
     try {
       await updateStore({
-        id: store._id,
+        id: currentStore._id,
         name,
         branchName: branchName.trim() || undefined,
         category,
@@ -128,14 +140,14 @@ function Pengaturan() {
 
   const handleCreateCashier = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!store || !newCashierName.trim() || newCashierPin.length !== 4) {
+    if (!currentStore || !newCashierName.trim() || newCashierPin.length !== 4) {
       toast.error("Nama kasir dan PIN 4-digit wajib diisi.");
       return;
     }
     setIsAddingCashier(true);
     try {
       await createCashier({
-        storeId: store._id,
+        storeId: currentStore._id,
         name: newCashierName.trim(),
         pin: newCashierPin,
         role: newCashierRole,
@@ -206,9 +218,9 @@ function Pengaturan() {
       const newStoreId = await createBranchMutation({
         userId: session.user.id,
         userEmail: session.user.email || undefined,
-        name: store?.name || "Toko Baru",
+        name: currentStore?.name || "Toko Baru",
         branchName: newBranchName.trim(),
-        category: (store?.category as any) || "kuliner_resto",
+        category: (currentStore?.category as any) || "kuliner_resto",
         address: newBranchAddress.trim() || undefined,
       });
       toast.success(`Cabang "${newBranchName}" berhasil dibuat!`);
@@ -222,7 +234,7 @@ function Pengaturan() {
     }
   };
 
-  if (!store) return <PengaturanLoader />;
+  if (!currentStore) return <PengaturanLoader />;
 
   return (
     <div className="mx-auto w-full max-w-4xl pb-12">
@@ -309,7 +321,7 @@ function Pengaturan() {
 
         <Tabs.Content value="branches">
           <BranchesTab
-            currentStoreId={store._id}
+            currentStoreId={currentStore._id}
             userStores={userStores}
             onSelectStore={(stId) => {
               setSelectedStoreId(stId);
@@ -326,11 +338,11 @@ function Pengaturan() {
       </Tabs>
 
       {/* Owner Access Unlock PIN Modal */}
-      {showOwnerAuthModal && store && (
+      {showOwnerAuthModal && currentStore && (
         <CashierLockModal
           isOpen={showOwnerAuthModal}
           onClose={() => setShowOwnerAuthModal(false)}
-          storeId={store._id}
+          storeId={currentStore._id}
           requiredRole="owner"
           title="Buka Kunci Akses Pemilik (Owner)"
           onSuccess={() => {

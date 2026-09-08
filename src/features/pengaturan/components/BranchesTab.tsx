@@ -1,4 +1,5 @@
-import { BuildingsIcon, PlusIcon, CheckCircleIcon } from "@phosphor-icons/react";
+import { useState } from "react";
+import { BuildingsIcon, PlusIcon, CheckCircleIcon, WarningCircleIcon } from "@phosphor-icons/react";
 import { Button } from "#/components/ui";
 import type { Id } from "../../../../convex/_generated/dataModel";
 
@@ -25,16 +26,41 @@ export function BranchesTab({
   isAddingBranch,
   onCreateBranch,
 }: BranchesTabProps) {
+  const [errors, setErrors] = useState<{ name?: string }>({});
+  const [isShaking, setIsShaking] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newBranchName.trim()) {
+      setErrors({ name: "Nama cabang wajib diisi" });
+      setIsShaking(true);
+      setTimeout(() => setIsShaking(false), 350);
+      return;
+    }
+    if (newBranchName.trim().length < 2) {
+      setErrors({ name: "Nama cabang minimal 2 karakter" });
+      setIsShaking(true);
+      setTimeout(() => setIsShaking(false), 350);
+      return;
+    }
+    setErrors({});
+    onCreateBranch(e);
+  };
+
   return (
     <div className="flex flex-col gap-5">
       {/* Add Branch Form */}
-      <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-xs">
+      <section
+        className={`rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-xs transition-transform ${
+          isShaking ? "animate-shake" : ""
+        }`}
+      >
         <h2 className="mb-4 flex items-center gap-2 text-base font-extrabold text-[var(--color-text)]">
           <BuildingsIcon size={20} weight="bold" className="text-[var(--color-brand)]" />
           <span>Tambah Cabang Baru</span>
         </h2>
 
-        <form onSubmit={onCreateBranch}>
+        <form onSubmit={handleSubmit} noValidate autoComplete="off">
           <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <label className="mb-2 block text-xs font-bold text-[var(--color-text)]">
@@ -42,12 +68,27 @@ export function BranchesTab({
               </label>
               <input
                 type="text"
+                name="toku_new_branch_name"
+                autoComplete="off"
+                data-1p-ignore
                 value={newBranchName}
-                onChange={(e) => setNewBranchName(e.target.value)}
+                onChange={(e) => {
+                  setNewBranchName(e.target.value);
+                  if (errors.name) setErrors({});
+                }}
                 placeholder="Contoh: Cabang Boulevard"
-                required
-                className="focus:ring-primary-500/20 focus:border-primary-500 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-2.5 text-sm font-medium text-[var(--color-text)] focus:ring-2 focus:outline-none"
+                className={`w-full rounded-xl border bg-[var(--color-surface)] px-3.5 py-2.5 text-sm font-medium text-[var(--color-text)] transition-colors focus:ring-2 focus:outline-none ${
+                  errors.name
+                    ? "border-rose-500 bg-rose-500/5 focus:border-rose-500 focus:ring-rose-500/20"
+                    : "border-[var(--color-border)] focus:border-primary-500 focus:ring-primary-500/20"
+                }`}
               />
+              {errors.name && (
+                <p className="mt-1.5 flex items-center gap-1 text-[11px] font-semibold text-rose-500">
+                  <WarningCircleIcon size={13} weight="fill" />
+                  <span>{errors.name}</span>
+                </p>
+              )}
             </div>
             <div>
               <label className="mb-2 block text-xs font-bold text-[var(--color-text)]">
@@ -55,6 +96,9 @@ export function BranchesTab({
               </label>
               <input
                 type="text"
+                name="toku_new_branch_address"
+                autoComplete="off"
+                data-1p-ignore
                 value={newBranchAddress}
                 onChange={(e) => setNewBranchAddress(e.target.value)}
                 placeholder="Jl. Boulevard Barat Blok A"
