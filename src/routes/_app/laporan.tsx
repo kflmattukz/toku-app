@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { useAppStore } from "#/lib/store-context";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { dayRange, weekRange, monthRange } from "#/lib/utils";
 import { PackageIcon, EyeIcon, EyeSlashIcon, DownloadSimpleIcon } from "@phosphor-icons/react";
 import { Button } from "#/components/ui";
@@ -33,10 +33,23 @@ function Laporan() {
         ? "Minggu Ini (7 Hari Terakhir)"
         : "Bulan Ini (30 Hari Terakhir)";
 
-  const summary = useQuery(
+  const rawSummary = useQuery(
     api.transactions.dailySummary,
     store ? { storeId: store._id, startOfDay, endOfDay } : "skip",
   );
+
+  const [cachedSummary, setCachedSummary] = useState<typeof rawSummary>(undefined);
+  const [dataVersion, setDataVersion] = useState(0);
+
+  useEffect(() => {
+    if (rawSummary !== undefined) {
+      setCachedSummary(rawSummary);
+      setDataVersion((v) => v + 1);
+    }
+  }, [rawSummary]);
+
+  const summary = rawSummary ?? cachedSummary;
+  const isFetching = rawSummary === undefined && cachedSummary !== undefined;
 
   if (!summary) return <LaporanLoader />;
 
@@ -91,7 +104,11 @@ function Laporan() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <ReportPeriodFilter range={range} onRangeChange={setRange} />
+          <ReportPeriodFilter
+            range={range}
+            onRangeChange={setRange}
+            isLoading={isFetching}
+          />
 
           <Button
             type="button"
@@ -129,34 +146,37 @@ function Laporan() {
         </div>
       </div>
 
-      {/* Main KPI Stat Cards (P&L Breakdown) */}
-      <ReportKpiGrid
-        range={range}
-        totalRevenue={totalRevenue}
-        totalCogs={totalCogs}
-        grossProfit={grossProfit}
-        grossMargin={grossMargin}
-        totalExpenses={totalExpenses}
-        netProfit={netProfit}
-        netMargin={netMargin}
-        totalTransactions={totalTransactions}
-        totalItems={totalItems}
-        cancelledCount={summary.cancelledCount ?? 0}
-        cancelledTotal={summary.cancelledTotal ?? 0}
-        privacyMode={privacyMode}
-      />
+      {/* Dynamic Content with Arrival Animation */}
+      <div key={dataVersion} className="animate-data-arrival">
+        {/* Main KPI Stat Cards (P&L Breakdown) */}
+        <ReportKpiGrid
+          range={range}
+          totalRevenue={totalRevenue}
+          totalCogs={totalCogs}
+          grossProfit={grossProfit}
+          grossMargin={grossMargin}
+          totalExpenses={totalExpenses}
+          netProfit={netProfit}
+          netMargin={netMargin}
+          totalTransactions={totalTransactions}
+          totalItems={totalItems}
+          cancelledCount={summary.cancelledCount ?? 0}
+          cancelledTotal={summary.cancelledTotal ?? 0}
+          privacyMode={privacyMode}
+        />
 
-      {/* Interactive Sales & Profit Trend Chart */}
-      <TrendChart
-        txs={txs}
-        range={range}
-        totalRevenue={totalRevenue}
-        totalProfit={grossProfit}
-        privacyMode={privacyMode}
-      />
+        {/* Interactive Sales & Profit Trend Chart */}
+        <TrendChart
+          txs={txs}
+          range={range}
+          totalRevenue={totalRevenue}
+          totalProfit={grossProfit}
+          privacyMode={privacyMode}
+        />
 
-      {/* Top-Selling & Most Profitable Products Ranking List */}
-      <TopProductsLeaderboard topProducts={topProducts} privacyMode={privacyMode} />
+        {/* Top-Selling & Most Profitable Products Ranking List */}
+        <TopProductsLeaderboard topProducts={topProducts} privacyMode={privacyMode} />
+      </div>
 
       {/* Export Report Modal (PDF, Excel, Google Sheets) */}
       <ExportReportModal

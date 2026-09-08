@@ -1,14 +1,14 @@
 import { useMemo, useState } from "react";
 import {
-  ChartBarIcon,
+  WaveformIcon,
   TrendUpIcon,
   ReceiptIcon,
   FireIcon,
   ClockIcon,
   ScalesIcon,
 } from "@phosphor-icons/react";
-import { defineChart, barY } from "@tanstack/charts";
-import { scaleBand } from "@tanstack/charts/scales/band";
+import { defineChart, areaY, lineY, dot } from "@tanstack/charts";
+import { scalePoint } from "@tanstack/charts/scales/point";
 import { scaleLinear } from "@tanstack/charts/scales/linear";
 import { Chart } from "@tanstack/charts/react";
 import { formatIDR } from "#/lib/utils";
@@ -150,6 +150,39 @@ export function TrendChart({
   const peakBucket = peakIdx !== -1 ? buckets[peakIdx] : null;
   const activeBucket = activeIdx !== null ? buckets[activeIdx] : null;
 
+  // Smooth wave curve calculation (Catmull-Rom to Cubic Bezier)
+  const smoothCurve = useMemo(
+    () => ({
+      line: (points: readonly (readonly [number, number])[]) => {
+        if (points.length < 2) return "";
+        let d = `M ${points[0][0]} ${points[0][1]}`;
+        for (let i = 0; i < points.length - 1; i++) {
+          const p0 = points[i === 0 ? 0 : i - 1];
+          const p1 = points[i];
+          const p2 = points[i + 1];
+          const p3 = points[i + 2] || p2;
+          const cp1x = p1[0] + (p2[0] - p0[0]) / 6;
+          const cp1y = p1[1] + (p2[1] - p0[1]) / 6;
+          const cp2x = p2[0] - (p3[0] - p1[0]) / 6;
+          const cp2y = p2[1] - (p3[1] - p1[1]) / 6;
+          d += ` C ${cp1x.toFixed(2)} ${cp1y.toFixed(2)}, ${cp2x.toFixed(2)} ${cp2y.toFixed(2)}, ${p2[0].toFixed(2)} ${p2[1].toFixed(2)}`;
+        }
+        return d;
+      },
+      area: (
+        top: readonly (readonly [number, number])[],
+        bottom: readonly (readonly [number, number])[],
+      ) => {
+        if (top.length < 2) return "";
+        const topLine = smoothCurve.line(top);
+        const revBottom = [...bottom].reverse();
+        const botLine = smoothCurve.line(revBottom);
+        return `${topLine} L ${revBottom[0][0]} ${revBottom[0][1]} ${botLine.replace(/^M [^ ]+ [^ ]+/, "")} Z`;
+      },
+    }),
+    [],
+  );
+
   // 3. TanStack Charts Data & Definition
   const chartData = useMemo(() => {
     return buckets.map((b, idx) => ({
@@ -164,34 +197,54 @@ export function TrendChart({
     return defineChart({
       svgAnimation: { duration: 320, easing: "ease-out" },
       marks: [
-        barY(chartData, {
+        areaY(chartData, {
           key: (d) => d.id,
           x: (d: any) => d.shortLabel,
           y: (d) => d.value,
-          fill: (d: any) => {
-            const isHovered = d.idx === activeIdx;
-            const isPeak = d.idx === peakIdx && d.value > 0;
-            const hasData = d.value > 0;
-
-            if (isProfit) {
-              if (isHovered) return "#10b981";
-              if (isPeak) return "#059669";
-              if (hasData) return "rgba(16, 185, 129, 0.75)";
-              return "var(--color-surface-3)";
-            }
-
-            if (isHovered) return "var(--color-brand)";
-            if (isPeak) return "var(--color-brand)";
-            if (hasData) return "color-mix(in srgb, var(--color-brand) 75%, transparent)";
-            return "var(--color-surface-3)";
-          },
-          radius: 4,
-          maxThickness: range === "minggu" ? 48 : range === "hari" ? 26 : 14,
+          fill: isProfit ? "url(#wave-profit-grad)" : "url(#wave-revenue-grad)",
+          fillOpacity: 1,
+          curve: smoothCurve,
         }),
+        lineY(chartData, {
+          key: (d) => d.id,
+          x: (d: any) => d.shortLabel,
+          y: (d) => d.value,
+          stroke: isProfit ? "#10b981" : "var(--color-brand)",
+          strokeWidth: 2.5,
+          curve: smoothCurve,
+        }),
+        ...(activeBucket
+          ? [
+              dot([activeBucket], {
+                key: (d: any) => `active-${d.id}`,
+                x: (d: any) => d.shortLabel,
+                y: (d: any) =>
+                  metric === "revenue" ? d.revenue : metric === "profit" ? d.profit : d.count,
+                r: 6,
+                fill: isProfit ? "#059669" : "var(--color-brand)",
+                stroke: "#ffffff",
+                strokeWidth: 2,
+              }),
+            ]
+          : []),
+        ...(peakBucket && peakBucket.id !== activeBucket?.id && peakVal > 0
+          ? [
+              dot([peakBucket], {
+                key: (d: any) => `peak-${d.id}`,
+                x: (d: any) => d.shortLabel,
+                y: (d: any) =>
+                  metric === "revenue" ? d.revenue : metric === "profit" ? d.profit : d.count,
+                r: 4.5,
+                fill: isProfit ? "#10b981" : "var(--color-brand)",
+                stroke: "#ffffff",
+                strokeWidth: 2,
+              }),
+            ]
+          : []),
       ],
       scales: {
         x: {
-          scale: scaleBand,
+          scale: scalePoint,
           axis: {
             ticks: {
               format: (val: any) => {
@@ -226,21 +279,37 @@ export function TrendChart({
         },
       },
     });
-  }, [chartData, metric, activeIdx, peakIdx, range, buckets.length]);
+  }, [chartData, metric, activeIdx, peakIdx, range, buckets.length, smoothCurve]);
 
   return (
     <section className="doppelrand-shell mb-6" onMouseLeave={() => setActiveIdx(null)}>
       <div className="doppelrand-core">
+        {/* SVG Gradients for Wave Chart */}
+        <svg className="pointer-events-none absolute h-0 w-0" aria-hidden="true">
+          <defs>
+            <linearGradient id="wave-revenue-grad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="var(--color-brand)" stopOpacity="0.4" />
+              <stop offset="60%" stopColor="var(--color-brand)" stopOpacity="0.12" />
+              <stop offset="100%" stopColor="var(--color-brand)" stopOpacity="0.01" />
+            </linearGradient>
+            <linearGradient id="wave-profit-grad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#10b981" stopOpacity="0.4" />
+              <stop offset="60%" stopColor="#10b981" stopOpacity="0.12" />
+              <stop offset="100%" stopColor="#10b981" stopOpacity="0.01" />
+            </linearGradient>
+          </defs>
+        </svg>
+
         {/* Header & Controls */}
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3.5">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--color-brand)] bg-[var(--color-brand-light)] text-[var(--color-brand)] transition-transform duration-200 hover:scale-105">
-              <ChartBarIcon size={22} weight="duotone" />
+              <WaveformIcon size={22} weight="duotone" />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="m-0 text-lg font-extrabold tracking-tight text-[var(--color-text)]">
-                  Grafik Tren & Pertumbuhan
+                  Grafik Kurva & Tren Pertumbuhan
                 </h2>
                 {peakBucket && (
                   <span className="inline-flex items-center gap-1 rounded-full border border-[var(--color-brand)] bg-[var(--color-brand-light)] px-2 py-0.5 text-[11px] font-extrabold text-[var(--color-brand)] shadow-xs transition-transform duration-200 hover:scale-105">
@@ -259,10 +328,10 @@ export function TrendChart({
               </div>
               <div className="mt-0.5 text-xs text-[var(--color-text-3)]">
                 {range === "hari"
-                  ? "Distribusi performa per jam operasional toko hari ini"
+                  ? "Distribusi kurva performa per jam operasional toko hari ini"
                   : range === "minggu"
-                    ? "Performa harian sepanjang minggu ini"
-                    : "Akumulasi tren harian sepanjang bulan ini"}
+                    ? "Kurva tren performa harian sepanjang minggu ini"
+                    : "Akumulasi kurva tren harian sepanjang bulan ini"}
               </div>
             </div>
           </div>
@@ -359,12 +428,12 @@ export function TrendChart({
               <div className="flex items-center gap-2">
                 <TrendUpIcon size={16} weight="bold" className="text-[var(--color-brand)]" />
                 <span className="text-xs font-bold text-[var(--color-brand-dark)]">
-                  Ringkasan Tren{" "}
+                  Ringkasan Kurva Tren{" "}
                   {range === "hari" ? "Hari Ini" : range === "minggu" ? "Minggu Ini" : "Bulan Ini"}
                 </span>
               </div>
               <div className="text-xs text-[var(--color-text-2)]">
-                Arahkan kursor atau sentuh diagram batang untuk melihat rincian omset dan laba
+                Arahkan kursor atau sentuh kurva gelombang untuk melihat rincian omset dan laba
                 setiap waktu
               </div>
             </>
@@ -372,11 +441,11 @@ export function TrendChart({
         </div>
 
         {/* TanStack Chart Canvas */}
-        <div className="relative w-full pt-2 transition-opacity duration-300 [&_.ts-chart__bar_rect]:transition-colors [&_.ts-chart__bar_rect]:duration-200">
+        <div className="relative w-full pt-2 transition-opacity duration-300">
           <Chart
             definition={chartDef}
             height={220}
-            ariaLabel="Grafik Tren Penjualan"
+            ariaLabel="Grafik Kurva Tren Penjualan"
             onFocusChange={(point) => {
               const nextIdx =
                 point && point.datum && typeof (point.datum as any).idx === "number"
