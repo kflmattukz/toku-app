@@ -2,12 +2,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { useAppStore } from "#/lib/store-context";
-import { ReceiptIcon } from "@phosphor-icons/react";
 import {
   useTransactionFilter,
   TransactionTable,
   TransactionDetailModal,
   TransactionCancelModal,
+  TransaksiSkeleton,
   type Transaction,
 } from "#/features/transaksi";
 
@@ -38,7 +38,7 @@ function Transaksi() {
     handleConfirmCancel,
   } = useTransactionFilter({ currentCashier });
 
-  if (!store || !rawTransactions) return <TransaksiLoader />;
+  if (!store || !rawTransactions) return <TransaksiSkeleton />;
 
   // Filter transactions
   const filteredTransactions = transactions.filter((t) => {
@@ -134,19 +134,6 @@ function Transaksi() {
         cancelling={cancelling}
         onConfirm={handleConfirmCancel}
       />
-    </div>
-  );
-}
-
-function TransaksiLoader() {
-  return (
-    <div className="flex h-[60vh] flex-col items-center justify-center gap-3">
-      <ReceiptIcon
-        size={48}
-        weight="duotone"
-        className="animate-pulse text-[var(--color-brand)] opacity-50"
-      />
-      <p className="text-sm font-bold text-[var(--color-text-2)]">Memuat transaksi...</p>
     </div>
   );
 }

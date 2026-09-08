@@ -6,6 +6,7 @@ import {
   BarcodeIcon,
 } from "@phosphor-icons/react";
 import { KasirProductCard } from "./KasirProductCard";
+import { KasirProductCardSkeleton } from "./KasirProductCardSkeleton";
 import type { CartItem, Product } from "../types";
 
 interface ProductCatalogGridProps {
@@ -19,6 +20,7 @@ interface ProductCatalogGridProps {
   onAddToCart: (product: Product) => void;
   onUpdateQty: (productId: string, delta: number) => void;
   onOpenScanner?: () => void;
+  isLoading?: boolean;
 }
 
 export function ProductCatalogGrid({
@@ -32,6 +34,7 @@ export function ProductCatalogGrid({
   onAddToCart,
   onUpdateQty,
   onOpenScanner,
+  isLoading = false,
 }: ProductCatalogGridProps) {
   const filtered = products.filter((p) => {
     const q = search.toLowerCase();
@@ -95,7 +98,15 @@ export function ProductCatalogGrid({
             WebkitOverflowScrolling: "touch",
           }}
         >
-          {categories.map((cat) => {
+          {isLoading
+            ? Array.from({ length: 5 }).map((_, idx) => (
+                <div
+                  key={`cat-skel-${idx}`}
+                  className="shimmer-placeholder h-9 shrink-0 rounded-full border border-[var(--color-border)]"
+                  style={{ width: idx === 0 ? 80 : 96 }}
+                />
+              ))
+            : categories.map((cat) => {
             const active = categoryFilter === cat;
             return (
               <button
@@ -124,7 +135,17 @@ export function ProductCatalogGrid({
 
       {/* Product Grid */}
       <div className="grid flex-1 grid-cols-2 content-start gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5">
-        {filtered.length === 0 ? (
+        {isLoading ? (
+          Array.from({ length: 10 }).map((_, idx) => (
+            <div
+              key={`skeleton-${idx}`}
+              className="catalog-card-animate flex h-full flex-col"
+              style={{ animationDelay: `${Math.min(idx * 20, 160)}ms` }}
+            >
+              <KasirProductCardSkeleton />
+            </div>
+          ))
+        ) : filtered.length === 0 ? (
           <div className="catalog-empty-animate col-span-full flex flex-col items-center justify-center rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-16 text-center text-[var(--color-text-3)]">
             <PackageIcon size={52} className="mb-3 opacity-30" />
             <p className="m-0 text-sm font-semibold">

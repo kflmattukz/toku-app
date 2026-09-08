@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { useAppStore } from "#/lib/store-context";
-import { PlusIcon, PackageIcon } from "@phosphor-icons/react";
+import { PlusIcon } from "@phosphor-icons/react";
 import { SearchFilter } from "#/components/ui/SearchFilter";
 import { Button } from "#/components/ui";
 import {
@@ -10,6 +10,7 @@ import {
   ProductTable,
   ProductFormModal,
   ProductDeleteModal,
+  ProdukSkeleton,
   type Product,
 } from "#/features/produk";
 
@@ -59,7 +60,7 @@ function Produk() {
     }
   }, [barcode]);
 
-  if (!store || !rawProducts) return <ProdukLoader />;
+  if (!store || !rawProducts) return <ProdukSkeleton />;
 
   return (
     <div className="w-full pb-12">
@@ -131,19 +132,6 @@ function Produk() {
         deleting={deleting}
         onConfirm={handleConfirmDelete}
       />
-    </div>
-  );
-}
-
-function ProdukLoader() {
-  return (
-    <div className="flex h-[60vh] flex-col items-center justify-center gap-3">
-      <PackageIcon
-        size={48}
-        weight="duotone"
-        className="animate-pulse text-[var(--color-brand)] opacity-50"
-      />
-      <p className="text-sm font-bold text-[var(--color-text-2)]">Memuat data produk...</p>
     </div>
   );
 }

@@ -4,6 +4,8 @@ export * from "./hooks/useKasirCart";
 export * from "./hooks/useKasirPayment";
 export * from "./components/KasirHeader";
 export * from "./components/KasirProductCard";
+export * from "./components/KasirProductCardSkeleton";
+export * from "./components/KasirSkeleton";
 export * from "./components/ProductCatalogGrid";
 export * from "./components/CartDrawer";
 export * from "./components/ItemDiscountModal";

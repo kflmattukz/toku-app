@@ -5,13 +5,14 @@ import { useAppStore } from "#/lib/store-context";
 import { useState } from "react";
 import { toast } from "sonner";
 import { dayRange, weekRange, monthRange, parseIDRInput } from "#/lib/utils";
-import { PlusIcon, CoinsIcon } from "@phosphor-icons/react";
+import { PlusIcon } from "@phosphor-icons/react";
 import { ReportPeriodFilter, type Range } from "#/features/laporan";
 import { Button } from "#/components/ui";
 import {
   ExpenseOverviewCards,
   ExpenseTable,
   ExpenseFormModal,
+  PengeluaranSkeleton,
   type ExpenseFormState,
   type Expense,
 } from "#/features/pengeluaran";
@@ -109,7 +110,7 @@ function Pengeluaran() {
     }
   };
 
-  if (!store || !rawExpenses || !expenseSummary) return <PengeluaranLoader />;
+  if (!store || !rawExpenses || !expenseSummary) return <PengeluaranSkeleton />;
 
   return (
     <div className="w-full pb-12">
@@ -164,19 +165,6 @@ function Pengeluaran() {
         onSave={handleSaveExpense}
         activeShift={activeShift}
       />
-    </div>
-  );
-}
-
-function PengeluaranLoader() {
-  return (
-    <div className="flex h-[60vh] flex-col items-center justify-center gap-3">
-      <CoinsIcon
-        size={48}
-        weight="duotone"
-        className="animate-pulse text-[var(--color-brand)] opacity-50"
-      />
-      <p className="text-sm font-bold text-[var(--color-text-2)]">Memuat data pengeluaran...</p>
     </div>
   );
 }

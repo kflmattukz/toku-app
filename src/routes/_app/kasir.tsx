@@ -4,7 +4,6 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { api } from "../../../convex/_generated/api";
 import { useAppStore } from "#/lib/store-context";
-import { PackageIcon } from "@phosphor-icons/react";
 import { BarcodeScannerModal } from "#/components/BarcodeScannerModal";
 import { triggerScanFeedback } from "#/lib/scan-feedback";
 import {
@@ -17,6 +16,7 @@ import {
   ItemDiscountModal,
   PaymentModal,
   ReceiptModal,
+  KasirSkeleton,
   type Product,
 } from "#/features/kasir";
 
@@ -26,6 +26,7 @@ function Kasir() {
   const navigate = useNavigate();
   const { store, currentCashier } = useAppStore();
   const rawProducts = useQuery(api.products.list, store ? { storeId: store._id } : "skip");
+  const isLoading = rawProducts === undefined;
   const products = (rawProducts as Product[] | undefined) ?? [];
   const activeShift = useQuery(api.shifts.getActive, store ? { storeId: store._id } : "skip");
 
@@ -136,7 +137,7 @@ function Kasir() {
     }
   };
 
-  if (!store || !rawProducts) return <KasirLoader />;
+  if (!store || !rawProducts) return <KasirSkeleton />;
 
   const categories = ["Semua", ...new Set(products.map((p) => p.category))];
 
@@ -167,6 +168,7 @@ function Kasir() {
             setLastScannedInfo(null);
             setShowScanner(true);
           }}
+          isLoading={isLoading}
         />
       </div>
 
@@ -242,19 +244,6 @@ function Kasir() {
         lastScannedInfo={lastScannedInfo}
         onScanSuccess={handleScanBarcode}
       />
-    </div>
-  );
-}
-
-function KasirLoader() {
-  return (
-    <div className="flex h-[60vh] flex-col items-center justify-center gap-3">
-      <PackageIcon
-        size={48}
-        weight="duotone"
-        className="animate-pulse text-[var(--color-brand)] opacity-50"
-      />
-      <p className="text-sm font-bold text-[var(--color-text-2)]">Memuat Kasir...</p>
     </div>
   );
 }

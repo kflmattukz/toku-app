@@ -4,8 +4,7 @@ import { api } from "../../../convex/_generated/api";
 import { useAppStore } from "#/lib/store-context";
 import { useState } from "react";
 import { toast } from "sonner";
-import { ChartBarIcon } from "@phosphor-icons/react";
-import { StockOverviewCards, StockTable, RestockModal } from "#/features/stok";
+import { StockOverviewCards, StockTable, RestockModal, StokSkeleton } from "#/features/stok";
 import type { Product } from "#/features/produk";
 
 export const Route = createFileRoute("/_app/stok")({ component: Stok });
@@ -51,7 +50,7 @@ function Stok() {
     }
   };
 
-  if (!store || !rawProducts) return <StokLoader />;
+  if (!store || !rawProducts) return <StokSkeleton />;
 
   return (
     <div className="w-full pb-12">
@@ -87,19 +86,6 @@ function Stok() {
         saving={saving}
         onConfirm={handleRestock}
       />
-    </div>
-  );
-}
-
-function StokLoader() {
-  return (
-    <div className="flex h-[60vh] flex-col items-center justify-center gap-3">
-      <ChartBarIcon
-        size={48}
-        weight="duotone"
-        className="animate-pulse text-[var(--color-brand)] opacity-50"
-      />
-      <p className="text-sm font-bold text-[var(--color-text-2)]">Memuat data persediaan...</p>
     </div>
   );
 }

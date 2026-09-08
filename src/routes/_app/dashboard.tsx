@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useAppStore } from "#/lib/store-context";
 import { useEffect } from "react";
+import { KasirSkeleton } from "#/features/kasir";
 
 export const Route = createFileRoute("/_app/dashboard")({ component: Dashboard });
 
@@ -17,11 +18,5 @@ function Dashboard() {
     }
   }, [store, navigate]);
 
-  return (
-    <div
-      style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "60vh" }}
-    >
-      <p style={{ color: "var(--color-text-2)", fontSize: 14 }}>Memuat...</p>
-    </div>
-  );
+  return <KasirSkeleton />;
 }

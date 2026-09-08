@@ -25,3 +25,4 @@ export {
   type ButtonShape,
 } from "./Button";
 export { DataTable } from "./DataTable";
+export { TableSkeleton } from "./TableSkeleton";

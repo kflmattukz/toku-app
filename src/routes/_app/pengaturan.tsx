@@ -8,12 +8,16 @@ import { isDarkMode, toggleTheme } from "#/lib/utils";
 import { toast } from "sonner";
 import { CashierLockModal } from "#/components/CashierLockModal";
 import { Tabs } from "#/components/ui/Tabs";
-import { StoreProfileTab, CashierManagementTab, BranchesTab } from "#/features/pengaturan";
+import {
+  StoreProfileTab,
+  CashierManagementTab,
+  BranchesTab,
+  PengaturanSkeleton,
+} from "#/features/pengaturan";
 import {
   StorefrontIcon,
   UsersIcon,
   BuildingsIcon,
-  UserIcon,
   SunIcon,
   MoonIcon,
 } from "@phosphor-icons/react";
@@ -268,7 +272,7 @@ function Pengaturan() {
     }
   };
 
-  if (!currentStore) return <PengaturanLoader />;
+  if (!currentStore) return <PengaturanSkeleton />;
 
   return (
     <div className="mx-auto w-full max-w-4xl pb-12">
@@ -396,19 +400,6 @@ function Pengaturan() {
           }}
         />
       )}
-    </div>
-  );
-}
-
-function PengaturanLoader() {
-  return (
-    <div className="flex h-[60vh] flex-col items-center justify-center gap-3">
-      <UserIcon
-        size={40}
-        weight="duotone"
-        className="animate-pulse text-[var(--color-brand)] opacity-50"
-      />
-      <p className="text-sm font-bold text-[var(--color-text-2)]">Memuat pengaturan...</p>
     </div>
   );
 }

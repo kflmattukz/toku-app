@@ -5,4 +5,5 @@ export * from "./components/TrendChart";
 export * from "./components/TopProductsLeaderboard";
 export * from "./components/ExportReportModal";
 export * from "./components/PrintableReport";
+export * from "./components/LaporanSkeleton";
 export * from "./lib/report-export";

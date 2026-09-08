@@ -526,9 +526,31 @@ body {
   animation: catalogEmptyEnter 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+/* Shimmer placeholder animation */
+@keyframes shimmerWave {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.shimmer-placeholder {
+  background: linear-gradient(
+    90deg,
+    var(--color-surface-2) 0%,
+    var(--color-surface-3) 50%,
+    var(--color-surface-2) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmerWave 1.8s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .catalog-card-animate,
-  .catalog-empty-animate {
+  .catalog-empty-animate,
+  .shimmer-placeholder {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;

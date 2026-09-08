@@ -4,7 +4,7 @@ import { api } from "../../../convex/_generated/api";
 import { useAppStore } from "#/lib/store-context";
 import { useState, useEffect } from "react";
 import { dayRange, weekRange, monthRange } from "#/lib/utils";
-import { PackageIcon, EyeIcon, EyeSlashIcon, DownloadSimpleIcon } from "@phosphor-icons/react";
+import { EyeIcon, EyeSlashIcon, DownloadSimpleIcon } from "@phosphor-icons/react";
 import { Button } from "#/components/ui";
 import {
   ReportPeriodFilter,
@@ -12,6 +12,7 @@ import {
   TrendChart,
   TopProductsLeaderboard,
   ExportReportModal,
+  LaporanSkeleton,
   type Range,
   type TopProduct,
 } from "#/features/laporan";
@@ -51,7 +52,7 @@ function Laporan() {
   const summary = rawSummary ?? cachedSummary;
   const isFetching = rawSummary === undefined && cachedSummary !== undefined;
 
-  if (!summary) return <LaporanLoader />;
+  if (!summary) return <LaporanSkeleton />;
 
   const totalRevenue = summary.total ?? 0;
   const totalTransactions = summary.count ?? 0;
@@ -202,19 +203,6 @@ function Laporan() {
           transactions: txs,
         }}
       />
-    </div>
-  );
-}
-
-function LaporanLoader() {
-  return (
-    <div className="flex h-[60vh] flex-col items-center justify-center gap-3">
-      <PackageIcon
-        size={48}
-        weight="duotone"
-        className="animate-pulse text-[var(--color-brand)] opacity-50"
-      />
-      <p className="text-sm font-bold text-[var(--color-text-2)]">Memuat laporan...</p>
     </div>
   );
 }
