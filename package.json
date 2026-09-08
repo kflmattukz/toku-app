@@ -12,7 +12,9 @@
     "preview": "vite preview",
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css}\"",
-    "doctor": "pnpm dlx react-doctor@latest"
+    "doctor": "pnpm dlx react-doctor@latest",
+    "convex:dev": "pnpm --allow-build=esbuild dlx convex dev",
+    "convex:push": "pnpm --allow-build=esbuild dlx convex deploy"
   },
   "dependencies": {
     "@convex-dev/react-query": "0.1.0",
