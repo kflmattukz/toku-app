@@ -1,5 +1,8 @@
 import * as XLSX from "xlsx";
+import { pdf } from "@react-pdf/renderer";
+import { createElement } from "react";
 import { formatIDR } from "#/lib/utils";
+import { ReportPdfDocument } from "../components/ReportPdfDocument";
 import type { Range, TopProduct } from "../types";
 
 export interface ReportExportData {
@@ -285,135 +288,26 @@ export async function copyToGoogleSheets(data: ReportExportData): Promise<boolea
   }
 }
 
-/**
- * Prints the report document in an isolated A4 iframe.
- * Ensures 100% visual fidelity matching the on-screen preview,
- * with exact A4 portrait dimensions, full color preservation,
- * and zero interference from thermal receipt 80mm rules or modals.
- */
-export function printReportA4(
-  element: HTMLElement | null,
-  title: string = "Laporan Keuangan Toku POS",
-) {
-  if (!element) {
-    window.print();
-    return;
-  }
+export async function downloadReportPdf(
+  data: ReportExportData,
+  includeTransactions: boolean = true,
+): Promise<void> {
+  const doc = createElement(ReportPdfDocument, {
+    data,
+    includeTransactions,
+  }) as unknown as Parameters<typeof pdf>[0];
+  const blob = await pdf(doc).toBlob();
 
-  // Remove previous report print frame if any
-  const existingFrame = document.getElementById("toku-report-print-frame");
-  if (existingFrame) existingFrame.remove();
+  const cleanStore = data.storeName.replace(/[^a-zA-Z0-9]/g, "_");
+  const dateSlug = new Date().toISOString().slice(0, 10);
+  const fileName = `Laporan_TokuPOS_${cleanStore}_${data.range}_${dateSlug}.pdf`;
 
-  const iframe = document.createElement("iframe");
-  iframe.id = "toku-report-print-frame";
-  iframe.style.position = "fixed";
-  iframe.style.right = "0";
-  iframe.style.bottom = "0";
-  iframe.style.width = "0";
-  iframe.style.height = "0";
-  iframe.style.border = "none";
-  iframe.style.visibility = "hidden";
-  document.body.appendChild(iframe);
-
-  const doc = iframe.contentWindow?.document;
-  if (!doc) {
-    window.print();
-    return;
-  }
-
-  // Collect all stylesheets and style blocks from the main document
-  let stylesHtml = "";
-  document.querySelectorAll("link[rel='stylesheet'], style").forEach((node) => {
-    stylesHtml += node.outerHTML;
-  });
-
-  doc.open();
-  doc.write(`
-    <!DOCTYPE html>
-    <html lang="id">
-    <head>
-      <meta charset="utf-8" />
-      <title>${title}</title>
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      ${stylesHtml}
-      <style>
-        @page {
-          size: A4 portrait;
-          margin: 18mm 20mm 20mm 20mm;
-        }
-        *, *::before, *::after {
-          box-sizing: border-box !important;
-          -webkit-print-color-adjust: exact !important;
-          print-color-adjust: exact !important;
-        }
-        html, body {
-          margin: 0 !important;
-          padding: 0 !important;
-          background: #ffffff !important;
-          color: #171717 !important;
-          width: 100% !important;
-          max-width: 100% !important;
-          -webkit-font-smoothing: antialiased;
-        }
-        .printable-report {
-          width: 100% !important;
-          max-width: 100% !important;
-          margin: 0 auto !important;
-          padding: 0 !important;
-          background: #ffffff !important;
-          color: #171717 !important;
-          border: none !important;
-          box-shadow: none !important;
-        }
-        /* Smart page flow: prevent awkward splitting */
-        .page-break-avoid,
-        .report-avoid-break {
-          page-break-inside: avoid !important;
-          break-inside: avoid !important;
-        }
-        table {
-          width: 100% !important;
-          border-collapse: collapse !important;
-        }
-        thead {
-          display: table-header-group !important;
-        }
-        tr {
-          page-break-inside: avoid !important;
-          break-inside: avoid !important;
-        }
-        .no-print {
-          display: none !important;
-        }
-      </style>
-    </head>
-    <body class="bg-white text-neutral-900">
-      <div class="printable-report">
-        ${element.innerHTML}
-      </div>
-    </body>
-    </html>
-  `);
-  doc.close();
-
-  // Temporarily sync parent document.title so all browser PDF drivers suggest this exact filename
-  const origTitle = document.title;
-  if (title) {
-    document.title = title;
-  }
-
-  // Allow styles and web fonts to settle in iframe before invoking print
-  setTimeout(() => {
-    try {
-      iframe.contentWindow?.focus();
-      iframe.contentWindow?.print();
-    } catch {
-      window.print();
-    } finally {
-      setTimeout(() => {
-        document.title = origTitle;
-        iframe.remove();
-      }, 2500);
-    }
-  }, 250);
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 }

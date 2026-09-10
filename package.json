@@ -21,6 +21,7 @@
     "@faker-js/faker": "^10.3.0",
     "@number-flow/react": "^0.6.2",
     "@phosphor-icons/react": "^2.1.7",
+    "@react-pdf/renderer": "^4.9.0",
     "@tailwindcss/vite": "^4.1.18",
     "@tanstack/charts": "^0.16.0",
     "@tanstack/match-sorter-utils": "latest",
