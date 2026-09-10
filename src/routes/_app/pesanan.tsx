@@ -20,9 +20,16 @@ import {
   QrCodeIcon,
   StorefrontIcon,
   XIcon,
+  PhoneCallIcon,
+  BellRingingIcon,
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { shareReceiptWhatsApp, shareReceiptWhatsAppImage } from "#/lib/print";
+import {
+  getNotificationPermissionStatus,
+  requestNotificationPermission,
+  isNotificationSupported,
+} from "#/lib/pwa-notifications";
 import type { Id } from "../../../convex/_generated/dataModel";
 
 export const Route = createFileRoute("/_app/pesanan")({
@@ -42,6 +49,32 @@ function PesananManagement() {
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "qris">("cash");
   const [cashInput, setCashInput] = useState<string>("");
   const [isCompleting, setIsCompleting] = useState(false);
+
+  // PWA Notification Banner state
+  const [notifPermission, setNotifPermission] = useState<NotificationPermission>(() =>
+    typeof window !== "undefined" ? getNotificationPermissionStatus() : "denied",
+  );
+  const [showNotifBanner, setShowNotifBanner] = useState(true);
+
+  const handleEnableNotification = async () => {
+    const perm = await requestNotificationPermission();
+    setNotifPermission(perm);
+    if (perm === "granted") {
+      toast.success("Notifikasi HP berhasil diaktifkan!");
+    } else if (perm === "denied") {
+      toast.error("Izin notifikasi ditolak di browser HP.");
+    }
+  };
+
+  const handleCallCustomer = (customerPhone: string) => {
+    const phone = normalizeIndonesianPhone(customerPhone);
+    if (!phone) {
+      toast.error("Nomor telepon tidak valid");
+      return;
+    }
+    // Directly launch WhatsApp Voice Call intent
+    window.location.href = `whatsapp://call?phone=${phone}`;
+  };
 
   // Success Receipt Modal state
   const [completedTxData, setCompletedTxData] = useState<{
@@ -173,11 +206,11 @@ function PesananManagement() {
   };
 
   return (
-    <div className="w-full pb-16">
+    <div className="w-full pb-28">
       {/* Header */}
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 tracking-wide uppercase">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[var(--color-brand-light)] text-[var(--color-brand)] border border-[var(--color-brand)]/20 tracking-wide uppercase">
             Online Pickup
           </div>
           <h1 className="mt-1 text-2xl font-black tracking-tight text-[var(--color-text)]">
@@ -209,6 +242,41 @@ function PesananManagement() {
         )}
       </div>
 
+      {/* PWA System Notification Banner */}
+      {isNotificationSupported() && notifPermission === "default" && showNotifBanner && (
+        <div className="mb-4 p-3.5 rounded-2xl bg-[var(--color-brand-light)] border border-[var(--color-brand)]/30 flex items-center justify-between gap-3 text-xs animate-in slide-in-from-top-2">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-xl bg-[var(--color-brand)] text-white flex items-center justify-center shrink-0">
+              <BellRingingIcon size={18} weight="bold" />
+            </div>
+            <div className="min-w-0">
+              <p className="font-extrabold text-[var(--color-brand-dark)] dark:text-orange-300">
+                Aktifkan Notifikasi Pesanan di HP
+              </p>
+              <p className="text-[11px] text-[var(--color-text-2)] truncate">
+                Dapatkan bunyi & getaran seketika saat pembeli membuat pesanan baru
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              type="button"
+              onClick={handleEnableNotification}
+              className="px-3 py-1.5 rounded-xl bg-[var(--color-brand)] hover:bg-[var(--color-brand-dark)] text-white font-bold press-tactile text-xs shadow-xs"
+            >
+              Aktifkan
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowNotifBanner(false)}
+              className="w-7 h-7 rounded-xl flex items-center justify-center text-[var(--color-text-3)] hover:bg-black/5"
+            >
+              <XIcon size={14} />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Filter Tabs & Search */}
       <div className="mb-5 space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -220,35 +288,38 @@ function PesananManagement() {
               { id: "ready_for_pickup" as const, label: "Siap Diambil", count: counts?.ready_for_pickup },
               { id: "completed" as const, label: "Selesai", count: undefined },
               { id: "cancelled" as const, label: "Dibatalkan", count: undefined },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setSelectedStatus(tab.id)}
-                className={cn(
-                  "px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 transition-all flex items-center gap-1.5",
-                  selectedStatus === tab.id
-                    ? "bg-emerald-600 text-white shadow-xs"
-                    : "bg-[var(--color-surface-2)] text-[var(--color-text-2)] hover:bg-[var(--color-surface-3)]",
-                )}
-              >
-                <span>{tab.label}</span>
-                {tab.count !== undefined && tab.count > 0 && (
-                  <span
-                    className={cn(
-                      "px-1.5 py-0.2 rounded-full text-[10px] font-bold",
-                      selectedStatus === tab.id
-                        ? "bg-white/20 text-white"
-                        : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
-                    )}
-                  >
-                    {tab.count}
-                  </span>
-                )}
-              </button>
-            ))}
+            ].map((tab) => {
+              const isSelected = selectedStatus === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setSelectedStatus(tab.id)}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap press-tactile",
+                    isSelected
+                      ? "bg-[var(--color-brand)] text-white shadow-xs"
+                      : "bg-[var(--color-surface)] text-[var(--color-text-2)] hover:bg-[var(--color-surface-2)] border border-[var(--color-border)]",
+                  )}
+                >
+                  <span>{tab.label}</span>
+                  {tab.count !== undefined && tab.count > 0 && (
+                    <span
+                      className={cn(
+                        "px-1.5 py-0.2 rounded-full text-[10px] font-extrabold",
+                        isSelected
+                          ? "bg-white/25 text-white"
+                          : "bg-[var(--color-brand-light)] text-[var(--color-brand)]",
+                      )}
+                    >
+                      {tab.count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
 
-          {/* Search */}
+          {/* Search Input */}
           <div className="relative w-full sm:w-64">
             <MagnifyingGlassIcon
               size={16}
@@ -256,10 +327,10 @@ function PesananManagement() {
             />
             <input
               type="text"
-              placeholder="Cari nama / nomor / WA..."
+              placeholder="Cari pembeli / no. pesanan..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 rounded-xl text-xs bg-[var(--color-surface-2)] border border-[var(--color-border)] focus:outline-none focus:border-emerald-500"
+              className="w-full pl-9 pr-3 py-1.5 rounded-xl text-xs bg-[var(--color-surface-2)] border border-[var(--color-border)] focus:outline-none focus:border-[var(--color-brand)]"
             />
           </div>
         </div>
@@ -340,18 +411,19 @@ function PesananManagement() {
                         href={`https://wa.me/${normalizeIndonesianPhone(order.customerPhone)}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="w-7 h-7 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center hover:bg-emerald-500/20 active:scale-95 transition-all"
+                        className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center hover:bg-emerald-500/20 active:scale-95 transition-all"
                         title="Chat WhatsApp"
                       >
-                        <WhatsappLogoIcon size={16} weight="fill" />
+                        <WhatsappLogoIcon size={18} weight="fill" />
                       </a>
-                      <a
-                        href={`tel:${order.customerPhone}`}
-                        className="w-7 h-7 rounded-xl bg-[var(--color-surface-2)] text-[var(--color-text-2)] flex items-center justify-center hover:bg-[var(--color-surface-3)] active:scale-95 transition-all"
-                        title="Telepon Pembeli"
+                      <button
+                        type="button"
+                        onClick={() => handleCallCustomer(order.customerPhone)}
+                        className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center hover:bg-emerald-500/20 active:scale-95 transition-all"
+                        title="Telepon Panggilan Suara WhatsApp"
                       >
-                        <PhoneIcon size={14} weight="bold" />
-                      </a>
+                        <PhoneCallIcon size={17} weight="bold" />
+                      </button>
                     </div>
                   </div>
 
@@ -412,7 +484,7 @@ function PesananManagement() {
                     <>
                       <button
                         onClick={() => handleStartPreparing(order._id)}
-                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold active:scale-95 transition-all shadow-xs"
+                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-[var(--color-brand)] hover:bg-[var(--color-brand-dark)] text-white text-xs font-bold active:scale-95 transition-all shadow-xs press-tactile"
                       >
                         <PackageIcon size={16} weight="bold" />
                         <span>Mulai Siapkan</span>

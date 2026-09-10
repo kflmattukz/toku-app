@@ -31,8 +31,31 @@ function OrderTrackingPage() {
 
   if (order === undefined) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--color-surface)]">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-emerald-500" />
+      <div className="min-h-screen bg-[var(--color-surface)] text-[var(--color-text)] pb-20">
+        <header className="sticky top-0 z-30 bg-[var(--color-surface)]/90 backdrop-blur-md border-b border-[var(--color-border)] px-4 py-3">
+          <div className="max-w-md mx-auto flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-[var(--color-surface-2)] animate-pulse" />
+            <div className="w-36 h-4 rounded bg-[var(--color-surface-2)] animate-pulse" />
+          </div>
+        </header>
+
+        <main className="max-w-md mx-auto px-4 pt-4 space-y-4">
+          <div className="p-6 rounded-3xl bg-[var(--color-surface-2)] border border-[var(--color-border)] text-center space-y-3">
+            <div className="w-16 h-16 rounded-2xl bg-[var(--color-surface-3)] mx-auto animate-pulse" />
+            <div className="w-48 h-5 rounded bg-[var(--color-surface-3)] mx-auto animate-pulse" />
+            <div className="w-64 h-3 rounded bg-[var(--color-surface-3)] mx-auto animate-pulse" />
+            <div className="w-40 h-14 rounded-2xl bg-[var(--color-surface-3)] mx-auto animate-pulse mt-4" />
+          </div>
+
+          <div className="p-4 rounded-2xl bg-[var(--color-surface-2)] border border-[var(--color-border)] space-y-3">
+            <div className="w-full h-8 rounded bg-[var(--color-surface-3)] animate-pulse" />
+          </div>
+
+          <div className="p-4 rounded-2xl bg-[var(--color-surface-2)] border border-[var(--color-border)] space-y-3">
+            <div className="w-full h-12 rounded bg-[var(--color-surface-3)] animate-pulse" />
+            <div className="w-full h-12 rounded bg-[var(--color-surface-3)] animate-pulse" />
+          </div>
+        </main>
       </div>
     );
   }
@@ -84,7 +107,7 @@ function OrderTrackingPage() {
       <header className="sticky top-0 z-30 bg-[var(--color-surface)]/90 backdrop-blur-md border-b border-[var(--color-border)] px-4 py-3">
         <div className="max-w-xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-[var(--color-brand)]/10 text-[var(--color-brand)] flex items-center justify-center">
               <StorefrontIcon size={18} weight="duotone" />
             </div>
             <div>
@@ -96,7 +119,7 @@ function OrderTrackingPage() {
             <Link
               to="/s/$storeSlug"
               params={{ storeSlug: store.slug || order.storeId }}
-              className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1"
+              className="text-xs font-semibold text-[var(--color-brand)] hover:underline flex items-center gap-1"
             >
               <ArrowLeftIcon size={12} />
               <span>Menu Toko</span>
@@ -111,9 +134,9 @@ function OrderTrackingPage() {
           className={cn(
             "p-6 rounded-3xl border text-center transition-all relative overflow-hidden",
             order.status === "ready_for_pickup"
-              ? "bg-gradient-to-b from-emerald-500/15 via-emerald-500/5 to-transparent border-emerald-500/30"
+              ? "bg-gradient-to-b from-[var(--color-brand)]/15 via-[var(--color-brand)]/5 to-transparent border-[var(--color-brand)]/30"
               : order.status === "completed"
-                ? "bg-gradient-to-b from-blue-500/15 via-blue-500/5 to-transparent border-blue-500/30"
+                ? "bg-gradient-to-b from-emerald-500/15 via-emerald-500/5 to-transparent border-emerald-500/30"
                 : isCancelled
                   ? "bg-rose-500/10 border-rose-500/20"
                   : "bg-[var(--color-surface-2)] border-[var(--color-border)]",
@@ -122,7 +145,7 @@ function OrderTrackingPage() {
           {/* Status Badge & Icon */}
           <div className="flex justify-center mb-3">
             {order.status === "ready_for_pickup" ? (
-              <div className="w-16 h-16 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-lg animate-bounce">
+              <div className="w-16 h-16 rounded-2xl bg-[var(--color-brand)] text-white flex items-center justify-center shadow-lg animate-bounce">
                 <CheckCircleIcon size={36} weight="fill" />
               </div>
             ) : order.status === "preparing" ? (
@@ -130,7 +153,7 @@ function OrderTrackingPage() {
                 <PackageIcon size={36} weight="duotone" />
               </div>
             ) : order.status === "completed" ? (
-              <div className="w-16 h-16 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-lg">
+              <div className="w-16 h-16 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-lg">
                 <ReceiptIcon size={36} weight="duotone" />
               </div>
             ) : isCancelled ? (
@@ -138,7 +161,7 @@ function OrderTrackingPage() {
                 <XCircleIcon size={36} weight="fill" />
               </div>
             ) : (
-              <div className="w-16 h-16 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] text-emerald-500 flex items-center justify-center shadow-sm">
+              <div className="w-16 h-16 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-brand)] flex items-center justify-center shadow-sm">
                 <ClockIcon size={36} weight="duotone" />
               </div>
             )}
@@ -170,7 +193,7 @@ function OrderTrackingPage() {
             <p className="text-[10px] uppercase font-bold text-[var(--color-text-3)] tracking-wider">
               Kode Ambil Pesanan
             </p>
-            <p className="text-2xl font-black tracking-widest text-emerald-600 dark:text-emerald-400 mt-0.5">
+            <p className="text-2xl font-black tracking-widest text-[var(--color-brand)] mt-0.5">
               {order.orderNumber}
             </p>
           </div>
@@ -183,7 +206,7 @@ function OrderTrackingPage() {
               {/* Connecting Line */}
               <div className="absolute left-4 right-4 top-3 h-0.5 bg-[var(--color-border)] -z-0" />
               <div
-                className="absolute left-4 top-3 h-0.5 bg-emerald-500 transition-all duration-500 -z-0"
+                className="absolute left-4 top-3 h-0.5 bg-[var(--color-brand)] transition-all duration-500 -z-0"
                 style={{
                   width: `${(Math.max(0, currentStep) / (steps.length - 1)) * 88}%`,
                 }}
@@ -199,9 +222,9 @@ function OrderTrackingPage() {
                       className={cn(
                         "w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold border-2 transition-all",
                         isPassed
-                          ? "bg-emerald-600 border-emerald-600 text-white"
+                          ? "bg-[var(--color-brand)] border-[var(--color-brand)] text-white"
                           : "bg-[var(--color-surface)] border-[var(--color-border)] text-[var(--color-text-3)]",
-                        isCurrent && "ring-4 ring-emerald-500/20 scale-110",
+                        isCurrent && "ring-4 ring-[var(--color-brand)]/20 scale-110",
                       )}
                     >
                       {idx + 1}
@@ -224,7 +247,7 @@ function OrderTrackingPage() {
         {/* Store Location Card */}
         {store && (
           <div className="p-4 rounded-2xl bg-[var(--color-surface-2)] border border-[var(--color-border)] flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0 mt-0.5">
+            <div className="w-10 h-10 rounded-xl bg-[var(--color-brand-light)] text-[var(--color-brand)] border border-[var(--color-brand)]/20 flex items-center justify-center shrink-0 mt-0.5">
               <MapPinIcon size={22} weight="duotone" />
             </div>
             <div className="min-w-0 flex-1">
@@ -261,7 +284,7 @@ function OrderTrackingPage() {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <PackageIcon size={18} className="text-emerald-500 opacity-60" />
+                      <PackageIcon size={18} className="text-[var(--color-brand)] opacity-60" />
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
@@ -271,7 +294,7 @@ function OrderTrackingPage() {
                     </p>
                   </div>
                 </div>
-                <span className="font-bold text-[var(--color-text)] shrink-0">
+                <span className="font-bold text-[var(--color-text)] shrink-0 font-mono">
                   {formatIDR(item.subtotal)}
                 </span>
               </div>
@@ -291,7 +314,7 @@ function OrderTrackingPage() {
 
           <div className="pt-3 border-t border-[var(--color-border)] flex justify-between items-center">
             <span className="text-xs font-bold text-[var(--color-text)]">Total Tagihan Kasir</span>
-            <span className="text-base font-extrabold text-emerald-600 dark:text-emerald-400">
+            <span className="text-base font-extrabold text-[var(--color-brand)] font-mono">
               {formatIDR(order.total)}
             </span>
           </div>
@@ -309,7 +332,7 @@ function OrderTrackingPage() {
             <span className="text-[10px] uppercase font-semibold text-[var(--color-text-3)]">
               WhatsApp
             </span>
-            <p className="font-mono text-emerald-600 dark:text-emerald-400 font-semibold">
+            <p className="font-mono text-[var(--color-brand)] font-semibold">
               {order.customerPhone}
             </p>
           </div>

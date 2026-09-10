@@ -11,6 +11,7 @@ import { ShiftModal } from "#/components/ShiftModal";
 import { SidebarNav, TopHeader, NAV_ITEMS } from "#/features/shell";
 import { toast } from "sonner";
 import { formatIDR } from "#/lib/utils";
+import { sendSystemNotification } from "#/lib/pwa-notifications";
 import type { Id } from "../../convex/_generated/dataModel";
 
 export const Route = createFileRoute("/_app")({
@@ -187,6 +188,14 @@ function AppShell() {
             label: "Lihat",
             onClick: () => navigate({ to: "/pesanan" }),
           },
+        });
+
+        // Trigger system-level mobile OS notification
+        sendSystemNotification({
+          title: `Pesanan Baru Masuk! #${o.orderNumber}`,
+          body: `${o.customerName} • ${formatIDR(o.total)}`,
+          url: "/pesanan",
+          tag: `order-${o._id}`,
         });
       });
     }
