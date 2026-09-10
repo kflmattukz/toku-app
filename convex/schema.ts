@@ -87,9 +87,12 @@ export default defineSchema({
     lowStockThreshold: v.optional(v.number()),
     branchName: v.optional(v.string()),
     isMainBranch: v.optional(v.boolean()),
+    slug: v.optional(v.string()),
+    onlineStoreEnabled: v.optional(v.boolean()),
   })
     .index("by_userId", ["userId"])
-    .index("by_userEmail", ["userEmail"]),
+    .index("by_userEmail", ["userEmail"])
+    .index("by_slug", ["slug"]),
 
   cashiers: defineTable({
     storeId: v.id("stores"),
@@ -207,5 +210,47 @@ export default defineSchema({
   })
     .index("by_storeId", ["storeId"])
     .index("by_storeId_createdAt", ["storeId", "createdAt"]),
+
+  online_orders: defineTable({
+    storeId: v.id("stores"),
+    orderNumber: v.string(),
+    customerName: v.string(),
+    customerPhone: v.string(),
+    customerNotes: v.optional(v.string()),
+    items: v.array(
+      v.object({
+        productId: v.string(),
+        name: v.string(),
+        price: v.number(),
+        costPrice: v.optional(v.number()),
+        qty: v.number(),
+        discountType: v.optional(v.union(v.literal("percentage"), v.literal("nominal"))),
+        discountValue: v.optional(v.number()),
+        subtotal: v.number(),
+      }),
+    ),
+    subtotal: v.number(),
+    total: v.number(),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("preparing"),
+      v.literal("ready_for_pickup"),
+      v.literal("completed"),
+      v.literal("cancelled"),
+    ),
+    cancelReason: v.optional(v.string()),
+    transactionId: v.optional(v.id("transactions")),
+    paymentMethod: v.optional(v.union(v.literal("cash"), v.literal("qris"))),
+    cashPaid: v.optional(v.number()),
+    change: v.optional(v.number()),
+    expiresAt: v.number(),
+    createdAt: v.number(),
+    preparedAt: v.optional(v.number()),
+    readyAt: v.optional(v.number()),
+    completedAt: v.optional(v.number()),
+  })
+    .index("by_storeId", ["storeId"])
+    .index("by_storeId_status", ["storeId", "status"])
+    .index("by_expiresAt", ["expiresAt"]),
 });
 

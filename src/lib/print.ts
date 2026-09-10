@@ -1,4 +1,4 @@
-import { formatIDR, calculateItemDiscount } from "./utils";
+import { formatIDR, calculateItemDiscount, normalizeIndonesianPhone } from "./utils";
 import { toast } from "sonner";
 
 export interface PrintReceiptOptions {
@@ -687,6 +687,8 @@ export async function downloadReceiptImage(data: ReceiptData | string, filename?
   }
 }
 
+export { normalizeIndonesianPhone } from "./utils";
+
 /**
  * Generates a crisp thermal receipt image and shares it to WhatsApp.
  * - On Mobile / Web Share supported devices: shares the actual image file directly to WhatsApp / messaging apps.
@@ -698,6 +700,7 @@ export async function shareReceiptWhatsAppImage(
   storeName: string,
   storeAddress?: string,
   paperWidth: "58mm" | "80mm" = "80mm",
+  customerPhone?: string,
 ) {
   if (!tx) return;
 
@@ -716,7 +719,7 @@ export async function shareReceiptWhatsAppImage(
     if (!blob) {
       toast.dismiss(toastId);
       toast.error("Gagal membuat gambar struk. Mengalihkan ke teks...");
-      shareReceiptWhatsApp(tx, storeName, storeAddress);
+      shareReceiptWhatsApp(tx, storeName, storeAddress, customerPhone);
       return;
     }
 
@@ -775,7 +778,10 @@ export async function shareReceiptWhatsAppImage(
     toast.dismiss(toastId);
 
     const introText = `Halo, berikut struk transaksi #${txId} dari ${storeName}:`;
-    const waUrl = `https://wa.me/?text=${encodeURIComponent(introText)}`;
+    const target = customerPhone ? normalizeIndonesianPhone(customerPhone) : "";
+    const waUrl = target
+      ? `https://wa.me/${target}?text=${encodeURIComponent(introText)}`
+      : `https://wa.me/?text=${encodeURIComponent(introText)}`;
     window.open(waUrl, "_blank");
 
     if (copiedToClipboard) {
@@ -793,14 +799,19 @@ export async function shareReceiptWhatsAppImage(
     console.error("Error sharing receipt image via WhatsApp:", error);
     toast.dismiss(toastId);
     toast.error("Terjadi kendala. Membuka WhatsApp versi teks...");
-    shareReceiptWhatsApp(tx, storeName, storeAddress);
+    shareReceiptWhatsApp(tx, storeName, storeAddress, customerPhone);
   }
 }
 
 /**
  * Formats a clean Indonesian receipt summary and opens WhatsApp with prefilled text.
  */
-export function shareReceiptWhatsApp(tx: any, storeName: string, storeAddress?: string) {
+export function shareReceiptWhatsApp(
+  tx: any,
+  storeName: string,
+  storeAddress?: string,
+  customerPhone?: string,
+) {
   if (!tx) return;
 
   const now = new Date(tx.createdAt || Date.now());
@@ -881,7 +892,10 @@ export function shareReceiptWhatsApp(tx: any, storeName: string, storeAddress?: 
   );
 
   const fullText = lines.join("\n");
-  const waUrl = `https://wa.me/?text=${encodeURIComponent(fullText)}`;
+  const target = customerPhone ? normalizeIndonesianPhone(customerPhone) : "";
+  const waUrl = target
+    ? `https://wa.me/${target}?text=${encodeURIComponent(fullText)}`
+    : `https://wa.me/?text=${encodeURIComponent(fullText)}`;
 
   window.open(waUrl, "_blank");
   toast.success("Membuka WhatsApp untuk mengirim struk...");

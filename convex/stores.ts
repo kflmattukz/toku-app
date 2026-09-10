@@ -15,10 +15,7 @@ export const getByUserId = query({
       const store = await ctx.db.get(storeId);
       if (store) {
         const storeEmailClean = store.userEmail?.trim().toLowerCase();
-        if (
-          store.userId === userId ||
-          (cleanEmail && storeEmailClean === cleanEmail)
-        ) {
+        if (store.userId === userId || (cleanEmail && storeEmailClean === cleanEmail)) {
           return store;
         }
       }
@@ -359,3 +356,126 @@ export const deleteBranch = mutation({
   },
 });
 
+export const getBySlugOrId = query({
+  args: {
+    identifier: v.string(),
+  },
+  handler: async (ctx, { identifier }) => {
+    const cleanIdent = identifier.trim().toLowerCase();
+
+    // 1. Try finding by slug
+    let store = await ctx.db
+      .query("stores")
+      .withIndex("by_slug", (q) => q.eq("slug", cleanIdent))
+      .first();
+
+    // 2. If not found, try as store _id
+    if (!store) {
+      try {
+        const id = ctx.db.normalizeId("stores", identifier);
+        if (id) {
+          store = await ctx.db.get(id);
+        }
+      } catch {}
+    }
+
+    if (!store) {
+      return null;
+    }
+
+    const currentStore = store;
+
+    // Fetch products belonging to this store
+    const products = await ctx.db
+      .query("products")
+      .withIndex("by_storeId", (q) => q.eq("storeId", currentStore._id))
+      .collect();
+
+    const enrichedProducts = await Promise.all(
+      products.map(async (p) => {
+        let imageUrl: string | null = null;
+        if (p.imageId) {
+          if (p.imageId.startsWith("data:") || p.imageId.startsWith("http")) {
+            imageUrl = p.imageId;
+          } else {
+            try {
+              imageUrl = await ctx.storage.getUrl(p.imageId);
+            } catch {
+              imageUrl = p.imageId;
+            }
+          }
+        }
+        return {
+          _id: p._id,
+          name: p.name,
+          category: p.category,
+          price: p.price,
+          stock: p.stock,
+          imageId: p.imageId,
+          imageUrl: imageUrl ?? p.imageId ?? null,
+          discountType: p.discountType,
+          discountValue: p.discountValue,
+        };
+      }),
+    );
+
+    return {
+      store: {
+        _id: store._id,
+        name: store.name,
+        branchName: store.branchName,
+        category: store.category,
+        address: store.address,
+        slug: store.slug,
+        onlineStoreEnabled: store.onlineStoreEnabled ?? true,
+      },
+      products: enrichedProducts,
+    };
+  },
+});
+
+export const updateOnlineSettings = mutation({
+  args: {
+    storeId: v.id("stores"),
+    slug: v.optional(v.string()),
+    onlineStoreEnabled: v.optional(v.boolean()),
+  },
+  handler: async (ctx, { storeId, slug, onlineStoreEnabled }) => {
+    const store = await ctx.db.get(storeId);
+    if (!store) {
+      throw new Error("Toko tidak ditemukan.");
+    }
+
+    const patch: Record<string, any> = {};
+
+    if (onlineStoreEnabled !== undefined) {
+      patch.onlineStoreEnabled = onlineStoreEnabled;
+    }
+
+    if (slug !== undefined) {
+      const cleanSlug = slug
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9-]/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^-|-$/g, "");
+
+      if (cleanSlug) {
+        // Check uniqueness
+        const existing = await ctx.db
+          .query("stores")
+          .withIndex("by_slug", (q) => q.eq("slug", cleanSlug))
+          .first();
+
+        if (existing && existing._id !== storeId) {
+          throw new Error("Slug URL ini sudah dipakai oleh toko lain. Silakan pilih slug lain.");
+        }
+        patch.slug = cleanSlug;
+      } else {
+        patch.slug = undefined;
+      }
+    }
+
+    await ctx.db.patch(storeId, patch);
+  },
+});

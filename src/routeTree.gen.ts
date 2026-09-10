@@ -18,9 +18,12 @@ import { Route as AppLaporanRouteImport } from './routes/_app/laporan'
 import { Route as AppOnboardingRouteImport } from './routes/_app/onboarding'
 import { Route as AppPengaturanRouteImport } from './routes/_app/pengaturan'
 import { Route as AppPengeluaranRouteImport } from './routes/_app/pengeluaran'
+import { Route as AppPesananRouteImport } from './routes/_app/pesanan'
 import { Route as AppProdukRouteImport } from './routes/_app/produk'
 import { Route as AppStokRouteImport } from './routes/_app/stok'
 import { Route as AppTransaksiRouteImport } from './routes/_app/transaksi'
+import { Route as OrderOrderIdRouteImport } from './routes/order.$orderId'
+import { Route as SStoreSlugRouteImport } from './routes/s.$storeSlug'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
 const IndexRoute = IndexRouteImport.update({
@@ -67,6 +70,11 @@ const AppPengeluaranRoute = AppPengeluaranRouteImport.update({
   path: '/pengeluaran',
   getParentRoute: () => AppRoute,
 } as any)
+const AppPesananRoute = AppPesananRouteImport.update({
+  id: '/pesanan',
+  path: '/pesanan',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppProdukRoute = AppProdukRouteImport.update({
   id: '/produk',
   path: '/produk',
@@ -81,6 +89,16 @@ const AppTransaksiRoute = AppTransaksiRouteImport.update({
   id: '/transaksi',
   path: '/transaksi',
   getParentRoute: () => AppRoute,
+} as any)
+const OrderOrderIdRoute = OrderOrderIdRouteImport.update({
+  id: '/order/$orderId',
+  path: '/order/$orderId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SStoreSlugRoute = SStoreSlugRouteImport.update({
+  id: '/s/$storeSlug',
+  path: '/s/$storeSlug',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
@@ -97,9 +115,12 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof AppOnboardingRoute
   '/pengaturan': typeof AppPengaturanRoute
   '/pengeluaran': typeof AppPengeluaranRoute
+  '/pesanan': typeof AppPesananRoute
   '/produk': typeof AppProdukRoute
   '/stok': typeof AppStokRoute
   '/transaksi': typeof AppTransaksiRoute
+  '/order/$orderId': typeof OrderOrderIdRoute
+  '/s/$storeSlug': typeof SStoreSlugRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesByTo {
@@ -111,9 +132,12 @@ export interface FileRoutesByTo {
   '/onboarding': typeof AppOnboardingRoute
   '/pengaturan': typeof AppPengaturanRoute
   '/pengeluaran': typeof AppPengeluaranRoute
+  '/pesanan': typeof AppPesananRoute
   '/produk': typeof AppProdukRoute
   '/stok': typeof AppStokRoute
   '/transaksi': typeof AppTransaksiRoute
+  '/order/$orderId': typeof OrderOrderIdRoute
+  '/s/$storeSlug': typeof SStoreSlugRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesById {
@@ -127,9 +151,12 @@ export interface FileRoutesById {
   '/_app/onboarding': typeof AppOnboardingRoute
   '/_app/pengaturan': typeof AppPengaturanRoute
   '/_app/pengeluaran': typeof AppPengeluaranRoute
+  '/_app/pesanan': typeof AppPesananRoute
   '/_app/produk': typeof AppProdukRoute
   '/_app/stok': typeof AppStokRoute
   '/_app/transaksi': typeof AppTransaksiRoute
+  '/order/$orderId': typeof OrderOrderIdRoute
+  '/s/$storeSlug': typeof SStoreSlugRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRouteTypes {
@@ -143,9 +170,12 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/pengaturan'
     | '/pengeluaran'
+    | '/pesanan'
     | '/produk'
     | '/stok'
     | '/transaksi'
+    | '/order/$orderId'
+    | '/s/$storeSlug'
     | '/api/auth/$'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -157,9 +187,12 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/pengaturan'
     | '/pengeluaran'
+    | '/pesanan'
     | '/produk'
     | '/stok'
     | '/transaksi'
+    | '/order/$orderId'
+    | '/s/$storeSlug'
     | '/api/auth/$'
   id:
     | '__root__'
@@ -172,9 +205,12 @@ export interface FileRouteTypes {
     | '/_app/onboarding'
     | '/_app/pengaturan'
     | '/_app/pengeluaran'
+    | '/_app/pesanan'
     | '/_app/produk'
     | '/_app/stok'
     | '/_app/transaksi'
+    | '/order/$orderId'
+    | '/s/$storeSlug'
     | '/api/auth/$'
   fileRoutesById: FileRoutesById
 }
@@ -182,6 +218,8 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
   LoginRoute: typeof LoginRoute
+  OrderOrderIdRoute: typeof OrderOrderIdRoute
+  SStoreSlugRoute: typeof SStoreSlugRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
 
@@ -250,6 +288,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPengeluaranRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/pesanan': {
+      id: '/_app/pesanan'
+      path: '/pesanan'
+      fullPath: '/pesanan'
+      preLoaderRoute: typeof AppPesananRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/produk': {
       id: '/_app/produk'
       path: '/produk'
@@ -271,6 +316,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppTransaksiRouteImport
       parentRoute: typeof AppRoute
     }
+    '/order/$orderId': {
+      id: '/order/$orderId'
+      path: '/order/$orderId'
+      fullPath: '/order/$orderId'
+      preLoaderRoute: typeof OrderOrderIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/s/$storeSlug': {
+      id: '/s/$storeSlug'
+      path: '/s/$storeSlug'
+      fullPath: '/s/$storeSlug'
+      preLoaderRoute: typeof SStoreSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -288,6 +347,7 @@ interface AppRouteChildren {
   AppOnboardingRoute: typeof AppOnboardingRoute
   AppPengaturanRoute: typeof AppPengaturanRoute
   AppPengeluaranRoute: typeof AppPengeluaranRoute
+  AppPesananRoute: typeof AppPesananRoute
   AppProdukRoute: typeof AppProdukRoute
   AppStokRoute: typeof AppStokRoute
   AppTransaksiRoute: typeof AppTransaksiRoute
@@ -300,6 +360,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppOnboardingRoute: AppOnboardingRoute,
   AppPengaturanRoute: AppPengaturanRoute,
   AppPengeluaranRoute: AppPengeluaranRoute,
+  AppPesananRoute: AppPesananRoute,
   AppProdukRoute: AppProdukRoute,
   AppStokRoute: AppStokRoute,
   AppTransaksiRoute: AppTransaksiRoute,
@@ -311,6 +372,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
   LoginRoute: LoginRoute,
+  OrderOrderIdRoute: OrderOrderIdRoute,
+  SStoreSlugRoute: SStoreSlugRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
 }
 export const routeTree = rootRouteImport

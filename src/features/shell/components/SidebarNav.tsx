@@ -17,16 +17,17 @@ import {
   SunIcon,
   MoonIcon,
   UserIcon,
+  ShoppingBagIcon,
 } from "@phosphor-icons/react";
 
 import { useState } from "react";
 import { useThemeSwitchAnimation } from "#/lib/useThemeSwitchAnimation";
-import { CATEGORY_LABELS } from "#/features/pengaturan";
 import type { ActiveCashier } from "#/lib/store-context";
 import type { Id } from "../../../../convex/_generated/dataModel";
 
 export const NAV_ITEMS = [
   { to: "/kasir", icon: StorefrontIcon, label: "Kasir" },
+  { to: "/pesanan", icon: ShoppingBagIcon, label: "Pesanan" },
   { to: "/produk", icon: PackageIcon, label: "Produk" },
   { to: "/stok", icon: ChartBarIcon, label: "Stok" },
   { to: "/transaksi", icon: ReceiptIcon, label: "Transaksi" },
@@ -43,6 +44,7 @@ interface SidebarNavProps {
   onSelectStore: (storeId: Id<"stores"> | null) => void;
   currentCashier: ActiveCashier;
   onOpenCashierModal: () => void;
+  activeOrdersCount?: number;
   onOpenShiftModal: () => void;
   activeShift: any;
   collapsed: boolean;
@@ -58,6 +60,7 @@ export function SidebarNav({
   onSelectStore,
   currentCashier,
   onOpenCashierModal,
+  activeOrdersCount,
   onOpenShiftModal,
   activeShift,
   collapsed,
@@ -70,65 +73,82 @@ export function SidebarNav({
   return (
     <div className="flex h-full flex-col bg-[var(--color-surface)] select-none">
       {/* Brand Header */}
-      <div className={`border-b border-[var(--color-border)] ${collapsed ? "p-3" : "p-4"}`}>
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex min-w-0 items-center gap-2.5">
-            <img
-              src="/logo.png"
-              alt="Toku POS"
-              className="h-8 w-8 shrink-0 rounded-xl object-contain"
-            />
-            {!collapsed && (
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-sm leading-tight font-extrabold text-[var(--color-text)]">
-                  {store ? store.name : "Toku POS"}
-                </div>
-                {userStores && userStores.length > 1 ? (
-                  <div className="relative mt-1">
-                    <button
-                      type="button"
-                      onClick={() => setShowStorePicker((prev) => !prev)}
-                      className="press-tactile inline-flex cursor-pointer items-center gap-1 rounded-md border border-[var(--color-border)] bg-[var(--color-surface-2)] px-2 py-0.5 text-[10px] font-bold text-[var(--color-brand)]"
-                    >
+      <div className={`border-b border-[var(--color-border)] ${collapsed ? "p-2" : "p-3.5"}`}>
+        <div className="flex items-center justify-between gap-1.5">
+          {/* Store Switcher */}
+          <div className="relative min-w-0 flex-1">
+            <button
+              type="button"
+              onClick={() => userStores && userStores.length > 1 && setShowStorePicker(!showStorePicker)}
+              className={`press-tactile flex w-full items-center ${
+                collapsed ? "justify-center" : "justify-between"
+              } rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-2)] p-2 text-left transition-all ${
+                userStores && userStores.length > 1 ? "cursor-pointer hover:bg-[var(--color-surface-3)]" : ""
+              }`}
+            >
+              {!collapsed ? (
+                <>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1 text-[10px] font-bold text-[var(--color-text-3)]">
                       <BuildingsIcon size={12} weight="bold" />
-                      <span className="max-w-[110px] truncate">{store?.branchName || "Pusat"}</span>
-                      <CaretDownIcon size={10} weight="bold" />
-                    </button>
+                      <span className="truncate">TOKU POS</span>
+                    </div>
+                    <div className="truncate text-xs font-black text-[var(--color-text)]">
+                      {store?.name || "Toko"}
+                    </div>
+                  </div>
+                  {userStores && userStores.length > 1 && (
+                    <CaretDownIcon
+                      size={14}
+                      weight="bold"
+                      className={`text-[var(--color-text-3)] transition-transform duration-200 ${
+                        showStorePicker ? "rotate-180" : ""
+                      }`}
+                    />
+                  )}
+                </>
+              ) : (
+                <div
+                  className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--color-brand)]/10 text-xs font-black text-[var(--color-brand)]"
+                  title={store?.name || "Toko"}
+                >
+                  {(store?.name || "T")[0].toUpperCase()}
+                </div>
+              )}
+            </button>
 
-                    {showStorePicker && (
-                      <div className="absolute top-full left-0 z-50 mt-1.5 flex w-48 flex-col gap-1 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-1.5 shadow-lg">
-                        <div className="px-2 py-1 text-[10px] font-bold text-[var(--color-text-3)]">
-                          PILIH CABANG OUTLET
-                        </div>
-                        {userStores.map((st) => (
-                          <button
-                            key={st._id}
-                            type="button"
-                            onClick={() => {
-                              onSelectStore(st._id);
-                              setShowStorePicker(false);
-                            }}
-                            className={`w-full cursor-pointer rounded-lg px-2.5 py-1.5 text-left text-xs font-bold transition-colors ${
-                              store?._id === st._id
-                                ? "bg-[var(--color-brand-light)] text-[var(--color-brand)]"
-                                : "text-[var(--color-text)] hover:bg-[var(--color-surface-2)]"
-                            }`}
-                          >
-                            {st.name} ({st.branchName || "Pusat"})
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="mt-1">
-                    <span className="inline-block rounded-full border border-[var(--color-border)] bg-[var(--color-brand-light)] px-1.5 py-0.5 text-[9px] font-bold text-[var(--color-brand)]">
-                      {store
-                        ? (CATEGORY_LABELS[store.category] ?? store.category)
-                        : "Menyiapkan..."}
-                    </span>
-                  </div>
-                )}
+            {/* Store Picker Dropdown */}
+            {showStorePicker && userStores && userStores.length > 1 && (
+              <div className="absolute top-full left-0 z-50 mt-1.5 w-56 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-1.5 shadow-xl">
+                <div className="px-2 py-1 text-[10px] font-bold text-[var(--color-text-3)]">GANTI TOKO</div>
+                <div className="max-h-48 overflow-y-auto space-y-0.5">
+                  {userStores.map((s: any) => (
+                    <button
+                      key={s._id}
+                      type="button"
+                      onClick={() => {
+                        onSelectStore(s._id);
+                        setShowStorePicker(false);
+                      }}
+                      className={`press-tactile flex w-full items-center justify-between rounded-xl px-2.5 py-2 text-left text-xs font-bold transition-all ${
+                        store?._id === s._id
+                          ? "bg-[var(--color-brand)] text-white"
+                          : "text-[var(--color-text)] hover:bg-[var(--color-surface-2)]"
+                      }`}
+                    >
+                      <span className="truncate">{s.name}</span>
+                      {s.branchName && (
+                        <span
+                          className={`text-[10px] ${
+                            store?._id === s._id ? "text-white/70" : "text-[var(--color-text-3)]"
+                          }`}
+                        >
+                          {s.branchName}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
           </div>
@@ -192,13 +212,15 @@ export function SidebarNav({
         {NAV_ITEMS.map((item) => {
           const Icon = item.icon;
           const active = currentPath.startsWith(item.to);
+          const hasOrdersBadge = item.to === "/pesanan" && Boolean(activeOrdersCount && activeOrdersCount > 0);
+
           return (
             <div key={item.to} className="nav-item-container relative">
               <Link
                 to={item.to}
                 title={collapsed ? item.label : undefined}
                 preload="intent"
-                className={`press-tactile flex items-center ${
+                className={`press-tactile relative flex items-center ${
                   collapsed ? "justify-center rounded-xl p-2.5" : "gap-3 rounded-full px-3.5 py-2.5"
                 } text-xs font-bold transition-all ${
                   active
@@ -206,10 +228,29 @@ export function SidebarNav({
                     : "text-[var(--color-text-2)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-text)]"
                 }`}
               >
-                <Icon size={18} weight={active ? "fill" : "regular"} className="shrink-0" />
-                {!collapsed && <span className="truncate">{item.label}</span>}
+                <div className="relative shrink-0">
+                  <Icon size={18} weight={active ? "fill" : "regular"} />
+                  {collapsed && hasOrdersBadge && (
+                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-[var(--color-surface)]" />
+                  )}
+                </div>
+                {!collapsed && (
+                  <div className="flex items-center justify-between w-full min-w-0">
+                    <span className="truncate">{item.label}</span>
+                    {hasOrdersBadge && (
+                      <span className="ml-auto px-1.5 py-0.2 rounded-full text-[10px] font-black bg-emerald-500 text-white animate-pulse">
+                        {activeOrdersCount}
+                      </span>
+                    )}
+                  </div>
+                )}
               </Link>
-              {collapsed && <div className="sidebar-tooltip">{item.label}</div>}
+              {collapsed && (
+                <div className="sidebar-tooltip">
+                  {item.label}
+                  {hasOrdersBadge ? ` (${activeOrdersCount})` : ""}
+                </div>
+              )}
             </div>
           );
         })}

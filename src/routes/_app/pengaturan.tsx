@@ -32,6 +32,7 @@ function Pengaturan() {
   const currentStore = store ?? cachedStore;
   const { data: session } = authClient.useSession();
   const updateStore = useMutation<typeof api.stores.update>(api.stores.update);
+  const updateOnlineSettings = useMutation(api.stores.updateOnlineSettings);
   const createBranchMutation = useMutation(api.stores.createBranch);
   const deleteBranchMutation = useMutation(api.stores.deleteBranch);
   const userStores = useQuery(
@@ -58,6 +59,8 @@ function Pengaturan() {
   const [category, setCategory] = useState<any>("kuliner_resto");
   const [address, setAddress] = useState("");
   const [lowStockThreshold, setLowStockThreshold] = useState(5);
+  const [slug, setSlug] = useState("");
+  const [onlineStoreEnabled, setOnlineStoreEnabled] = useState(true);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const { ref: themeButtonRef, toggleSwitchTheme, dark } = useThemeSwitchAnimation();
@@ -88,6 +91,8 @@ function Pengaturan() {
       setCategory(currentStore.category || "kuliner_resto");
       setAddress(currentStore.address || "");
       setLowStockThreshold(currentStore.lowStockThreshold ?? 5);
+      setSlug((currentStore as any).slug || "");
+      setOnlineStoreEnabled((currentStore as any).onlineStoreEnabled ?? true);
     }
   }, [currentStore]);
 
@@ -109,11 +114,16 @@ function Pengaturan() {
         address: address.trim() || undefined,
         lowStockThreshold,
       });
+      await updateOnlineSettings({
+        storeId: currentStore._id,
+        slug: slug.trim() || undefined,
+        onlineStoreEnabled,
+      });
       setSaved(true);
-      toast.success("Profil toko berhasil diperbarui!");
+      toast.success("Profil toko & toko online berhasil diperbarui!");
       setTimeout(() => setSaved(false), 2500);
-    } catch {
-      toast.error("Gagal menyimpan profil toko.");
+    } catch (err: any) {
+      toast.error(err?.message || "Gagal menyimpan profil toko.");
     } finally {
       setSaving(false);
     }
@@ -321,6 +331,11 @@ function Pengaturan() {
             setAddress={setAddress}
             lowStockThreshold={lowStockThreshold}
             setLowStockThreshold={setLowStockThreshold}
+            slug={slug}
+            setSlug={setSlug}
+            onlineStoreEnabled={onlineStoreEnabled}
+            setOnlineStoreEnabled={setOnlineStoreEnabled}
+            storeId={currentStore?._id}
             saving={saving}
             saved={saved}
             onSave={handleSaveStore}

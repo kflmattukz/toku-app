@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { authClient } from "#/lib/auth-client";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
@@ -9,11 +9,45 @@ import { XIcon } from "@phosphor-icons/react";
 import { CashierLockModal } from "#/components/CashierLockModal";
 import { ShiftModal } from "#/components/ShiftModal";
 import { SidebarNav, TopHeader, NAV_ITEMS } from "#/features/shell";
+import { toast } from "sonner";
+import { formatIDR } from "#/lib/utils";
 import type { Id } from "../../convex/_generated/dataModel";
 
 export const Route = createFileRoute("/_app")({
   component: AppShell,
 });
+
+function playOrderChime() {
+  try {
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const now = ctx.currentTime;
+    const osc1 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    osc1.type = "sine";
+    osc1.frequency.setValueAtTime(880, now);
+    gain1.gain.setValueAtTime(0.2, now);
+    gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+    osc1.connect(gain1);
+    gain1.connect(ctx.destination);
+    osc1.start(now);
+    osc1.stop(now + 0.35);
+
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.type = "sine";
+    osc2.frequency.setValueAtTime(1320, now + 0.12);
+    gain2.gain.setValueAtTime(0.25, now + 0.12);
+    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
+    osc2.connect(gain2);
+    gain2.connect(ctx.destination);
+    osc2.start(now + 0.12);
+    osc2.stop(now + 0.55);
+  } catch (err) {
+    console.warn("Audio chime error:", err);
+  }
+}
 
 function safeGetStorage(key: string): string | null {
   try {
@@ -119,6 +153,46 @@ function AppShell() {
   const isPro = true;
 
   const activeShift = useQuery(api.shifts.getActive, store ? { storeId: store._id } : "skip");
+
+  const activeOrdersCount = useQuery(
+    api.onlineOrders.countActiveByStore,
+    store ? { storeId: store._id } : "skip",
+  );
+  const pendingOrders = useQuery(
+    api.onlineOrders.listByStore,
+    store ? { storeId: store._id, status: "pending" } : "skip",
+  );
+
+  const prevPendingIdsRef = useRef<Set<string>>(new Set());
+  const isFirstLoadRef = useRef(true);
+
+  useEffect(() => {
+    if (!pendingOrders) return;
+    const currentIds = new Set(pendingOrders.map((o) => o._id));
+
+    if (isFirstLoadRef.current) {
+      prevPendingIdsRef.current = currentIds;
+      isFirstLoadRef.current = false;
+      return;
+    }
+
+    const newOrders = pendingOrders.filter((o) => !prevPendingIdsRef.current.has(o._id));
+    if (newOrders.length > 0) {
+      playOrderChime();
+      newOrders.forEach((o) => {
+        toast.success(`Pesanan Baru Masuk! #${o.orderNumber}`, {
+          description: `${o.customerName} - ${formatIDR(o.total)}`,
+          duration: 8000,
+          action: {
+            label: "Lihat",
+            onClick: () => navigate({ to: "/pesanan" }),
+          },
+        });
+      });
+    }
+
+    prevPendingIdsRef.current = currentIds;
+  }, [pendingOrders, navigate]);
 
   useEffect(() => {
     const savedCashier = safeGetStorage("toku_active_cashier");
@@ -305,6 +379,7 @@ function AppShell() {
           onOpenCashierModal={() => setCashierModalOpen(true)}
           onOpenShiftModal={() => setShiftModalOpen(true)}
           activeShift={activeShift}
+          activeOrdersCount={activeOrdersCount?.totalActive || 0}
           collapsed={collapsed}
           onToggleCollapse={toggleCollapsed}
           onSignOut={handleSignOut}
@@ -353,6 +428,7 @@ function AppShell() {
                     setShiftModalOpen(true);
                   }}
                   activeShift={activeShift}
+                  activeOrdersCount={activeOrdersCount?.totalActive || 0}
                   collapsed={false}
                   onSignOut={handleSignOut}
                 />
@@ -363,8 +439,7 @@ function AppShell() {
         )}
 
       {/* Main Content Area */}
-      <div className="flex min-h-screen min-w-0 flex-1 flex-col">
-        {/* Top Header */}
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <TopHeader
           store={store}
           currentCashier={currentCashier}
@@ -373,16 +448,10 @@ function AppShell() {
           onOpenCashierModal={() => setCashierModalOpen(true)}
         />
 
-        {/* Route Content */}
-        <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col p-4 pb-28 sm:p-6">
-          <div
-            key={currentPath}
-            className="page-enter-animation flex w-full min-w-0 flex-1 flex-col"
-          >
-            <AppStoreContext.Provider value={storeContextValue}>
-              <Outlet />
-            </AppStoreContext.Provider>
-          </div>
+        <main className="main-content-scroll flex-1 overflow-x-hidden overflow-y-auto px-4 py-4 md:px-8 md:py-6">
+          <AppStoreContext.Provider value={storeContextValue}>
+            <Outlet />
+          </AppStoreContext.Provider>
         </main>
 
         {/* Mobile Floating Bottom Dock */}
@@ -403,6 +472,8 @@ function AppShell() {
           {bottomNavItems.map((item, index) => {
             const Icon = item.icon;
             const active = currentPath.startsWith(item.to);
+            const hasOrdersBadge = item.to === "/pesanan" && Boolean(activeOrdersCount && activeOrdersCount.totalActive > 0);
+
             return (
               <Link
                 key={item.to}
@@ -413,12 +484,19 @@ function AppShell() {
                   active ? "text-white" : "text-text-2 hover:text-text"
                 }`}
               >
-                <Icon
-                  size={20}
-                  weight={active ? "fill" : "regular"}
-                  className="transition-transform duration-200 ease-out"
-                  style={{ transform: active ? "scale(1.08)" : "scale(1)" }}
-                />
+                <div className="relative">
+                  <Icon
+                    size={20}
+                    weight={active ? "fill" : "regular"}
+                    className="transition-transform duration-200 ease-out"
+                    style={{ transform: active ? "scale(1.08)" : "scale(1)" }}
+                  />
+                  {hasOrdersBadge && activeOrdersCount && (
+                    <span className="absolute -top-1 -right-1.5 min-w-[14px] h-[14px] px-0.5 rounded-full bg-emerald-500 text-white text-[9px] font-black flex items-center justify-center ring-2 ring-[var(--color-surface)]">
+                      {activeOrdersCount.totalActive}
+                    </span>
+                  )}
+                </div>
                 <span className="mt-0.5 truncate text-[10px] font-extrabold">{item.label}</span>
               </Link>
             );
