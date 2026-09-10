@@ -22,7 +22,7 @@ interface BranchesTabProps {
   isUpdatingBranch?: boolean;
   onUpdateBranch: (
     storeId: Id<"stores">,
-    values: { branchName: string; address?: string }
+    values: { branchName: string; address?: string },
   ) => Promise<void> | void;
   isDeletingBranch?: boolean;
   onDeleteBranch: (storeId: Id<"stores">) => Promise<void> | void;
@@ -429,11 +429,13 @@ export function BranchesTab({
               Hapus Cabang {deletingStore.branchName || deletingStore.name}?
             </h3>
             <p className="mb-4 text-xs leading-relaxed text-[var(--color-text-2)]">
-              Tindakan ini permanen. Semua data produk, transaksi POS, staf kasir, shift, dan pengeluaran pada cabang ini akan dihapus secara permanen dari sistem.
+              Tindakan ini permanen. Semua data produk, transaksi POS, staf kasir, shift, dan
+              pengeluaran pada cabang ini akan dihapus secara permanen dari sistem.
             </p>
 
             <div className="mb-5 rounded-xl border border-rose-500/20 bg-rose-500/5 p-3 text-left text-xs font-semibold text-rose-600 dark:text-rose-400">
-              ⚠️ Diperlukan verifikasi PIN Pemilik Toko (Owner) untuk menyelesaikan proses penghapusan cabang ini.
+              ⚠️ Diperlukan verifikasi PIN Pemilik Toko (Owner) untuk menyelesaikan proses
+              penghapusan cabang ini.
             </div>
 
             <div className="grid grid-cols-2 gap-3">

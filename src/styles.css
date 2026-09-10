@@ -470,9 +470,18 @@ body {
 }
 
 @keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  20%, 60% { transform: translateX(-4px); }
-  40%, 80% { transform: translateX(4px); }
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20%,
+  60% {
+    transform: translateX(-4px);
+  }
+  40%,
+  80% {
+    transform: translateX(4px);
+  }
 }
 
 .animate-shake {
@@ -954,7 +963,8 @@ textarea {
 }
 
 @keyframes scannerSweep {
-  0%, 100% {
+  0%,
+  100% {
     top: 6%;
     opacity: 0.3;
   }

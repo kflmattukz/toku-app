@@ -108,7 +108,10 @@ export function exportToExcel(data: ReportExportData, includeTransactions: boole
     ["RINGKASAN OPERASIONAL"],
     ["Total Transaksi Sukses", data.totalTransactions],
     ["Total Barang Terjual (pcs)", data.totalItems],
-    ["Transaksi Dibatalkan", `${data.cancelledCount} transaksi (${formatIDR(data.cancelledTotal)})`],
+    [
+      "Transaksi Dibatalkan",
+      `${data.cancelledCount} transaksi (${formatIDR(data.cancelledTotal)})`,
+    ],
   ];
 
   const wsSummary = XLSX.utils.aoa_to_sheet(summaryRows);
@@ -133,7 +136,8 @@ export function exportToExcel(data: ReportExportData, includeTransactions: boole
   ];
 
   sortedProducts.forEach((p, idx) => {
-    const marginPct = p.totalRevenue > 0 ? ((p.totalProfit / p.totalRevenue) * 100).toFixed(1) : "0";
+    const marginPct =
+      p.totalRevenue > 0 ? ((p.totalProfit / p.totalRevenue) * 100).toFixed(1) : "0";
     productRows.push([
       `#${idx + 1}`,
       p.name,
@@ -185,9 +189,7 @@ export function exportToExcel(data: ReportExportData, includeTransactions: boole
         minute: "2-digit",
       });
 
-      const itemsSummary = (tx.items || [])
-        .map((i: any) => `${i.name} (${i.qty}x)`)
-        .join(", ");
+      const itemsSummary = (tx.items || []).map((i: any) => `${i.name} (${i.qty}x)`).join(", ");
 
       txRows.push([
         idx + 1,
@@ -249,9 +251,7 @@ export async function copyToGoogleSheets(data: ReportExportData): Promise<boolea
   lines.push(
     `1. Uang Masuk (Omset)\t${data.totalRevenue}\tTotal seluruh penerimaan penjualan kotor`,
   );
-  lines.push(
-    `2. Modal Kulakan (HPP)\t${data.totalCogs}\tModal barang yang laku terjual`,
-  );
+  lines.push(`2. Modal Kulakan (HPP)\t${data.totalCogs}\tModal barang yang laku terjual`);
   lines.push(
     `3. Untung Kotor\t${data.grossProfit}\tSelisih omset dikurangi modal barang (Margin ${data.grossMargin.toFixed(1)}%)`,
   );
@@ -417,4 +417,3 @@ export function printReportA4(
     }
   }, 250);
 }
-

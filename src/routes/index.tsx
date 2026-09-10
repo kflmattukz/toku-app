@@ -60,11 +60,7 @@ function Landing() {
       <div className="hero-glow-3" />
 
       {/* Glass Pill Navbar */}
-      <LandingNavbar
-        dark={dark}
-        session={session}
-        onGoogleLogin={handleGoogleLogin}
-      />
+      <LandingNavbar dark={dark} session={session} onGoogleLogin={handleGoogleLogin} />
 
       {/* Editorial Hero Section */}
       <LandingHero session={session} onGoogleLogin={handleGoogleLogin} />

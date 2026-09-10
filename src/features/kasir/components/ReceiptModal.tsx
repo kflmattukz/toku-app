@@ -1,11 +1,7 @@
 import { useState } from "react";
 import { Modal } from "#/components/Modal";
 import { KasirReceipt } from "./KasirReceipt";
-import {
-  printReceipt,
-  downloadReceiptImage,
-  shareReceiptWhatsAppImage,
-} from "#/lib/print";
+import { printReceipt, downloadReceiptImage, shareReceiptWhatsAppImage } from "#/lib/print";
 import {
   PrinterIcon,
   DownloadSimpleIcon,
@@ -23,13 +19,7 @@ interface ReceiptModalProps {
   storeAddress?: string;
 }
 
-export function ReceiptModal({
-  open,
-  onClose,
-  tx,
-  storeName,
-  storeAddress,
-}: ReceiptModalProps) {
+export function ReceiptModal({ open, onClose, tx, storeName, storeAddress }: ReceiptModalProps) {
   const [paperWidth, setPaperWidth] = useState<"58mm" | "80mm">("80mm");
   const [isDownloading, setIsDownloading] = useState(false);
   const [isSharing, setIsSharing] = useState(false);

@@ -54,9 +54,7 @@ export function TransactionTable({
               <div className="flex items-center gap-2">
                 <span
                   className={`text-xs font-black ${
-                    isCancelled
-                      ? "text-[var(--color-danger-text)]"
-                      : "text-[var(--color-brand)]"
+                    isCancelled ? "text-[var(--color-danger-text)]" : "text-[var(--color-brand)]"
                   }`}
                 >
                   #{txNumber}

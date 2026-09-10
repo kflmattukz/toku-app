@@ -107,29 +107,29 @@ export function ProductCatalogGrid({
                 />
               ))
             : categories.map((cat) => {
-            const active = categoryFilter === cat;
-            return (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => onCategoryFilterChange(cat)}
-                className={`press-tactile flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-5 py-2.5 text-xs whitespace-nowrap transition-all ${
-                  active
-                    ? "shadow-primary-500/20 border-[var(--color-brand)] bg-[var(--color-brand)] font-extrabold text-white shadow-md"
-                    : "border-[var(--color-border)] bg-[var(--color-surface)] font-semibold text-[var(--color-text-2)] shadow-xs"
-                }`}
-              >
-                {cat === "Semua" && (
-                  <FireIcon
-                    size={16}
-                    weight="fill"
-                    color={active ? "#ffffff" : "var(--color-brand)"}
-                  />
-                )}
-                <span>{cat}</span>
-              </button>
-            );
-          })}
+                const active = categoryFilter === cat;
+                return (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => onCategoryFilterChange(cat)}
+                    className={`press-tactile flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-5 py-2.5 text-xs whitespace-nowrap transition-all ${
+                      active
+                        ? "shadow-primary-500/20 border-[var(--color-brand)] bg-[var(--color-brand)] font-extrabold text-white shadow-md"
+                        : "border-[var(--color-border)] bg-[var(--color-surface)] font-semibold text-[var(--color-text-2)] shadow-xs"
+                    }`}
+                  >
+                    {cat === "Semua" && (
+                      <FireIcon
+                        size={16}
+                        weight="fill"
+                        color={active ? "#ffffff" : "var(--color-brand)"}
+                      />
+                    )}
+                    <span>{cat}</span>
+                  </button>
+                );
+              })}
         </div>
       </div>
 

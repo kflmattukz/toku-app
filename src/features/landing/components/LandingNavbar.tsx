@@ -36,9 +36,7 @@ export function LandingNavbar({ dark: propDark, onToggleTheme, session }: Landin
             : "rgba(255, 255, 255, 0.65)",
         backdropFilter: isScrolled ? "blur(16px)" : "blur(10px)",
         WebkitBackdropFilter: isScrolled ? "blur(16px)" : "blur(10px)",
-        boxShadow: isScrolled
-          ? "0 14px 30px -10px rgba(0, 0, 0, 0.18)"
-          : "var(--shadow-md)",
+        boxShadow: isScrolled ? "0 14px 30px -10px rgba(0, 0, 0, 0.18)" : "var(--shadow-md)",
         transition: "all 250ms cubic-bezier(0.16, 1, 0.3, 1)",
       }}
     >

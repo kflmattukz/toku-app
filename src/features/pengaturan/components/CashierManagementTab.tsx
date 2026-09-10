@@ -69,7 +69,7 @@ interface CashierManagementTabProps {
   isUpdatingCashier: boolean;
   onUpdateCashier: (
     id: Id<"cashiers">,
-    data: { name: string; pin: string; role: "cashier" | "manager" | "owner" }
+    data: { name: string; pin: string; role: "cashier" | "manager" | "owner" },
   ) => Promise<void> | void;
   deletingCashier: { id: Id<"cashiers">; name: string } | null;
   setDeletingCashier: (target: { id: Id<"cashiers">; name: string } | null) => void;
@@ -393,7 +393,9 @@ export function CashierManagementTab({
                       <badge.icon size={20} weight="duotone" />
                     </div>
                     <div>
-                      <div className="text-sm font-extrabold text-[var(--color-text)]">{c.name}</div>
+                      <div className="text-sm font-extrabold text-[var(--color-text)]">
+                        {c.name}
+                      </div>
                       <div className="flex items-center gap-1.5 text-xs text-[var(--color-text-3)]">
                         <span style={{ color: badge.color }} className="font-bold">
                           {badge.label}

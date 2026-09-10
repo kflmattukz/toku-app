@@ -10,11 +10,11 @@
     "generate-routes": "tsr generate",
     "build": "vite build",
     "preview": "vite preview",
-    "format": "prettier --write \"src/**/*.{ts,tsx,css}\"",
-    "format:check": "prettier --check \"src/**/*.{ts,tsx,css}\"",
+    "format": "oxfmt --write \"src/**/*.{ts,tsx,css}\"",
+    "format:check": "oxfmt --check \"src/**/*.{ts,tsx,css}\"",
     "doctor": "pnpm dlx react-doctor@latest",
-    "convex:dev": "pnpm --allow-build=esbuild dlx convex dev",
-    "convex:push": "pnpm --allow-build=esbuild dlx convex deploy"
+    "cv:dev": "pnpm --allow-build=esbuild dlx convex dev",
+    "cv:push": "pnpm --allow-build=esbuild dlx convex deploy"
   },
   "dependencies": {
     "@convex-dev/react-query": "0.1.0",

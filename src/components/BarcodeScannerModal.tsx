@@ -322,9 +322,7 @@ export function BarcodeScannerModal({
           {cameraError && (
             <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center text-white">
               <WarningCircleIcon size={36} weight="regular" className="mb-2 text-neutral-400" />
-              <p className="max-w-xs text-xs leading-relaxed text-neutral-200">
-                {cameraError}
-              </p>
+              <p className="max-w-xs text-xs leading-relaxed text-neutral-200">{cameraError}</p>
               <p className="mt-2 text-[11px] text-neutral-400">
                 Gunakan input barcode manual di bawah ini.
               </p>

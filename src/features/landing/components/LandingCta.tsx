@@ -11,10 +11,7 @@ export function LandingCta({ session, onGoogleLogin }: LandingCtaProps) {
   const containerRef = useScrollReveal<HTMLElement>({ threshold: 0.1 });
 
   return (
-    <section
-      ref={containerRef}
-      style={{ padding: "0 20px 80px", maxWidth: 960, margin: "0 auto" }}
-    >
+    <section ref={containerRef} style={{ padding: "0 20px 80px", maxWidth: 960, margin: "0 auto" }}>
       <div
         className="reveal-init"
         style={{

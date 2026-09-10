@@ -30,8 +30,7 @@ export function useKasirCart(products: Product[] = []) {
     let changed = false;
     const nextCart: CartItem[] = [];
     const notifications: Array<
-      | { type: "out_of_stock"; name: string }
-      | { type: "adjusted"; name: string; stock: number }
+      { type: "out_of_stock"; name: string } | { type: "adjusted"; name: string; stock: number }
     > = [];
 
     for (const item of cartRef.current) {

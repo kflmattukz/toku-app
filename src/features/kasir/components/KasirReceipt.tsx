@@ -13,11 +13,7 @@ function ReceiptBarcode({ value, is58mm }: { value: string; is58mm: boolean }) {
   const narrowWidth = is58mm ? 1.15 : 1.3;
   const wideWidth = is58mm ? 2.8 : 3.2;
   const height = is58mm ? 26 : 30;
-  const { bars, totalWidth, displayValue } = generateBarcodeBars(
-    value,
-    narrowWidth,
-    wideWidth,
-  );
+  const { bars, totalWidth, displayValue } = generateBarcodeBars(value, narrowWidth, wideWidth);
 
   let curX = 0;
 
@@ -44,14 +40,7 @@ function ReceiptBarcode({ value, is58mm }: { value: string; is58mm: boolean }) {
           curX += bar.width;
           if (!bar.isBar) return null;
           return (
-            <rect
-              key={`bar-${x}`}
-              x={x}
-              y={0}
-              width={bar.width}
-              height={height}
-              fill="#000000"
-            />
+            <rect key={`bar-${x}`} x={x} y={0} width={bar.width} height={height} fill="#000000" />
           );
         })}
       </svg>
@@ -131,9 +120,7 @@ export function KasirReceipt({
         </strong>
 
         {storeAddress && (
-          <div style={{ fontSize: 10.5, color: "#000000", marginTop: 2 }}>
-            {storeAddress}
-          </div>
+          <div style={{ fontSize: 10.5, color: "#000000", marginTop: 2 }}>{storeAddress}</div>
         )}
 
         <div style={{ fontSize: 10.5, color: "#000000", marginTop: 4 }}>

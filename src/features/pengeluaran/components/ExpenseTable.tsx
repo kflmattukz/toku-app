@@ -48,9 +48,7 @@ export function ExpenseTable({
               year: "numeric",
             });
             return (
-              <span className="text-xs font-bold text-[var(--color-text)]">
-                {formattedDate}
-              </span>
+              <span className="text-xs font-bold text-[var(--color-text)]">{formattedDate}</span>
             );
           },
         }),

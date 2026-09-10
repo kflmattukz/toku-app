@@ -44,9 +44,7 @@ export function StockOverviewCards({ lowStockCount, healthyStockCount }: StockOv
               <CheckCircleIcon size={22} weight="duotone" />
             </div>
           </div>
-          <div className="mb-1 text-xs font-bold text-[var(--color-text-2)]">
-            Persediaan Cukup
-          </div>
+          <div className="mb-1 text-xs font-bold text-[var(--color-text-2)]">Persediaan Cukup</div>
           <div className="price mb-1.5 text-2xl font-black tracking-tight text-[var(--color-text)] sm:text-3xl">
             {healthyStockCount} Produk
           </div>

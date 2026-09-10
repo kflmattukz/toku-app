@@ -62,7 +62,10 @@ function Onboarding() {
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
           {/* Store Name Input */}
           <div>
-            <label htmlFor="store-name-input" className="mb-2 block text-xs font-bold text-[var(--color-text)]">
+            <label
+              htmlFor="store-name-input"
+              className="mb-2 block text-xs font-bold text-[var(--color-text)]"
+            >
               Nama Toko / Usaha
             </label>
             <input

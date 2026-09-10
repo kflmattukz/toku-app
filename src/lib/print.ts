@@ -141,36 +141,36 @@ const CODE39_MAP: Record<string, string> = {
   "7": "000100101",
   "8": "100100100",
   "9": "001100100",
-  "A": "100001001",
-  "B": "001001001",
-  "C": "101001000",
-  "D": "000011001",
-  "E": "100011000",
-  "F": "001011000",
-  "G": "000001101",
-  "H": "100001100",
-  "I": "001001100",
-  "J": "000011100",
-  "K": "100000011",
-  "L": "001000011",
-  "M": "101000010",
-  "N": "000010011",
-  "O": "100010010",
-  "P": "001010010",
-  "Q": "000000111",
-  "R": "100000110",
-  "S": "001000110",
-  "T": "000010110",
-  "U": "110000001",
-  "V": "011000001",
-  "W": "111000000",
-  "X": "010010001",
-  "Y": "110010000",
-  "Z": "011010000",
+  A: "100001001",
+  B: "001001001",
+  C: "101001000",
+  D: "000011001",
+  E: "100011000",
+  F: "001011000",
+  G: "000001101",
+  H: "100001100",
+  I: "001001100",
+  J: "000011100",
+  K: "100000011",
+  L: "001000011",
+  M: "101000010",
+  N: "000010011",
+  O: "100010010",
+  P: "001010010",
+  Q: "000000111",
+  R: "100000110",
+  S: "001000110",
+  T: "000010110",
+  U: "110000001",
+  V: "011000001",
+  W: "111000000",
+  X: "010010001",
+  Y: "110010000",
+  Z: "011010000",
   "-": "010000101",
   ".": "110000100",
   " ": "011000100",
-  "$": "010101000",
+  $: "010101000",
   "/": "010100010",
   "+": "010001010",
   "%": "000101010",
@@ -243,11 +243,7 @@ export function drawBarcodeToCanvas(
     showText = true,
   } = options;
 
-  const { bars, totalWidth, displayValue } = generateBarcodeBars(
-    text,
-    narrowWidth,
-    wideWidth,
-  );
+  const { bars, totalWidth, displayValue } = generateBarcodeBars(text, narrowWidth, wideWidth);
   let curX = centerX - totalWidth / 2;
 
   ctx.fillStyle = color;
@@ -275,11 +271,7 @@ export function drawBarcodeToCanvas(
 /**
  * Helper to wrap text into multiple lines for canvas rendering
  */
-function wrapText(
-  ctx: CanvasRenderingContext2D,
-  text: string,
-  maxWidth: number,
-): string[] {
+function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
   if (!text) return [];
   const words = text.split(" ");
   const lines: string[] = [];
@@ -538,7 +530,11 @@ export async function renderReceiptCanvas(
   ctx.fillText("Metode Bayar", paddingX, curY);
   ctx.textAlign = "right";
   ctx.font = `800 ${is58mm ? 11 : 12}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
-  ctx.fillText(tx.paymentMethod === "cash" ? "Tunai (Cash)" : "QRIS Digital", canvasWidth - paddingX, curY);
+  ctx.fillText(
+    tx.paymentMethod === "cash" ? "Tunai (Cash)" : "QRIS Digital",
+    canvasWidth - paddingX,
+    curY,
+  );
   curY += 15;
 
   if (tx.paymentMethod === "cash") {
@@ -620,8 +616,14 @@ export async function renderReceiptCanvas(
   if (finalCtx) {
     finalCtx.drawImage(
       canvas,
-      0, 0, canvasWidth * scale, finalHeight * scale,
-      0, 0, canvasWidth * scale, finalHeight * scale,
+      0,
+      0,
+      canvasWidth * scale,
+      finalHeight * scale,
+      0,
+      0,
+      canvasWidth * scale,
+      finalHeight * scale,
     );
     return finalCanvas;
   }
@@ -632,10 +634,7 @@ export async function renderReceiptCanvas(
 /**
  * Captures receipt and triggers an immediate PNG download without hanging.
  */
-export async function downloadReceiptImage(
-  data: ReceiptData | string,
-  filename?: string,
-) {
+export async function downloadReceiptImage(data: ReceiptData | string, filename?: string) {
   const toastId = toast.loading("Membuat gambar struk...");
 
   try {
@@ -664,9 +663,7 @@ export async function downloadReceiptImage(
         return;
       }
 
-      const txId = data.tx._id
-        ? `TX-${String(data.tx._id).slice(-6).toUpperCase()}`
-        : "transaksi";
+      const txId = data.tx._id ? `TX-${String(data.tx._id).slice(-6).toUpperCase()}` : "transaksi";
       const finalFilename = filename || `struk-${txId}.png`;
 
       const downloadUrl = URL.createObjectURL(blob);
@@ -714,9 +711,7 @@ export async function shareReceiptWhatsAppImage(
   try {
     const canvas = await renderReceiptCanvas(tx, storeName, storeAddress, paperWidth);
 
-    const blob = await new Promise<Blob | null>((resolve) =>
-      canvas.toBlob(resolve, "image/png"),
-    );
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
 
     if (!blob) {
       toast.dismiss(toastId);
@@ -758,9 +753,7 @@ export async function shareReceiptWhatsAppImage(
       typeof ClipboardItem !== "undefined"
     ) {
       try {
-        await navigator.clipboard.write([
-          new ClipboardItem({ "image/png": blob }),
-        ]);
+        await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
         copiedToClipboard = true;
       } catch (clipErr) {
         console.warn("Clipboard image write not supported, falling back to download", clipErr);
@@ -825,9 +818,7 @@ export function shareReceiptWhatsApp(tx: any, storeName: string, storeAddress?: 
     minute: "2-digit",
   });
 
-  const lines: string[] = [
-    `🧾 *STRUK PEMBELIAN - ${storeName.toUpperCase()}*`,
-  ];
+  const lines: string[] = [`🧾 *STRUK PEMBELIAN - ${storeName.toUpperCase()}*`];
 
   if (storeAddress) {
     lines.push(`📍 ${storeAddress}`);
@@ -895,4 +886,3 @@ export function shareReceiptWhatsApp(tx: any, storeName: string, storeAddress?: 
   window.open(waUrl, "_blank");
   toast.success("Membuka WhatsApp untuk mengirim struk...");
 }
-

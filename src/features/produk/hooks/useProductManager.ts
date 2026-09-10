@@ -101,7 +101,9 @@ export function useProductManager({ storeId }: UseProductManagerProps) {
     const currentData =
       overrideForm && "name" in overrideForm ? (overrideForm as ProductFormState) : form;
     const priceNum = parseIDRInput(currentData.price);
-    const costPriceNum = currentData.costPrice.trim() ? parseIDRInput(currentData.costPrice) : undefined;
+    const costPriceNum = currentData.costPrice.trim()
+      ? parseIDRInput(currentData.costPrice)
+      : undefined;
     const stockNum = parseInt(currentData.stock, 10) || 0;
     if (!currentData.name.trim() || !currentData.category.trim() || priceNum <= 0) {
       toast.error("Mohon lengkapi nama, kategori, dan harga yang valid");

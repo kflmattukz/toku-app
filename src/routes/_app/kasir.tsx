@@ -129,11 +129,7 @@ function Kasir() {
           >
             <div className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-2)]">
               {found.imageUrl ? (
-                <img
-                  src={found.imageUrl}
-                  alt={found.name}
-                  className="h-full w-full object-cover"
-                />
+                <img src={found.imageUrl} alt={found.name} className="h-full w-full object-cover" />
               ) : (
                 <PackageIcon size={20} weight="duotone" className="text-[var(--color-text-3)]" />
               )}

@@ -115,7 +115,10 @@ export function StoreProfileTab({
           </div>
 
           <div className="mb-6">
-            <label htmlFor="low-stock-threshold" className="mb-2 block flex items-center gap-1.5 text-xs font-bold text-[var(--color-text)]">
+            <label
+              htmlFor="low-stock-threshold"
+              className="mb-2 block flex items-center gap-1.5 text-xs font-bold text-[var(--color-text)]"
+            >
               <BellRingingIcon size={16} weight="bold" className="text-[var(--color-brand)]" />
               <span>Batas Peringatan Stok Menipis (Auto Restock Alert)</span>
             </label>

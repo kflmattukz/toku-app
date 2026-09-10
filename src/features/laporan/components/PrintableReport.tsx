@@ -47,9 +47,7 @@ export const PrintableReport = forwardRef<HTMLDivElement, PrintableReportProps>(
             <div className="text-sm font-extrabold text-orange-700 bg-orange-50 px-2.5 py-1 rounded-md mt-0.5 border border-orange-200 inline-block">
               {data.dateLabel}
             </div>
-            <div className="text-[10px] text-neutral-400 mt-1.5">
-              Waktu Cetak: {printedAt}
-            </div>
+            <div className="text-[10px] text-neutral-400 mt-1.5">Waktu Cetak: {printedAt}</div>
           </div>
         </div>
 
@@ -75,15 +73,21 @@ export const PrintableReport = forwardRef<HTMLDivElement, PrintableReportProps>(
         {/* Rangkuman 4 Angka Kunci */}
         <div className="report-avoid-break grid grid-cols-4 gap-3 mb-6">
           <div className="p-3.5 rounded-xl border border-neutral-200 bg-neutral-50">
-            <div className="text-[11px] font-bold text-neutral-500 uppercase">Uang Masuk (Omset)</div>
+            <div className="text-[11px] font-bold text-neutral-500 uppercase">
+              Uang Masuk (Omset)
+            </div>
             <div className="text-base font-black text-neutral-900 mt-1">
               {formatIDR(data.totalRevenue)}
             </div>
-            <div className="text-[10px] text-neutral-500 mt-0.5">{data.totalTransactions} transaksi</div>
+            <div className="text-[10px] text-neutral-500 mt-0.5">
+              {data.totalTransactions} transaksi
+            </div>
           </div>
 
           <div className="p-3.5 rounded-xl border border-neutral-200 bg-neutral-50">
-            <div className="text-[11px] font-bold text-neutral-500 uppercase">Modal Barang (HPP)</div>
+            <div className="text-[11px] font-bold text-neutral-500 uppercase">
+              Modal Barang (HPP)
+            </div>
             <div className="text-base font-black text-neutral-900 mt-1">
               {formatIDR(data.totalCogs)}
             </div>
@@ -91,7 +95,9 @@ export const PrintableReport = forwardRef<HTMLDivElement, PrintableReportProps>(
           </div>
 
           <div className="p-3.5 rounded-xl border border-neutral-200 bg-neutral-50">
-            <div className="text-[11px] font-bold text-neutral-500 uppercase">Biaya Operasional</div>
+            <div className="text-[11px] font-bold text-neutral-500 uppercase">
+              Biaya Operasional
+            </div>
             <div className="text-base font-black text-rose-700 mt-1">
               {formatIDR(data.totalExpenses)}
             </div>
@@ -99,7 +105,9 @@ export const PrintableReport = forwardRef<HTMLDivElement, PrintableReportProps>(
           </div>
 
           <div className="p-3.5 rounded-xl border border-emerald-300 bg-emerald-50/70">
-            <div className="text-[11px] font-extrabold text-emerald-800 uppercase">Cuan Bersih Akhir</div>
+            <div className="text-[11px] font-extrabold text-emerald-800 uppercase">
+              Cuan Bersih Akhir
+            </div>
             <div className="text-lg font-black text-emerald-800 mt-0.5">
               {formatIDR(data.netProfit)}
             </div>
@@ -222,10 +230,15 @@ export const PrintableReport = forwardRef<HTMLDivElement, PrintableReportProps>(
             </thead>
             <tbody>
               {sortedProducts.slice(0, 15).map((p, idx) => (
-                <tr key={p.name} className="border-b border-neutral-150 last:border-0 hover:bg-neutral-50">
+                <tr
+                  key={p.name}
+                  className="border-b border-neutral-150 last:border-0 hover:bg-neutral-50"
+                >
                   <td className="py-2 px-3 text-neutral-500 font-bold">{idx + 1}</td>
                   <td className="py-2 px-3 font-extrabold text-neutral-900">{p.name}</td>
-                  <td className="py-2 px-3 text-center font-bold text-neutral-700">{p.totalQty} pcs</td>
+                  <td className="py-2 px-3 text-center font-bold text-neutral-700">
+                    {p.totalQty} pcs
+                  </td>
                   <td className="py-2 px-3 text-right font-mono text-neutral-800">
                     {formatIDR(p.totalRevenue)}
                   </td>
@@ -266,7 +279,10 @@ export const PrintableReport = forwardRef<HTMLDivElement, PrintableReportProps>(
               </thead>
               <tbody>
                 {data.transactions.slice(0, 50).map((tx, idx) => (
-                  <tr key={tx._id || tx.invoiceNumber || idx} className="border-b border-neutral-150 last:border-0">
+                  <tr
+                    key={tx._id || tx.invoiceNumber || idx}
+                    className="border-b border-neutral-150 last:border-0"
+                  >
                     <td className="py-2 px-3 text-neutral-500">{idx + 1}</td>
                     <td className="py-2 px-3 text-neutral-700 whitespace-nowrap">
                       {new Date(tx.createdAt).toLocaleTimeString("id-ID", {
@@ -298,9 +314,7 @@ export const PrintableReport = forwardRef<HTMLDivElement, PrintableReportProps>(
           <div>
             Dicetak otomatis dari sistem <strong>Toku POS</strong> · Solusi Kasir & Pembukuan UMKM
           </div>
-          <div className="text-right">
-            Halaman Dokumen Resmi {data.storeName}
-          </div>
+          <div className="text-right">Halaman Dokumen Resmi {data.storeName}</div>
         </div>
       </div>
     );

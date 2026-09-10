@@ -87,7 +87,10 @@ export function LaporanSkeleton() {
 
         <div className="divide-y divide-[var(--color-border)]">
           {Array.from({ length: 5 }).map((_, idx) => (
-            <div key={`leaderboard-skel-${idx}`} className="flex items-center justify-between py-3.5">
+            <div
+              key={`leaderboard-skel-${idx}`}
+              className="flex items-center justify-between py-3.5"
+            >
               <div className="flex items-center gap-3">
                 <div className="shimmer-placeholder h-7 w-7 rounded-full" />
                 <div className="flex flex-col gap-1.5">

@@ -6,10 +6,7 @@ export function LandingSteps() {
   const containerRef = useScrollReveal<HTMLElement>({ threshold: 0.12, staggerDelay: 80 });
 
   return (
-    <section
-      ref={containerRef}
-      style={{ padding: "64px 20px", maxWidth: 1040, margin: "0 auto" }}
-    >
+    <section ref={containerRef} style={{ padding: "64px 20px", maxWidth: 1040, margin: "0 auto" }}>
       <div style={{ textAlign: "center", marginBottom: 44 }}>
         <div className="reveal-init eyebrow-tag" style={{ justifyContent: "center" }}>
           CARA KERJA CEPAT

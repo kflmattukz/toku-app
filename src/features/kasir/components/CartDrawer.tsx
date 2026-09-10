@@ -148,7 +148,9 @@ export function CartDrawer({
                         ? "cursor-not-allowed bg-[var(--color-surface-3)] text-[var(--color-text-3)] opacity-40"
                         : "press-tactile cursor-pointer bg-[var(--color-brand)] text-white shadow-xs"
                     }`}
-                    title={isMaxStock ? `Maksimal stok tercapai (${productData?.stock} pcs)` : "Tambah"}
+                    title={
+                      isMaxStock ? `Maksimal stok tercapai (${productData?.stock} pcs)` : "Tambah"
+                    }
                   >
                     <PlusIcon size={11} weight="bold" />
                   </button>

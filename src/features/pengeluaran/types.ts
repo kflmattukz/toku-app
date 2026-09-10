@@ -1,7 +1,12 @@
 import type { Id } from "../../../convex/_generated/dataModel";
 
 export type ExpenseCategory =
-  "operasional" | "gaji" | "sewa" | "utilitas" | "bahan_baku" | "lainnya";
+  | "operasional"
+  | "gaji"
+  | "sewa"
+  | "utilitas"
+  | "bahan_baku"
+  | "lainnya";
 
 export type ExpenseSource = "cash_drawer" | "bank" | "owner";
 

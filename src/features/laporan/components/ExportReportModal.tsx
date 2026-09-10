@@ -242,7 +242,8 @@ export function ExportReportModal({ open, onClose, data }: ExportReportModalProp
                     Dokumen PDF
                   </h3>
                   <p className="mt-1 text-[11px] leading-relaxed text-[var(--color-text-2)]">
-                    Format cetak resmi A4 atau simpan sebagai file PDF. Lengkap dengan analisa kesehatan toko.
+                    Format cetak resmi A4 atau simpan sebagai file PDF. Lengkap dengan analisa
+                    kesehatan toko.
                   </p>
                 </div>
 
@@ -282,7 +283,8 @@ export function ExportReportModal({ open, onClose, data }: ExportReportModalProp
                     Microsoft Excel
                   </h3>
                   <p className="mt-1 text-[11px] leading-relaxed text-[var(--color-text-2)]">
-                    File Excel lengkap dengan tab terpisah untuk Ringkasan Cuan, Produk, dan Buku Transaksi.
+                    File Excel lengkap dengan tab terpisah untuk Ringkasan Cuan, Produk, dan Buku
+                    Transaksi.
                   </p>
                 </div>
 
@@ -316,7 +318,8 @@ export function ExportReportModal({ open, onClose, data }: ExportReportModalProp
                     Google Sheets
                   </h3>
                   <p className="mt-1 text-[11px] leading-relaxed text-[var(--color-text-2)]">
-                    Salin seluruh tabel data keuangan dalam satu klik, lalu tekan Paste (Ctrl+V) di Google Sheets Anda.
+                    Salin seluruh tabel data keuangan dalam satu klik, lalu tekan Paste (Ctrl+V) di
+                    Google Sheets Anda.
                   </p>
                 </div>
 
@@ -468,13 +471,16 @@ export function ExportReportModal({ open, onClose, data }: ExportReportModalProp
             <div className="flex items-center justify-between gap-2 text-[11px] text-[var(--color-text-3)] px-1">
               <span className="sm:hidden flex items-center gap-1 truncate">
                 {zoomMode === "fit" ? (
-                  <>💡 Fit layar aktif · Pilih <strong>100%</strong> untuk zoom detail teks.</>
+                  <>
+                    💡 Fit layar aktif · Pilih <strong>100%</strong> untuk zoom detail teks.
+                  </>
                 ) : (
                   <>👆 Geser kanan/kiri untuk membaca tabel secara menyeluruh.</>
                 )}
               </span>
               <span className="hidden sm:inline text-xs text-[var(--color-text-2)]">
-                Format resmi A4 Portrait (210mm × 297mm) · Hasil cetak identik 100% dengan lembar ini.
+                Format resmi A4 Portrait (210mm × 297mm) · Hasil cetak identik 100% dengan lembar
+                ini.
               </span>
               <span className="text-[11px] font-semibold text-[var(--color-text-3)] shrink-0 ml-auto">
                 Skala: {Math.round(scale * 100)}%

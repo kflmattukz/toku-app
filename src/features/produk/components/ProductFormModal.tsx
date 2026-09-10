@@ -124,18 +124,13 @@ export function ProductFormModal({
             >
               {({ name, category, price }) => {
                 const priceNum = parseIDRInput(price);
-                const hasErrors =
-                  submitted && (!name.trim() || !category.trim() || priceNum <= 0);
+                const hasErrors = submitted && (!name.trim() || !category.trim() || priceNum <= 0);
 
                 if (!hasErrors) return null;
 
                 return (
                   <div className="flex items-center gap-2.5 rounded-xl border border-rose-500/40 bg-rose-500/10 p-3 text-xs font-bold text-rose-600 dark:text-rose-400">
-                    <WarningCircleIcon
-                      size={18}
-                      weight="fill"
-                      className="shrink-0 text-rose-500"
-                    />
+                    <WarningCircleIcon size={18} weight="fill" className="shrink-0 text-rose-500" />
                     <span>Mohon lengkapi bagian bertanda merah sebelum menyimpan produk.</span>
                   </div>
                 );
@@ -215,7 +210,8 @@ export function ProductFormModal({
             <productForm.Field
               name="name"
               validators={{
-                onChange: ({ value }) => (!value.trim() ? "Nama produk tidak boleh kosong" : undefined),
+                onChange: ({ value }) =>
+                  !value.trim() ? "Nama produk tidak boleh kosong" : undefined,
               }}
             >
               {(field) => {
@@ -227,7 +223,9 @@ export function ProductFormModal({
                         Nama Produk / Jasa <span className="text-rose-500">*</span>
                       </span>
                       {isInvalid && (
-                        <span className="text-[10px] font-extrabold text-rose-500">Wajib diisi</span>
+                        <span className="text-[10px] font-extrabold text-rose-500">
+                          Wajib diisi
+                        </span>
                       )}
                     </label>
                     <input
@@ -275,7 +273,9 @@ export function ProductFormModal({
                           Kategori <span className="text-rose-500">*</span>
                         </span>
                         {isInvalid && (
-                          <span className="text-[10px] font-extrabold text-rose-500">Wajib diisi</span>
+                          <span className="text-[10px] font-extrabold text-rose-500">
+                            Wajib diisi
+                          </span>
                         )}
                       </label>
                       <input
@@ -357,7 +357,9 @@ export function ProductFormModal({
                           Harga Jual Normal (IDR) <span className="text-rose-500">*</span>
                         </span>
                         {isInvalid && (
-                          <span className="text-[10px] font-extrabold text-rose-500">Wajib &gt; 0</span>
+                          <span className="text-[10px] font-extrabold text-rose-500">
+                            Wajib &gt; 0
+                          </span>
                         )}
                       </label>
                       <div className="relative flex items-center">
@@ -604,7 +606,9 @@ export function ProductFormModal({
 
                       {discountType !== "none" && preview.hasDiscount && (
                         <div className="mt-2.5 flex items-center justify-between rounded-xl border border-[var(--color-brand)] bg-[var(--color-brand-light)] p-2.5 text-xs">
-                          <span className="font-semibold text-[var(--color-text-2)]">Harga Akhir:</span>
+                          <span className="font-semibold text-[var(--color-text-2)]">
+                            Harga Akhir:
+                          </span>
                           <span className="price font-black text-[var(--color-brand)]">
                             {formatIDR(preview.unitPrice)}
                           </span>

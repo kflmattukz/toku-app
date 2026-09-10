@@ -55,9 +55,7 @@ export function StockTable({
         columnHelper.accessor("name", {
           header: "Nama Produk",
           cell: (info) => (
-            <div className="text-sm font-bold text-[var(--color-text)]">
-              {info.getValue()}
-            </div>
+            <div className="text-sm font-bold text-[var(--color-text)]">{info.getValue()}</div>
           ),
         }),
         columnHelper.accessor("category", {

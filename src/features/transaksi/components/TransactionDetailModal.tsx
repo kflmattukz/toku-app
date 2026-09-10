@@ -1,11 +1,7 @@
 import { useState } from "react";
 import { Modal } from "#/components/Modal";
 import { KasirReceipt } from "#/features/kasir";
-import {
-  printReceipt,
-  downloadReceiptImage,
-  shareReceiptWhatsAppImage,
-} from "#/lib/print";
+import { printReceipt, downloadReceiptImage, shareReceiptWhatsAppImage } from "#/lib/print";
 import {
   PrinterIcon,
   DownloadSimpleIcon,
@@ -153,13 +149,7 @@ export function TransactionDetailModal({
             Cetak Struk ({paperWidth})
           </Button>
 
-          <Button
-            type="button"
-            variant="secondary"
-            size="md"
-            fullWidth
-            onClick={onClose}
-          >
+          <Button type="button" variant="secondary" size="md" fullWidth onClick={onClose}>
             Tutup
           </Button>
         </div>

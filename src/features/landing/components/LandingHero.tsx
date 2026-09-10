@@ -194,7 +194,8 @@ export function LandingHero({ session, onGoogleLogin }: LandingHeroProps) {
           <CheckCircleIcon size={16} weight="fill" color="var(--color-brand)" /> Gratis Selamanya
         </span>
         <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-          <CheckCircleIcon size={16} weight="fill" color="var(--color-brand)" /> Bisa Digunakan Offline
+          <CheckCircleIcon size={16} weight="fill" color="var(--color-brand)" /> Bisa Digunakan
+          Offline
         </span>
         <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
           <CheckCircleIcon size={16} weight="fill" color="var(--color-brand)" /> Cetak Struk 58/80mm

@@ -12,10 +12,7 @@ export function LandingFaq() {
   };
 
   return (
-    <section
-      ref={containerRef}
-      style={{ padding: "80px 20px", maxWidth: 860, margin: "0 auto" }}
-    >
+    <section ref={containerRef} style={{ padding: "80px 20px", maxWidth: 860, margin: "0 auto" }}>
       <div style={{ textAlign: "center", marginBottom: 44 }}>
         <div className="reveal-init eyebrow-tag" style={{ justifyContent: "center" }}>
           PERTANYAAN UMUM
@@ -45,9 +42,7 @@ export function LandingFaq() {
                 padding: "20px 24px",
                 borderColor: isOpen ? "var(--color-brand)" : "var(--color-border)",
                 transition: "border-color 220ms ease, box-shadow 220ms ease",
-                boxShadow: isOpen
-                  ? "0 8px 24px -6px rgba(234, 88, 12, 0.14)"
-                  : "var(--shadow-sm)",
+                boxShadow: isOpen ? "0 8px 24px -6px rgba(234, 88, 12, 0.14)" : "var(--shadow-sm)",
               }}
               onClick={() => toggleFaq(idx)}
             >

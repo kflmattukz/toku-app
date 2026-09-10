@@ -188,9 +188,7 @@ export function LandingSimulator() {
                       className="press-tactile"
                       style={{
                         textAlign: "left",
-                        background: isSelected
-                          ? "var(--color-surface)"
-                          : "var(--color-surface-2)",
+                        background: isSelected ? "var(--color-surface)" : "var(--color-surface-2)",
                         border: isSelected
                           ? "1.5px solid var(--color-brand)"
                           : "1.5px solid var(--color-border)",
@@ -307,8 +305,8 @@ export function LandingSimulator() {
                         marginTop: 4,
                       }}
                     >
-                      <CheckCircleIcon size={14} weight="fill" /> LUNAS ({paymentMethod.toUpperCase()}
-                      )
+                      <CheckCircleIcon size={14} weight="fill" /> LUNAS (
+                      {paymentMethod.toUpperCase()})
                     </div>
                   </div>
 
@@ -324,7 +322,10 @@ export function LandingSimulator() {
                     }}
                   >
                     {cart.map((c) => (
-                      <div key={c.item.id} style={{ display: "flex", justifyContent: "space-between" }}>
+                      <div
+                        key={c.item.id}
+                        style={{ display: "flex", justifyContent: "space-between" }}
+                      >
                         <span>
                           {c.qty}x {c.item.name}
                         </span>
@@ -440,7 +441,14 @@ export function LandingSimulator() {
                             >
                               {c.item.name}
                             </span>
-                            <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 6,
+                                flexShrink: 0,
+                              }}
+                            >
                               <button
                                 type="button"
                                 onClick={() => updateQty(c.item.id, -1)}
