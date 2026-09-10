@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { Modal } from "#/components/Modal";
 import { KasirReceipt } from "./KasirReceipt";
 import { printReceipt, downloadReceiptImage, shareReceiptWhatsAppImage } from "#/lib/print";
@@ -8,8 +8,15 @@ import {
   WhatsappLogoIcon,
   CheckCircleIcon,
   XIcon,
+  BluetoothIcon,
 } from "@phosphor-icons/react";
 import { Button } from "#/components/ui";
+
+const ThermalPrintDialog = lazy(() =>
+  import("#/components/ThermalPrintDialog").then((m) => ({
+    default: m.ThermalPrintDialog,
+  })),
+);
 
 interface ReceiptModalProps {
   open: boolean;
@@ -23,6 +30,7 @@ export function ReceiptModal({ open, onClose, tx, storeName, storeAddress }: Rec
   const [paperWidth, setPaperWidth] = useState<"58mm" | "80mm">("80mm");
   const [isDownloading, setIsDownloading] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+  const [showThermalDialog, setShowThermalDialog] = useState(false);
 
   if (!open || !tx) return null;
 
@@ -117,7 +125,7 @@ export function ReceiptModal({ open, onClose, tx, storeName, storeAddress }: Rec
       </div>
 
       {/* Rendered Receipt Card with contained scroll */}
-      <div className="custom-scrollbar max-h-[52vh] sm:max-h-[56vh] overflow-y-auto overflow-x-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-2)] p-3 sm:p-4 shadow-inner">
+      <div className="custom-scrollbar max-h-[52vh] overflow-x-hidden overflow-y-auto rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-2)] p-3 shadow-inner sm:max-h-[56vh] sm:p-4">
         <div id="toku-receipt-content" className="receipt-print flex w-full justify-center py-1">
           <KasirReceipt
             tx={tx}
@@ -136,21 +144,21 @@ export function ReceiptModal({ open, onClose, tx, storeName, storeAddress }: Rec
             variant="primary"
             size="md"
             fullWidth
-            leftIcon={<PrinterIcon size={18} weight="bold" />}
-            onClick={handlePrint}
+            leftIcon={<BluetoothIcon size={18} weight="bold" />}
+            onClick={() => setShowThermalDialog(true)}
           >
-            Cetak Struk ({paperWidth})
+            Cetak Thermal (BT/USB)
           </Button>
 
           <Button
             type="button"
-            variant="secondary"
+            variant="outline"
             size="md"
             fullWidth
-            leftIcon={<CheckCircleIcon size={18} weight="bold" />}
-            onClick={onClose}
+            leftIcon={<PrinterIcon size={18} weight="bold" />}
+            onClick={handlePrint}
           >
-            Selesai Transaksi
+            Cetak Biasa ({paperWidth})
           </Button>
         </div>
 
@@ -181,7 +189,31 @@ export function ReceiptModal({ open, onClose, tx, storeName, storeAddress }: Rec
             Kirim WhatsApp
           </Button>
         </div>
+
+        <Button
+          type="button"
+          variant="secondary"
+          size="md"
+          fullWidth
+          leftIcon={<CheckCircleIcon size={18} weight="bold" />}
+          onClick={onClose}
+        >
+          Selesai Transaksi
+        </Button>
       </div>
+
+      {showThermalDialog && (
+        <Suspense fallback={null}>
+          <ThermalPrintDialog
+            open={showThermalDialog}
+            onClose={() => setShowThermalDialog(false)}
+            tx={tx}
+            storeName={storeName}
+            storeAddress={storeAddress}
+            paperWidth={paperWidth}
+          />
+        </Suspense>
+      )}
     </Modal>
   );
 }

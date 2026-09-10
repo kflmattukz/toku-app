@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { Modal } from "#/components/Modal";
 import { KasirReceipt } from "#/features/kasir";
 import { printReceipt, downloadReceiptImage, shareReceiptWhatsAppImage } from "#/lib/print";
@@ -8,8 +8,15 @@ import {
   WhatsappLogoIcon,
   ArrowCounterClockwiseIcon,
   XIcon,
+  BluetoothIcon,
 } from "@phosphor-icons/react";
 import { Button } from "#/components/ui";
+
+const ThermalPrintDialog = lazy(() =>
+  import("#/components/ThermalPrintDialog").then((m) => ({
+    default: m.ThermalPrintDialog,
+  })),
+);
 import type { Transaction } from "../types";
 
 interface TransactionDetailModalProps {
@@ -30,6 +37,7 @@ export function TransactionDetailModal({
   const [paperWidth, setPaperWidth] = useState<"58mm" | "80mm">("80mm");
   const [isDownloading, setIsDownloading] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
+  const [showThermalDialog, setShowThermalDialog] = useState(false);
 
   if (!transaction) return null;
 
@@ -124,7 +132,7 @@ export function TransactionDetailModal({
       </div>
 
       {/* Rendered Receipt with contained scroll */}
-      <div className="custom-scrollbar max-h-[52vh] sm:max-h-[56vh] overflow-y-auto overflow-x-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-2)] p-3 sm:p-4 shadow-inner">
+      <div className="custom-scrollbar max-h-[52vh] overflow-x-hidden overflow-y-auto rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-2)] p-3 shadow-inner sm:max-h-[56vh] sm:p-4">
         <div id="toku-receipt-content-tx" className="receipt-print flex w-full justify-center py-1">
           <KasirReceipt
             tx={transaction}
@@ -143,14 +151,21 @@ export function TransactionDetailModal({
             variant="primary"
             size="md"
             fullWidth
+            leftIcon={<BluetoothIcon size={18} weight="bold" />}
+            onClick={() => setShowThermalDialog(true)}
+          >
+            Cetak Thermal (BT/USB)
+          </Button>
+
+          <Button
+            type="button"
+            variant="outline"
+            size="md"
+            fullWidth
             leftIcon={<PrinterIcon size={18} weight="bold" />}
             onClick={handlePrint}
           >
-            Cetak Struk ({paperWidth})
-          </Button>
-
-          <Button type="button" variant="secondary" size="md" fullWidth onClick={onClose}>
-            Tutup
+            Cetak Biasa ({paperWidth})
           </Button>
         </div>
 
@@ -196,7 +211,24 @@ export function TransactionDetailModal({
             Batalkan Transaksi / Retur Barang (Kembalikan Stok)
           </Button>
         )}
+
+        <Button type="button" variant="secondary" size="md" fullWidth onClick={onClose}>
+          Tutup
+        </Button>
       </div>
+
+      {showThermalDialog && (
+        <Suspense fallback={null}>
+          <ThermalPrintDialog
+            open={showThermalDialog}
+            onClose={() => setShowThermalDialog(false)}
+            tx={transaction}
+            storeName={storeName}
+            storeAddress={storeAddress}
+            paperWidth={paperWidth}
+          />
+        </Suspense>
+      )}
     </Modal>
   );
 }
