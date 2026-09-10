@@ -13,6 +13,7 @@ import type * as cashiers from "../cashiers.js";
 import type * as expenses from "../expenses.js";
 import type * as onlineOrders from "../onlineOrders.js";
 import type * as products from "../products.js";
+import type * as pushActions from "../pushActions.js";
 import type * as pushNotifications from "../pushNotifications.js";
 import type * as shifts from "../shifts.js";
 import type * as stores from "../stores.js";
@@ -32,6 +33,7 @@ declare const fullApi: ApiFromModules<{
   expenses: typeof expenses;
   onlineOrders: typeof onlineOrders;
   products: typeof products;
+  pushActions: typeof pushActions;
   pushNotifications: typeof pushNotifications;
   shifts: typeof shifts;
   stores: typeof stores;

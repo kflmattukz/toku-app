@@ -102,13 +102,14 @@ export const create = mutation({
     });
 
     // Schedule background Web Push notification to store devices
-    await ctx.scheduler.runAfter(0, (internal as any).pushNotifications.sendPushToStore, {
+    await ctx.scheduler.runAfter(0, (internal as any).pushActions.sendPushToStore, {
       storeId: args.storeId,
       title: `Pesanan Baru Masuk! #${orderNumber}`,
       body: `${args.customerName} • Rp ${args.total.toLocaleString("id-ID")}`,
       url: "/pesanan",
       tag: `order-${orderId}`,
     });
+
 
 
     return orderId;
