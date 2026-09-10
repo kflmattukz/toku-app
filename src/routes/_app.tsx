@@ -11,7 +11,7 @@ import { ShiftModal } from "#/components/ShiftModal";
 import { SidebarNav, TopHeader, NAV_ITEMS } from "#/features/shell";
 import { toast } from "sonner";
 import { formatIDR } from "#/lib/utils";
-import { sendSystemNotification } from "#/lib/pwa-notifications";
+import { sendSystemNotification, subscribeToPush } from "#/lib/pwa-notifications";
 import type { Id } from "../../convex/_generated/dataModel";
 
 export const Route = createFileRoute("/_app")({
@@ -202,6 +202,27 @@ function AppShell() {
 
     prevPendingIdsRef.current = currentIds;
   }, [pendingOrders, navigate]);
+
+  const subscribePushMutation = useMutation((api as any).pushNotifications?.subscribe);
+  useEffect(() => {
+    if (!store?._id) return;
+    const registerPush = async () => {
+      try {
+        const subData = await subscribeToPush();
+        if (subData && subscribePushMutation) {
+          await subscribePushMutation({
+            storeId: store._id,
+            endpoint: subData.endpoint,
+            p256dh: subData.p256dh,
+            auth: subData.auth,
+          });
+        }
+      } catch (err) {
+        console.warn("[PWA Push] Auto-registration failed:", err);
+      }
+    };
+    registerPush();
+  }, [store?._id, subscribePushMutation]);
 
   useEffect(() => {
     const savedCashier = safeGetStorage("toku_active_cashier");

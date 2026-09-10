@@ -79,7 +79,8 @@ export async function sendSystemNotification(options: SystemNotificationOptions)
           vibrate,
           renotify: true,
           data: { url },
-        });
+        } as NotificationOptions);
+
         return true;
       }
     }
@@ -104,3 +105,93 @@ export async function sendSystemNotification(options: SystemNotificationOptions)
     return false;
   }
 }
+
+/**
+ * Convert base64 url string to Uint8Array for PushManager subscribe applicationServerKey
+ */
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
+export interface PushSubscriptionData {
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+}
+
+/**
+ * Subscribe current browser/device to Web Push notifications.
+ */
+export async function subscribeToPush(
+  vapidPublicKey?: string
+): Promise<PushSubscriptionData | null> {
+  if (typeof window === "undefined" || !("serviceWorker" in navigator) || !("PushManager" in window)) {
+    return null;
+  }
+
+  const publicKey = vapidPublicKey || (import.meta as any).env?.VITE_VAPID_PUBLIC_KEY;
+  if (!publicKey) {
+    console.warn("[PWA Push] VAPID public key not found");
+    return null;
+  }
+
+  try {
+    const reg = await registerServiceWorker();
+    if (!reg) return null;
+
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicKey) as any,
+      });
+    }
+
+    const subJson = sub.toJSON();
+    if (!subJson.endpoint || !subJson.keys?.p256dh || !subJson.keys?.auth) {
+      return null;
+    }
+
+    return {
+      endpoint: subJson.endpoint,
+      p256dh: subJson.keys.p256dh,
+      auth: subJson.keys.auth,
+    };
+  } catch (err) {
+    console.error("[PWA Push] Subscription error:", err);
+    return null;
+  }
+}
+
+/**
+ * Unsubscribe current browser/device from Web Push notifications.
+ */
+export async function unsubscribeFromPush(): Promise<string | null> {
+  if (typeof window === "undefined" || !("serviceWorker" in navigator)) {
+    return null;
+  }
+
+  try {
+    const reg = await navigator.serviceWorker.getRegistration();
+    if (!reg) return null;
+
+    const sub = await reg.pushManager.getSubscription();
+    if (sub) {
+      const endpoint = sub.endpoint;
+      await sub.unsubscribe();
+      return endpoint;
+    }
+    return null;
+  } catch (err) {
+    console.error("[PWA Push] Unsubscribe error:", err);
+    return null;
+  }
+}
+

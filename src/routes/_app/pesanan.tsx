@@ -9,7 +9,6 @@ import {
   CheckCircleIcon,
   XCircleIcon,
   WhatsappLogoIcon,
-  PhoneIcon,
   CreditCardIcon,
   ReceiptIcon,
   MagnifyingGlassIcon,

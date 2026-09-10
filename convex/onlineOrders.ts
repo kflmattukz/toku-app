@@ -101,7 +101,18 @@ export const create = mutation({
       orderId,
     });
 
+    // Schedule background Web Push notification to store devices
+    await ctx.scheduler.runAfter(0, (internal as any).pushNotifications.sendPushToStore, {
+      storeId: args.storeId,
+      title: `Pesanan Baru Masuk! #${orderNumber}`,
+      body: `${args.customerName} • Rp ${args.total.toLocaleString("id-ID")}`,
+      url: "/pesanan",
+      tag: `order-${orderId}`,
+    });
+
+
     return orderId;
+
   },
 });
 

@@ -252,5 +252,16 @@ export default defineSchema({
     .index("by_storeId", ["storeId"])
     .index("by_storeId_status", ["storeId", "status"])
     .index("by_expiresAt", ["expiresAt"]),
+
+  push_subscriptions: defineTable({
+    storeId: v.id("stores"),
+    endpoint: v.string(),
+    p256dh: v.string(),
+    auth: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_storeId", ["storeId"])
+    .index("by_endpoint", ["endpoint"]),
 });
+
 
