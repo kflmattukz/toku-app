@@ -66,18 +66,30 @@ export function ProductFormModal({
     },
   });
 
-  useEffect(() => {
+  const [prevOpen, setPrevOpen] = useState(open);
+  const [prevEditId, setPrevEditId] = useState(editId);
+
+  if (open !== prevOpen || editId !== prevEditId) {
+    setPrevOpen(open);
+    setPrevEditId(editId);
     if (open) {
       setSubmitted(false);
+    }
+  }
+
+  useEffect(() => {
+    if (open) {
       productForm.reset(form);
     }
   }, [open, editId]);
 
-  useEffect(() => {
+  const [prevImageId, setPrevImageId] = useState(form.imageId);
+  if (form.imageId !== prevImageId) {
+    setPrevImageId(form.imageId);
     if (form.imageId !== productForm.getFieldValue("imageId")) {
       productForm.setFieldValue("imageId", form.imageId);
     }
-  }, [form.imageId]);
+  }
 
   if (!open) return null;
 

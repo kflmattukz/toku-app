@@ -53,25 +53,38 @@ export function CashierLockModal({
     setMounted(true);
   }, []);
 
-  // Lock body scroll and auto-select if 1 staff
-  useEffect(() => {
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+  const [prevCashiersLen, setPrevCashiersLen] = useState(eligibleCashiers.length);
+
+  if (isOpen !== prevIsOpen) {
+    setPrevIsOpen(isOpen);
     if (isOpen) {
       setPin("");
       setIsErrorShake(false);
-      const prevOverflow = document.body.style.overflow;
-      document.body.style.overflow = "hidden";
-
       if (eligibleCashiers.length === 1) {
         setSelectedStaff(eligibleCashiers[0]);
-      } else if (!selectedStaff && eligibleCashiers.length > 1) {
+      } else {
         setSelectedStaff(null);
       }
-
-      return () => {
-        document.body.style.overflow = prevOverflow;
-      };
     }
-  }, [isOpen, eligibleCashiers.length]);
+  } else if (isOpen && eligibleCashiers.length !== prevCashiersLen) {
+    setPrevCashiersLen(eligibleCashiers.length);
+    if (eligibleCashiers.length === 1) {
+      setSelectedStaff(eligibleCashiers[0]);
+    } else if (!selectedStaff && eligibleCashiers.length > 1) {
+      setSelectedStaff(null);
+    }
+  }
+
+  // Lock body scroll
+  useEffect(() => {
+    if (!isOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [isOpen]);
 
   if (!isOpen || !mounted || typeof document === "undefined") return null;
 

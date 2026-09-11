@@ -37,32 +37,27 @@ const FLOW_PROPS = {
 };
 
 function useAnimatedNumber(value: number, rangeKey: string): number {
-  const [displayValue, setDisplayValue] = useState(0);
-  const prevRangeRef = useRef(rangeKey);
-  const prevValueRef = useRef(value);
+  const [displayValue, setDisplayValue] = useState(value);
+  const [prevRange, setPrevRange] = useState(rangeKey);
+  const [prevVal, setPrevVal] = useState(value);
 
-  // Animate in from 0 on initial mount
-  useEffect(() => {
+  if (prevRange !== rangeKey) {
+    setPrevRange(rangeKey);
+    setPrevVal(value);
+    setDisplayValue(value > 0 ? Math.floor(value * 0.88) : 1);
+  } else if (prevVal !== value) {
+    setPrevVal(value);
     setDisplayValue(value);
-  }, []);
+  }
 
   useEffect(() => {
-    const rangeChanged = prevRangeRef.current !== rangeKey;
-    const valueChanged = prevValueRef.current !== value;
-    prevRangeRef.current = rangeKey;
-    prevValueRef.current = value;
-
-    if (valueChanged) {
-      setDisplayValue(value);
-    } else if (rangeChanged) {
-      // When period filter changes, ensure visible number roll even if database values are identical
-      setDisplayValue((v) => (v > 0 ? Math.floor(v * 0.88) : 1));
+    if (displayValue !== value) {
       const raf = requestAnimationFrame(() => {
         setDisplayValue(value);
       });
       return () => cancelAnimationFrame(raf);
     }
-  }, [value, rangeKey]);
+  }, [displayValue, value]);
 
   return displayValue;
 }

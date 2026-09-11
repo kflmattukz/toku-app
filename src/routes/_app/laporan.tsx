@@ -39,15 +39,15 @@ function Laporan() {
     store ? { storeId: store._id, startOfDay, endOfDay } : "skip",
   );
 
-  const [cachedSummary, setCachedSummary] = useState<typeof rawSummary>(undefined);
+  const [prevRawSummary, setPrevRawSummary] = useState(rawSummary);
+  const [cachedSummary, setCachedSummary] = useState<typeof rawSummary>(rawSummary);
   const [dataVersion, setDataVersion] = useState(0);
 
-  useEffect(() => {
-    if (rawSummary !== undefined) {
-      setCachedSummary(rawSummary);
-      setDataVersion((v) => v + 1);
-    }
-  }, [rawSummary]);
+  if (rawSummary !== undefined && rawSummary !== prevRawSummary) {
+    setPrevRawSummary(rawSummary);
+    setCachedSummary(rawSummary);
+    setDataVersion((v) => v + 1);
+  }
 
   const summary = rawSummary ?? cachedSummary;
   const isFetching = rawSummary === undefined && cachedSummary !== undefined;

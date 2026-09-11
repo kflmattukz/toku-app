@@ -22,6 +22,8 @@ import {
   type Product,
 } from "#/features/kasir";
 
+const EMPTY_PRODUCTS: Product[] = [];
+
 export const Route = createFileRoute("/_app/kasir")({ component: Kasir });
 
 function Kasir() {
@@ -29,7 +31,7 @@ function Kasir() {
   const { store, currentCashier } = useAppStore();
   const rawProducts = useQuery(api.products.list, store ? { storeId: store._id } : "skip");
   const isLoading = rawProducts === undefined;
-  const products = (rawProducts as Product[] | undefined) ?? [];
+  const products = (rawProducts as Product[] | undefined) ?? EMPTY_PRODUCTS;
   const activeShift = useQuery(api.shifts.getActive, store ? { storeId: store._id } : "skip");
 
   const [search, setSearch] = useState("");

@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { authClient } from "#/lib/auth-client";
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useEffect, useState, useMemo, useRef, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
@@ -17,6 +17,22 @@ import type { Id } from "../../convex/_generated/dataModel";
 export const Route = createFileRoute("/_app")({
   component: AppShell,
 });
+
+function subscribeOnline(callback: () => void) {
+  if (typeof window === "undefined") return () => {};
+  window.addEventListener("online", callback);
+  window.addEventListener("offline", callback);
+  return () => {
+    window.removeEventListener("online", callback);
+    window.removeEventListener("offline", callback);
+  };
+}
+function getOnlineSnapshot() {
+  return typeof navigator !== "undefined" ? navigator.onLine : true;
+}
+function getServerOnlineSnapshot() {
+  return true;
+}
 
 function playOrderChime() {
   try {
@@ -133,23 +149,23 @@ function AppShell() {
   const [shiftModalOpen, setShiftModalOpen] = useState(false);
 
   const navigate = useNavigate();
-  const [isOnline, setIsOnline] = useState(true);
+  const isOnline = useSyncExternalStore(
+    subscribeOnline,
+    getOnlineSnapshot,
+    getServerOnlineSnapshot,
+  );
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState<boolean>(false);
   const routerState = useRouterState();
   const currentPath = routerState.location.pathname;
 
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [currentPath]);
+
   const bottomNavItems = useMemo(() => NAV_ITEMS.slice(0, 5), []);
   const activeBottomIndex = bottomNavItems.findIndex((item) => currentPath.startsWith(item.to));
-  const [indicatorIndex, setIndicatorIndex] = useState(() =>
-    activeBottomIndex >= 0 ? activeBottomIndex : 0,
-  );
-
-  useEffect(() => {
-    if (activeBottomIndex >= 0) {
-      setIndicatorIndex(activeBottomIndex);
-    }
-  }, [activeBottomIndex]);
+  const indicatorIndex = activeBottomIndex >= 0 ? activeBottomIndex : 0;
 
   const isPro = true;
 
@@ -238,8 +254,6 @@ function AppShell() {
     } else if (window.innerWidth <= 1024 && window.innerWidth > 768) {
       setCollapsed(true);
     }
-
-    setIsOnline(navigator.onLine);
   }, []);
 
   const setCurrentCashier = (cashier: ActiveCashier | null) => {
@@ -287,21 +301,6 @@ function AppShell() {
   useEffect(() => {
     safeSetStorage("toku_sidebar_collapsed", String(collapsed));
   }, [collapsed]);
-
-  useEffect(() => {
-    const on = () => setIsOnline(true);
-    const off = () => setIsOnline(false);
-    window.addEventListener("online", on);
-    window.addEventListener("offline", off);
-    return () => {
-      window.removeEventListener("online", on);
-      window.removeEventListener("offline", off);
-    };
-  }, []);
-
-  useEffect(() => {
-    setSidebarOpen(false);
-  }, [currentPath]);
 
   // Lock body scroll when mobile sidebar drawer is open
   useEffect(() => {
@@ -499,17 +498,18 @@ function AppShell() {
             aria-hidden="true"
           />
 
-          {bottomNavItems.map((item, index) => {
+          {bottomNavItems.map((item) => {
             const Icon = item.icon;
             const active = currentPath.startsWith(item.to);
-            const hasOrdersBadge = item.to === "/pesanan" && Boolean(activeOrdersCount && activeOrdersCount.totalActive > 0);
+            const hasOrdersBadge =
+              item.to === "/pesanan" &&
+              Boolean(activeOrdersCount && activeOrdersCount.totalActive > 0);
 
             return (
               <Link
                 key={item.to}
                 to={item.to}
                 preload="intent"
-                onClick={() => setIndicatorIndex(index)}
                 className={`press-tactile relative z-10 flex min-w-0 flex-1 flex-col items-center justify-center rounded-full px-1 py-2 text-center transition-colors duration-200 ${
                   active ? "text-white" : "text-text-2 hover:text-text"
                 }`}

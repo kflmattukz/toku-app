@@ -73,12 +73,19 @@ export function BarcodeScannerModal({
     [continuous, onClose, onScanSuccess],
   );
 
-  // Initialize and start scanner
-  useEffect(() => {
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
     if (!open) {
       setCameraError(null);
       setIsInitializing(true);
       setTorchOn(false);
+    }
+  }
+
+  // Initialize and start scanner
+  useEffect(() => {
+    if (!open) {
       return;
     }
 

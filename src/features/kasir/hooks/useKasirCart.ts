@@ -9,7 +9,9 @@ import {
 } from "#/lib/utils";
 import type { CartItem, ItemDiscountModalState, Product } from "../types";
 
-export function useKasirCart(products: Product[] = []) {
+const EMPTY_PRODUCTS: Product[] = [];
+
+export function useKasirCart(products: Product[] = EMPTY_PRODUCTS) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [basketDiscountType, setBasketDiscountType] = useState<"none" | "percentage" | "nominal">(
     "none",

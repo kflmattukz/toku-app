@@ -906,7 +906,7 @@ function DetailDrawer() {
                 const isChecked = checkedItems[`${selectedOrder._id}-${idx}`];
                 return (
                   <div
-                    key={idx}
+                    key={item.productId || `${item.name}-${idx}`}
                     onClick={() => toggleItemCheck(selectedOrder._id, idx)}
                     className={cn(
                       "flex items-center justify-between p-2.5 rounded-xl border text-xs cursor-pointer select-none transition-all",

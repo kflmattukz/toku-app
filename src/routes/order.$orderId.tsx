@@ -274,7 +274,7 @@ function OrderTrackingPage() {
 
           <div className="space-y-2.5">
             {order.items.map((item, idx) => (
-              <div key={idx} className="flex items-center justify-between text-xs gap-3">
+              <div key={(item as any).productId || `${item.name}-${idx}`} className="flex items-center justify-between text-xs gap-3">
                 <div className="flex items-center gap-2.5 min-w-0 flex-1">
                   <div className="w-10 h-10 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] overflow-hidden flex items-center justify-center shrink-0">
                     {(item as any).imageUrl ? (
@@ -402,7 +402,7 @@ function OrderTrackingPage() {
                 {/* Items */}
                 <div className="py-3 border-b border-dashed border-stone-300 dark:border-stone-700 space-y-2">
                   {order.items.map((item, idx) => (
-                    <div key={idx} className="flex justify-between items-start text-[11px]">
+                    <div key={(item as any).productId || `${item.name}-${idx}`} className="flex justify-between items-start text-[11px]">
                       <div className="flex-1 pr-2">
                         <p className="font-bold">{item.name}</p>
                         <p className="text-[10px] text-stone-500 dark:text-stone-400">
