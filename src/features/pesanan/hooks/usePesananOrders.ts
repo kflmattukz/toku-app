@@ -212,6 +212,22 @@ export function usePesananOrders() {
   const handleStatusTransition = useCallback(async (order: OrderRecord, targetStatus: OrderStatus) => {
     if (order.status === targetStatus) return;
 
+    // Guard: completed or cancelled orders cannot be transitioned
+    if (order.status === "completed" || order.status === "cancelled") {
+      toast.warning(
+        `Pesanan #${order.orderNumber} sudah ${order.status === "completed" ? "selesai" : "dibatalkan"} dan tidak dapat dipindahkan.`,
+      );
+      return;
+    }
+
+    // Guard: in-progress orders cannot be moved backward to pending
+    if (targetStatus === "pending") {
+      toast.warning(
+        `Pesanan #${order.orderNumber} yang sudah diproses tidak dapat dikembalikan ke status Baru.`,
+      );
+      return;
+    }
+
     if (targetStatus === "completed") {
       openPaymentModal(order);
       return;

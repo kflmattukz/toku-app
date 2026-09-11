@@ -6,6 +6,10 @@ export function useOrderDragAndDrop() {
   const [dropTargetStatus, setDropTargetStatus] = useState<OrderStatus | null>(null);
 
   const handleDragStart = useCallback((e: React.DragEvent, order: OrderRecord) => {
+    if (order.status === "completed" || order.status === "cancelled") {
+      e.preventDefault();
+      return;
+    }
     setDraggedOrder(order);
     e.dataTransfer.setData("application/json", JSON.stringify(order));
     e.dataTransfer.effectAllowed = "move";
@@ -16,10 +20,10 @@ export function useOrderDragAndDrop() {
     }
   }, []);
 
-  const handleDragEnd = useCallback((e: React.DragEvent) => {
+  const handleDragEnd = useCallback((e?: React.DragEvent | any) => {
     setDraggedOrder(null);
     setDropTargetStatus(null);
-    if (e.currentTarget instanceof HTMLElement) {
+    if (e && e.currentTarget instanceof HTMLElement) {
       e.currentTarget.classList.remove("opacity-40");
     }
   }, []);

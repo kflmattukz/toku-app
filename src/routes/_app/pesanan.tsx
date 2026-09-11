@@ -11,7 +11,9 @@ function PesananContent() {
   return (
     <>
       <OrderView.Header />
-      {viewMode === "kanban" ? <OrderView.Kanban /> : <OrderView.Table />}
+      <div key={viewMode} className="animate-in fade-in duration-200 ease-out">
+        {viewMode === "kanban" ? <OrderView.Kanban /> : <OrderView.Table />}
+      </div>
       <OrderView.DetailDrawer />
       <OrderView.PaymentModal />
       <OrderView.ReceiptModal />

@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import {
   KanbanIcon,
   TableIcon,
@@ -305,7 +306,11 @@ function KanbanColumn({ columnId, title, badgeClass, dotColor, orders }: KanbanC
     handleStatusTransition,
   } = useOrderViewContext();
 
+  const [visibleLimit, setVisibleLimit] = React.useState(5);
   const isOver = dropTargetStatus === columnId;
+
+  const visibleOrders = orders.slice(0, visibleLimit);
+  const remainingCount = orders.length - visibleLimit;
 
   return (
     <div
@@ -337,8 +342,8 @@ function KanbanColumn({ columnId, title, badgeClass, dotColor, orders }: KanbanC
         </span>
       </div>
 
-      {/* Cards Scrollable List */}
-      <div className="flex-1 space-y-3 overflow-y-auto pr-0.5">
+      {/* Cards Scrollable List with top padding to prevent hover lift clipping */}
+      <div className="flex-1 space-y-3 overflow-y-auto p-1 pt-2 -mr-1 pr-1.5">
         {orders.length === 0 ? (
           <div
             className={cn(
@@ -353,9 +358,35 @@ function KanbanColumn({ columnId, title, badgeClass, dotColor, orders }: KanbanC
             </p>
           </div>
         ) : (
-          orders.map((order) => (
-            <KanbanCard key={order._id} order={order} />
-          ))
+          <>
+            <AnimatePresence mode="popLayout" initial={false}>
+              {visibleOrders.map((order) => (
+                <KanbanCard key={order._id} order={order} />
+              ))}
+            </AnimatePresence>
+
+            {/* Load More Button if more than 5 */}
+            {remainingCount > 0 && (
+              <button
+                type="button"
+                onClick={() => setVisibleLimit((prev) => prev + 5)}
+                className="w-full py-2 px-3 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] hover:border-[var(--color-brand)]/50 hover:bg-[var(--color-surface-3)] text-xs font-bold text-[var(--color-brand)] active:scale-95 transition-all shadow-xs flex items-center justify-center gap-1.5 press-tactile"
+              >
+                <span>Muat +{Math.min(5, remainingCount)} lagi ({remainingCount} tersisa)</span>
+              </button>
+            )}
+
+            {/* Collapse Button if expanded */}
+            {visibleLimit > 5 && orders.length > 5 && (
+              <button
+                type="button"
+                onClick={() => setVisibleLimit(5)}
+                className="w-full py-1 text-[11px] font-semibold text-[var(--color-text-3)] hover:text-[var(--color-text)] transition-colors text-center"
+              >
+                Ciutkan ke 5 pesanan
+              </button>
+            )}
+          </>
         )}
       </div>
     </div>
@@ -375,17 +406,33 @@ function KanbanCard({ order }: { order: OrderRecord }) {
   } = useOrderViewContext();
 
   const totalItemsCount = order.items.reduce((sum, it) => sum + it.qty, 0);
+  const isDraggable = order.status !== "completed" && order.status !== "cancelled";
 
   return (
-    <div
-      draggable
-      onDragStart={(e) => handleDragStart(e, order)}
-      onDragEnd={handleDragEnd}
+    <motion.div
+      layout
+      layoutId={order._id}
+      initial={{ opacity: 0, scale: 0.93, y: 8 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.93, transition: { duration: 0.15 } }}
+      transition={{
+        type: "spring",
+        stiffness: 380,
+        damping: 26,
+        mass: 0.8,
+      }}
+      draggable={isDraggable}
+      onDragStart={(e) => isDraggable && handleDragStart(e as unknown as React.DragEvent, order)}
+      onDragEnd={(e: any) => handleDragEnd(e)}
       onClick={() => setSelectedOrder(order)}
       className={cn(
-        "group relative p-3.5 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] hover:border-[var(--color-brand)]/50 hover:shadow-md transition-all cursor-grab active:cursor-grabbing select-none press-tactile",
-        order.status === "ready_for_pickup" && "border-emerald-500/40 ring-1 ring-emerald-500/20",
-        order.status === "pending" && "border-amber-500/30",
+        "group relative p-3.5 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] hover:border-[var(--color-brand)]/50 hover:shadow-lg hover:-translate-y-1 active:translate-y-0 active:scale-[0.99] transition-all duration-200 select-none press-tactile",
+        isDraggable ? "cursor-grab active:cursor-grabbing" : "cursor-pointer",
+        order.status === "ready_for_pickup" && "border-emerald-500/50 ring-2 ring-emerald-500/20 hover:ring-emerald-500/40",
+        order.status === "pending" && "border-amber-500/40 hover:ring-2 hover:ring-amber-500/20",
+        order.status === "preparing" && "border-blue-500/40 hover:ring-2 hover:ring-blue-500/20",
+        order.status === "completed" && "hover:ring-1 hover:ring-slate-500/20 opacity-90",
+        order.status === "cancelled" && "border-rose-500/30 hover:ring-1 hover:ring-rose-500/20 opacity-80",
       )}
     >
       {/* Top Header */}
@@ -490,7 +537,7 @@ function KanbanCard({ order }: { order: OrderRecord }) {
           )}
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -725,12 +772,23 @@ function DetailDrawer() {
     store,
   } = useOrderViewContext();
 
+  const [isClosing, setIsClosing] = React.useState(false);
+
+  const handleClose = React.useCallback(() => {
+    if (isClosing) return;
+    setIsClosing(true);
+    setTimeout(() => {
+      setSelectedOrder(null);
+      setIsClosing(false);
+    }, 220);
+  }, [isClosing, setSelectedOrder]);
+
   // Escape key & body scroll lock
   useEffect(() => {
     if (!selectedOrder) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setSelectedOrder(null);
+      if (e.key === "Escape") handleClose();
     };
 
     const originalOverflow = document.body.style.overflow;
@@ -741,7 +799,7 @@ function DetailDrawer() {
       document.body.style.overflow = originalOverflow;
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [selectedOrder, setSelectedOrder]);
+  }, [selectedOrder, handleClose]);
 
   if (!selectedOrder) return null;
 
@@ -750,12 +808,20 @@ function DetailDrawer() {
       role="dialog"
       aria-modal="true"
       aria-labelledby="drawer-order-number"
-      className="fixed inset-0 z-50 flex items-end md:items-stretch md:justify-end bg-black/60 backdrop-blur-xs animate-in fade-in duration-200"
-      onClick={() => setSelectedOrder(null)}
+      className={cn(
+        "fixed inset-0 z-50 flex items-end md:items-stretch md:justify-end bg-black/60 backdrop-blur-xs transition-opacity duration-220 ease-in-out",
+        isClosing ? "opacity-0 pointer-events-none" : "opacity-100 animate-in fade-in duration-200",
+      )}
+      onClick={handleClose}
     >
       {/* Container: Bottom sheet on mobile, right drawer on desktop */}
       <div
-        className="w-full md:w-[480px] bg-[var(--color-surface)] border-t md:border-t-0 md:border-l border-[var(--color-border)] rounded-t-3xl md:rounded-none max-h-[88vh] md:max-h-full flex flex-col overflow-hidden shadow-2xl animate-in slide-in-from-bottom md:slide-in-from-right duration-250"
+        className={cn(
+          "w-full md:w-[480px] bg-[var(--color-surface)] border-t md:border-t-0 md:border-l border-[var(--color-border)] rounded-t-3xl md:rounded-none max-h-[88vh] md:max-h-full flex flex-col overflow-hidden shadow-2xl transition-transform duration-220 ease-in-out",
+          isClosing
+            ? "translate-y-full md:translate-y-0 md:translate-x-full"
+            : "translate-y-0 md:translate-x-0 animate-in slide-in-from-bottom md:slide-in-from-right duration-250 ease-out",
+        )}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -785,7 +851,7 @@ function DetailDrawer() {
 
           <button
             type="button"
-            onClick={() => setSelectedOrder(null)}
+            onClick={handleClose}
             aria-label="Tutup detail"
             className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-[var(--color-surface-2)] text-[var(--color-text-2)] transition-colors"
           >
