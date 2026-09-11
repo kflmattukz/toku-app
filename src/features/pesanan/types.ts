@@ -1,12 +1,13 @@
 import type { Id } from "../../../convex/_generated/dataModel";
 
 export type OrderStatus =
-  | "all"
   | "pending"
   | "preparing"
   | "ready_for_pickup"
   | "completed"
   | "cancelled";
+
+export type OrderStatusFilter = "all" | OrderStatus;
 
 export type OrderViewMode = "kanban" | "table";
 
@@ -30,7 +31,7 @@ export interface OrderRecord {
   items: OrderItem[];
   subtotal: number;
   total: number;
-  status: "pending" | "preparing" | "ready_for_pickup" | "completed" | "cancelled";
+  status: OrderStatus;
   cancelReason?: string;
   transactionId?: string;
   completedAt?: number;

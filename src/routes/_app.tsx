@@ -391,10 +391,10 @@ function AppShell() {
   );
 
   return (
-    <div className="flex min-h-screen bg-[var(--color-bg)]">
+    <div className="flex h-screen h-dvh overflow-hidden bg-[var(--color-surface-2)]">
       {/* Desktop Persistent Sidebar */}
       <aside
-        className={`desktop-only sticky top-0 z-30 h-screen border-r border-[var(--color-border)] transition-all duration-200 ${
+        className={`desktop-only h-full shrink-0 border-r border-[var(--color-border)] transition-all duration-200 ${
           collapsed ? "w-16" : "w-60"
         }`}
       >
@@ -468,7 +468,7 @@ function AppShell() {
         )}
 
       {/* Main Content Area */}
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-col h-full overflow-hidden">
         <TopHeader
           store={store}
           currentCashier={currentCashier}
@@ -477,7 +477,13 @@ function AppShell() {
           onOpenCashierModal={() => setCashierModalOpen(true)}
         />
 
-        <main className="main-content-scroll flex-1 overflow-x-hidden overflow-y-auto px-4 py-4 md:px-8 md:py-6">
+        <main
+          className={`main-content-scroll flex-1 flex flex-col min-h-0 px-4 pt-3 pb-20 md:px-8 md:pt-4 md:pb-6 ${
+            currentPath.startsWith("/pesanan")
+              ? "overflow-hidden"
+              : "overflow-x-hidden overflow-y-auto"
+          }`}
+        >
           <AppStoreContext.Provider value={storeContextValue}>
             <Outlet />
           </AppStoreContext.Provider>

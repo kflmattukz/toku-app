@@ -197,6 +197,64 @@ export const listByStore = query({
   },
 });
 
+export const listByStatus = query({
+  args: {
+    storeId: v.id("stores"),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("preparing"),
+      v.literal("ready_for_pickup"),
+      v.literal("completed"),
+      v.literal("cancelled"),
+    ),
+    limit: v.optional(v.number()),
+    search: v.optional(v.string()),
+  },
+  handler: async (ctx, { storeId, status, limit = 5, search }) => {
+    const qSearch = search?.trim().toLowerCase();
+
+    if (qSearch) {
+      const all = await ctx.db
+        .query("online_orders")
+        .withIndex("by_storeId_status", (q) =>
+          q.eq("storeId", storeId).eq("status", status),
+        )
+        .order("desc")
+        .collect();
+
+      const filtered = all.filter(
+        (o) =>
+          o.orderNumber.toLowerCase().includes(qSearch) ||
+          o.customerName.toLowerCase().includes(qSearch) ||
+          o.customerPhone.toLowerCase().includes(qSearch),
+      );
+
+      const orders = filtered.slice(0, limit);
+      return {
+        orders,
+        hasMore: filtered.length > limit,
+        totalCount: filtered.length,
+      };
+    }
+
+    const items = await ctx.db
+      .query("online_orders")
+      .withIndex("by_storeId_status", (q) =>
+        q.eq("storeId", storeId).eq("status", status),
+      )
+      .order("desc")
+      .take(limit + 1);
+
+    const hasMore = items.length > limit;
+    const orders = hasMore ? items.slice(0, limit) : items;
+
+    return {
+      orders,
+      hasMore,
+    };
+  },
+});
+
 export const countActiveByStore = query({
   args: { storeId: v.id("stores") },
   handler: async (ctx, { storeId }) => {
@@ -208,17 +266,23 @@ export const countActiveByStore = query({
     let pending = 0;
     let preparing = 0;
     let ready_for_pickup = 0;
+    let completed = 0;
+    let cancelled = 0;
 
     for (const o of orders) {
       if (o.status === "pending") pending++;
       else if (o.status === "preparing") preparing++;
       else if (o.status === "ready_for_pickup") ready_for_pickup++;
+      else if (o.status === "completed") completed++;
+      else if (o.status === "cancelled") cancelled++;
     }
 
     return {
       pending,
       preparing,
       ready_for_pickup,
+      completed,
+      cancelled,
       totalActive: pending + preparing + ready_for_pickup,
     };
   },

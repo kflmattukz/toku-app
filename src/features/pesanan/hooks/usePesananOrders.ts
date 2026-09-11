@@ -9,7 +9,7 @@ import {
   requestNotificationPermission,
 } from "#/lib/pwa-notifications";
 import type { Id } from "../../../../convex/_generated/dataModel";
-import type { OrderRecord, OrderStatus, OrderViewMode, CompletedTxData } from "../types";
+import type { OrderRecord, OrderStatus, OrderStatusFilter, OrderViewMode, CompletedTxData } from "../types";
 
 export function usePesananOrders() {
   const { store, currentCashier } = useAppStore();
@@ -32,7 +32,7 @@ export function usePesananOrders() {
     } catch {}
   }, []);
 
-  const [selectedStatus, setSelectedStatus] = useState<OrderStatus>("all");
+  const [selectedStatus, setSelectedStatus] = useState<OrderStatusFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [showCancelledColumn, setShowCancelledColumn] = useState(false);
   const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
@@ -55,10 +55,10 @@ export function usePesananOrders() {
   );
   const [showNotifBanner, setShowNotifBanner] = useState(true);
 
-  // Queries
+  // Queries (only fetch full list when in table mode)
   const ordersQuery = useQuery(
     api.onlineOrders.listByStore,
-    store ? { storeId: store._id, status: viewMode === "kanban" ? "all" : selectedStatus } : "skip",
+    store && viewMode === "table" ? { storeId: store._id, status: selectedStatus } : "skip",
   );
   const counts = useQuery(
     api.onlineOrders.countActiveByStore,

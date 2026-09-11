@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useEffect } from "react";
+import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from "react";
+import { useQuery } from "convex/react";
+import { api } from "../../../../convex/_generated/api";
 import { motion, AnimatePresence } from "motion/react";
 import {
   KanbanIcon,
@@ -27,7 +29,7 @@ import { shareReceiptWhatsApp, shareReceiptWhatsAppImage } from "#/lib/print";
 import { isNotificationSupported } from "#/lib/pwa-notifications";
 import { usePesananOrders } from "../hooks/usePesananOrders";
 import { useOrderDragAndDrop } from "../hooks/useOrderDragAndDrop";
-import type { OrderRecord, OrderStatus } from "../types";
+import type { OrderRecord, OrderStatus, OrderStatusFilter } from "../types";
 
 // Context
 type PesananContextType = ReturnType<typeof usePesananOrders> &
@@ -50,7 +52,7 @@ function Root({ children }: { children: React.ReactNode }) {
 
   return (
     <OrderViewContext.Provider value={value}>
-      <div className="w-full pb-28">{children}</div>
+      <div className="w-full flex-1 h-full flex flex-col min-h-0">{children}</div>
     </OrderViewContext.Provider>
   );
 }
@@ -70,60 +72,72 @@ function Header() {
   } = useOrderViewContext();
 
   return (
-    <header className="mb-5 space-y-4">
-      {/* Title & View Switcher */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[var(--color-brand-light)] text-[var(--color-brand)] border border-[var(--color-brand)]/20 tracking-wide uppercase">
-            Online Pickup
-          </div>
-          <h1 className="mt-1 text-2xl font-black tracking-tight text-[var(--color-text)]">
+    <header className="mb-2.5 space-y-2 shrink-0">
+      {/* Title & View Switcher Toolbar */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <h1 className="text-xl sm:text-2xl font-black tracking-tight text-[var(--color-text)]">
             Pesanan Toko
           </h1>
-          <p className="text-xs text-[var(--color-text-2)] mt-0.5">
-            Kelola alur persiapan pesanan online dengan Kanban Drag & Drop atau mode Tabel.
-          </p>
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-[var(--color-brand-light)] text-[var(--color-brand)] border border-[var(--color-brand)]/20 tracking-wide uppercase">
+            Online Pickup
+          </span>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5">
           {/* Live Counters */}
           {counts && (
-            <div className="hidden sm:flex items-center gap-2">
-              <div className="px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs">
+            <div className="hidden lg:flex items-center gap-1.5">
+              <div className="px-2.5 py-1 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs">
                 <span className="text-amber-600 dark:text-amber-400 font-bold">{counts.pending}</span>{" "}
-                <span className="text-[var(--color-text-2)]">Baru</span>
+                <span className="text-[var(--color-text-2)] text-[11px]">Baru</span>
               </div>
-              <div className="px-3 py-1.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-xs">
+              <div className="px-2.5 py-1 rounded-xl bg-blue-500/10 border border-blue-500/20 text-xs">
                 <span className="text-blue-600 dark:text-blue-400 font-bold">{counts.preparing}</span>{" "}
-                <span className="text-[var(--color-text-2)]">Disiapkan</span>
+                <span className="text-[var(--color-text-2)] text-[11px]">Disiapkan</span>
               </div>
-              <div className="px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs">
+              <div className="px-2.5 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs">
                 <span className="text-emerald-600 dark:text-emerald-400 font-bold">
                   {counts.ready_for_pickup}
                 </span>{" "}
-                <span className="text-[var(--color-text-2)]">Siap Ambil</span>
+                <span className="text-[var(--color-text-2)] text-[11px]">Siap Ambil</span>
               </div>
             </div>
           )}
+
+          {/* Search Bar */}
+          <div className="relative w-44 sm:w-56">
+            <MagnifyingGlassIcon
+              size={14}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-3)]"
+            />
+            <input
+              type="text"
+              placeholder="Cari pesanan..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-8 pr-2.5 py-1.5 rounded-xl text-xs bg-[var(--color-surface)] border border-[var(--color-border)] focus:outline-none focus:border-[var(--color-brand)] text-[var(--color-text)] placeholder:text-[var(--color-text-3)] transition-all"
+            />
+          </div>
 
           {/* View Mode Toggle Switch */}
           <div
             role="group"
             aria-label="Tampilan pesanan"
-            className="flex items-center p-1 rounded-2xl bg-[var(--color-surface-2)] border border-[var(--color-border)] shadow-xs"
+            className="flex items-center p-0.5 rounded-xl bg-[var(--color-surface-3)] border border-[var(--color-border)] shadow-xs"
           >
             <button
               type="button"
               aria-pressed={viewMode === "kanban"}
               onClick={() => setViewMode("kanban")}
               className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all press-tactile",
+                "flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition-all press-tactile",
                 viewMode === "kanban"
                   ? "bg-[var(--color-brand)] text-white shadow-xs"
                   : "text-[var(--color-text-2)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface)]",
               )}
             >
-              <KanbanIcon size={16} weight={viewMode === "kanban" ? "fill" : "bold"} />
+              <KanbanIcon size={14} weight={viewMode === "kanban" ? "fill" : "bold"} />
               <span>Kanban</span>
             </button>
 
@@ -132,13 +146,13 @@ function Header() {
               aria-pressed={viewMode === "table"}
               onClick={() => setViewMode("table")}
               className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all press-tactile",
+                "flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition-all press-tactile",
                 viewMode === "table"
                   ? "bg-[var(--color-brand)] text-white shadow-xs"
                   : "text-[var(--color-text-2)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface)]",
               )}
             >
-              <TableIcon size={16} weight={viewMode === "table" ? "fill" : "bold"} />
+              <TableIcon size={14} weight={viewMode === "table" ? "fill" : "bold"} />
               <span>Tabel</span>
             </button>
           </div>
@@ -147,10 +161,10 @@ function Header() {
 
       {/* PWA System Notification Banner */}
       {isNotificationSupported() && notifPermission === "default" && showNotifBanner && (
-        <div className="p-3.5 rounded-2xl bg-[var(--color-brand-light)] border border-[var(--color-brand)]/30 flex items-center justify-between gap-3 text-xs animate-in slide-in-from-top-2">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-xl bg-[var(--color-brand)] text-white flex items-center justify-center shrink-0">
-              <BellRingingIcon size={18} weight="bold" />
+        <div className="p-2.5 rounded-2xl bg-[var(--color-brand-light)] border border-[var(--color-brand)]/30 flex items-center justify-between gap-3 text-xs animate-in slide-in-from-top-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-7 h-7 rounded-lg bg-[var(--color-brand)] text-white flex items-center justify-center shrink-0">
+              <BellRingingIcon size={16} weight="bold" />
             </div>
             <div className="min-w-0">
               <p className="font-extrabold text-[var(--color-brand-dark)] dark:text-orange-300">
@@ -165,37 +179,20 @@ function Header() {
             <button
               type="button"
               onClick={handleEnableNotification}
-              className="px-3 py-1.5 rounded-xl bg-[var(--color-brand)] hover:bg-[var(--color-brand-dark)] text-white font-bold press-tactile text-xs shadow-xs"
+              className="px-2.5 py-1 rounded-lg bg-[var(--color-brand)] hover:bg-[var(--color-brand-dark)] text-white font-bold press-tactile text-xs shadow-xs"
             >
               Aktifkan
             </button>
             <button
               type="button"
               onClick={() => setShowNotifBanner(false)}
-              className="w-7 h-7 rounded-xl flex items-center justify-center text-[var(--color-text-3)] hover:bg-black/5"
+              className="w-6 h-6 rounded-lg flex items-center justify-center text-[var(--color-text-3)] hover:bg-black/5"
             >
-              <XIcon size={14} />
+              <XIcon size={13} />
             </button>
           </div>
         </div>
       )}
-
-      {/* Global Search Bar */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="relative w-full sm:w-80">
-          <MagnifyingGlassIcon
-            size={16}
-            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--color-text-3)]"
-          />
-          <input
-            type="text"
-            placeholder="Cari pembeli / no. pesanan..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 rounded-xl text-xs bg-[var(--color-surface-2)] border border-[var(--color-border)] focus:outline-none focus:border-[var(--color-brand)] text-[var(--color-text)] placeholder:text-[var(--color-text-3)] transition-all"
-          />
-        </div>
-      </div>
     </header>
   );
 }
@@ -234,44 +231,44 @@ const KANBAN_COLUMNS: Array<{
 ];
 
 function Kanban() {
-  const { filteredOrders, showCancelledColumn, setShowCancelledColumn } = useOrderViewContext();
+  const { showCancelledColumn, setShowCancelledColumn, counts } = useOrderViewContext();
 
-  const cancelledOrders = filteredOrders.filter((o) => o.status === "cancelled");
+  const cancelledCount = (counts as any)?.cancelled ?? 0;
 
   return (
-    <div className="space-y-3">
+    <div className="flex-1 min-h-0 flex flex-col space-y-2">
       {/* Optional Cancelled Column Toggle */}
-      <div className="flex items-center justify-end">
+      <div className="flex items-center justify-end shrink-0">
         <button
           type="button"
           onClick={() => setShowCancelledColumn((prev) => !prev)}
           className={cn(
-            "text-xs font-semibold px-3 py-1.5 rounded-xl border transition-all flex items-center gap-1.5",
+            "text-[11px] font-semibold px-2.5 py-1 rounded-xl border transition-all flex items-center gap-1.5 press-tactile",
             showCancelledColumn
               ? "bg-rose-500/10 border-rose-500/30 text-rose-600"
               : "bg-[var(--color-surface)] border-[var(--color-border)] text-[var(--color-text-2)] hover:bg-[var(--color-surface-2)]",
           )}
         >
-          <XCircleIcon size={14} weight="bold" />
-          <span>{showCancelledColumn ? "Sembunyikan Dibatalkan" : `Tampilkan Dibatalkan (${cancelledOrders.length})`}</span>
+          <XCircleIcon size={13} weight="bold" />
+          <span>
+            {showCancelledColumn
+              ? "Sembunyikan Dibatalkan"
+              : `Tampilkan Dibatalkan (${cancelledCount})`}
+          </span>
         </button>
       </div>
 
       {/* Kanban Columns Flex Board */}
-      <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar items-start min-h-[calc(100vh-280px)]">
-        {KANBAN_COLUMNS.map((col) => {
-          const colOrders = filteredOrders.filter((o) => o.status === col.id);
-          return (
-            <KanbanColumn
-              key={col.id}
-              columnId={col.id}
-              title={col.title}
-              badgeClass={col.badgeClass}
-              dotColor={col.dotColor}
-              orders={colOrders}
-            />
-          );
-        })}
+      <div className="flex-1 min-h-0 flex gap-4 overflow-x-auto pb-2 items-stretch custom-scrollbar">
+        {KANBAN_COLUMNS.map((col) => (
+          <KanbanColumn
+            key={col.id}
+            columnId={col.id}
+            title={col.title}
+            badgeClass={col.badgeClass}
+            dotColor={col.dotColor}
+          />
+        ))}
 
         {/* Cancelled column when toggled */}
         {showCancelledColumn && (
@@ -280,7 +277,6 @@ function Kanban() {
             title="Dibatalkan"
             badgeClass="bg-rose-500/10 text-rose-600 border-rose-500/20"
             dotColor="bg-rose-500"
-            orders={cancelledOrders}
           />
         )}
       </div>
@@ -294,11 +290,13 @@ interface KanbanColumnProps {
   title: string;
   badgeClass: string;
   dotColor: string;
-  orders: OrderRecord[];
 }
 
-function KanbanColumn({ columnId, title, badgeClass, dotColor, orders }: KanbanColumnProps) {
+function KanbanColumn({ columnId, title, badgeClass, dotColor }: KanbanColumnProps) {
   const {
+    store,
+    searchQuery,
+    counts,
     dropTargetStatus,
     handleDragOver,
     handleDragLeave,
@@ -306,11 +304,44 @@ function KanbanColumn({ columnId, title, badgeClass, dotColor, orders }: KanbanC
     handleStatusTransition,
   } = useOrderViewContext();
 
-  const [visibleLimit, setVisibleLimit] = React.useState(5);
+  const [limit, setLimit] = useState(5);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const isOver = dropTargetStatus === columnId;
 
-  const visibleOrders = orders.slice(0, visibleLimit);
-  const remainingCount = orders.length - visibleLimit;
+  // Reset limit to 5 if search query changes
+  useEffect(() => {
+    setLimit(5);
+  }, [searchQuery]);
+
+  const queryResult = useQuery(
+    api.onlineOrders.listByStatus,
+    store
+      ? {
+          storeId: store._id,
+          status: columnId,
+          limit,
+          search: searchQuery.trim() || undefined,
+        }
+      : "skip",
+  );
+
+  const orders = (queryResult?.orders ?? []) as OrderRecord[];
+  const hasMore = queryResult?.hasMore ?? false;
+  const isLoading = queryResult === undefined;
+
+  const totalCount =
+    (counts as any)?.[columnId] ??
+    (queryResult as any)?.totalCount ??
+    orders.length;
+
+  // Auto-load on scroll near bottom
+  const handleScroll = useCallback(() => {
+    if (!scrollRef.current || !hasMore || isLoading) return;
+    const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
+    if (scrollHeight - scrollTop - clientHeight < 60) {
+      setLimit((prev) => prev + 5);
+    }
+  }, [hasMore, isLoading]);
 
   return (
     <div
@@ -318,33 +349,46 @@ function KanbanColumn({ columnId, title, badgeClass, dotColor, orders }: KanbanC
       onDragLeave={(e) => handleDragLeave(e, columnId)}
       onDrop={(e) => handleDrop(e, columnId, handleStatusTransition)}
       className={cn(
-        "flex flex-col w-80 shrink-0 rounded-3xl bg-[var(--color-surface-2)] border p-3.5 transition-all min-h-[500px]",
+        "flex flex-col w-80 shrink-0 h-full max-h-full rounded-3xl bg-[var(--color-surface-3)] border p-3.5 transition-all shadow-xs",
         isOver
-          ? "border-[var(--color-brand)] ring-2 ring-[var(--color-brand)]/20 bg-[var(--color-brand-light)]/20"
+          ? "border-[var(--color-brand)] ring-2 ring-[var(--color-brand)]/20 bg-[var(--color-brand-light)]/40"
           : "border-[var(--color-border)]",
       )}
     >
       {/* Column Header */}
-      <div className="flex items-center justify-between pb-3 mb-3 border-b border-[var(--color-border)]">
+      <div className="flex items-center justify-between pb-3 mb-2.5 border-b border-[var(--color-border)] shrink-0">
         <div className="flex items-center gap-2">
-          <span className={cn("w-2.5 h-2.5 rounded-full", dotColor)} />
-          <h2 className="font-bold text-xs text-[var(--color-text)] uppercase tracking-wider">
+          <span className={cn("w-2.5 h-2.5 rounded-full shrink-0", dotColor)} />
+          <h2 className="font-extrabold text-xs text-[var(--color-text)] uppercase tracking-wider">
             {title}
           </h2>
         </div>
         <span
           className={cn(
-            "px-2 py-0.5 rounded-full text-xs font-black border",
+            "px-2.5 py-0.5 rounded-full text-xs font-black border",
             badgeClass,
           )}
         >
-          {orders.length}
+          {totalCount}
         </span>
       </div>
 
-      {/* Cards Scrollable List with top padding to prevent hover lift clipping */}
-      <div className="flex-1 space-y-3 overflow-y-auto p-1 pt-2 -mr-1 pr-1.5">
-        {orders.length === 0 ? (
+      {/* Cards Scrollable List */}
+      <div
+        ref={scrollRef}
+        onScroll={handleScroll}
+        className="flex-1 min-h-0 space-y-2.5 overflow-y-auto p-1 pt-1.5 -mr-1 pr-1.5 custom-scrollbar"
+      >
+        {isLoading && orders.length === 0 ? (
+          <div className="space-y-2.5 p-0.5">
+            {[1, 2].map((i) => (
+              <div
+                key={i}
+                className="h-28 rounded-2xl bg-[var(--color-surface)]/60 border border-[var(--color-border)] animate-pulse"
+              />
+            ))}
+          </div>
+        ) : orders.length === 0 ? (
           <div
             className={cn(
               "h-36 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center p-4 text-center transition-all",
@@ -360,31 +404,21 @@ function KanbanColumn({ columnId, title, badgeClass, dotColor, orders }: KanbanC
         ) : (
           <>
             <AnimatePresence mode="popLayout" initial={false}>
-              {visibleOrders.map((order) => (
+              {orders.map((order) => (
                 <KanbanCard key={order._id} order={order} />
               ))}
             </AnimatePresence>
 
-            {/* Load More Button if more than 5 */}
-            {remainingCount > 0 && (
-              <button
-                type="button"
-                onClick={() => setVisibleLimit((prev) => prev + 5)}
-                className="w-full py-2 px-3 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] hover:border-[var(--color-brand)]/50 hover:bg-[var(--color-surface-3)] text-xs font-bold text-[var(--color-brand)] active:scale-95 transition-all shadow-xs flex items-center justify-center gap-1.5 press-tactile"
-              >
-                <span>Muat +{Math.min(5, remainingCount)} lagi ({remainingCount} tersisa)</span>
-              </button>
-            )}
-
-            {/* Collapse Button if expanded */}
-            {visibleLimit > 5 && orders.length > 5 && (
-              <button
-                type="button"
-                onClick={() => setVisibleLimit(5)}
-                className="w-full py-1 text-[11px] font-semibold text-[var(--color-text-3)] hover:text-[var(--color-text)] transition-colors text-center"
-              >
-                Ciutkan ke 5 pesanan
-              </button>
+            {hasMore && (
+              <div className="py-1.5 flex items-center justify-center">
+                <button
+                  type="button"
+                  onClick={() => setLimit((prev) => prev + 5)}
+                  className="w-full py-1.5 px-3 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] hover:border-[var(--color-brand)]/50 text-[11px] font-bold text-[var(--color-brand)] active:scale-95 transition-all shadow-xs flex items-center justify-center gap-1.5 press-tactile"
+                >
+                  <span>Muat lebih banyak</span>
+                </button>
+              </div>
             )}
           </>
         )}
@@ -556,7 +590,7 @@ function Table() {
     handleCancelOrder,
   } = useOrderViewContext();
 
-  const tableTabs: Array<{ id: OrderStatus; label: string; count?: number }> = [
+  const tableTabs: Array<{ id: OrderStatusFilter; label: string; count?: number }> = [
     { id: "all", label: "Semua" },
     { id: "pending", label: "Pesanan Baru", count: counts?.pending },
     { id: "preparing", label: "Disiapkan", count: counts?.preparing },
@@ -571,9 +605,9 @@ function Table() {
       : filteredOrders.filter((o) => o.status === selectedStatus);
 
   return (
-    <div className="space-y-4">
+    <div className="flex-1 min-h-0 flex flex-col space-y-3">
       {/* Tabs */}
-      <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+      <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar shrink-0">
         {tableTabs.map((tab) => {
           const isSelected = selectedStatus === tab.id;
           return (
@@ -606,7 +640,7 @@ function Table() {
       </div>
 
       {/* Table Container */}
-      <div className="overflow-hidden rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-xs">
+      <div className="flex-1 min-h-0 overflow-auto rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-xs custom-scrollbar">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
@@ -759,7 +793,7 @@ function Table() {
 // 7. Responsive Detail Drawer / Modal
 function DetailDrawer() {
   const {
-    selectedOrder,
+    selectedOrder: contextOrder,
     setSelectedOrder,
     checkedItems,
     toggleItemCheck,
@@ -772,20 +806,46 @@ function DetailDrawer() {
     store,
   } = useOrderViewContext();
 
-  const [isClosing, setIsClosing] = React.useState(false);
+  const [activeOrder, setActiveOrder] = useState<OrderRecord | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const handleClose = React.useCallback(() => {
-    if (isClosing) return;
-    setIsClosing(true);
-    setTimeout(() => {
+  useEffect(() => {
+    if (contextOrder) {
+      if (closeTimerRef.current) {
+        clearTimeout(closeTimerRef.current);
+        closeTimerRef.current = null;
+      }
+      setActiveOrder(contextOrder);
+      const raf1 = requestAnimationFrame(() => {
+        const raf2 = requestAnimationFrame(() => {
+          setIsOpen(true);
+        });
+        return () => cancelAnimationFrame(raf2);
+      });
+      return () => cancelAnimationFrame(raf1);
+    } else {
+      setIsOpen(false);
+      const timer = setTimeout(() => {
+        setActiveOrder(null);
+      }, 250);
+      return () => clearTimeout(timer);
+    }
+  }, [contextOrder]);
+
+  const handleClose = useCallback(() => {
+    setIsOpen(false);
+    if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+    closeTimerRef.current = setTimeout(() => {
       setSelectedOrder(null);
-      setIsClosing(false);
-    }, 220);
-  }, [isClosing, setSelectedOrder]);
+      setActiveOrder(null);
+      closeTimerRef.current = null;
+    }, 250);
+  }, [setSelectedOrder]);
 
   // Escape key & body scroll lock
   useEffect(() => {
-    if (!selectedOrder) return;
+    if (!activeOrder) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") handleClose();
@@ -799,9 +859,11 @@ function DetailDrawer() {
       document.body.style.overflow = originalOverflow;
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [selectedOrder, handleClose]);
+  }, [activeOrder, handleClose]);
 
-  if (!selectedOrder) return null;
+  if (!activeOrder) return null;
+
+  const selectedOrder = contextOrder ?? activeOrder;
 
   return (
     <div
@@ -809,18 +871,18 @@ function DetailDrawer() {
       aria-modal="true"
       aria-labelledby="drawer-order-number"
       className={cn(
-        "fixed inset-0 z-50 flex items-end md:items-stretch md:justify-end bg-black/60 backdrop-blur-xs transition-opacity duration-220 ease-in-out",
-        isClosing ? "opacity-0 pointer-events-none" : "opacity-100 animate-in fade-in duration-200",
+        "fixed inset-0 z-50 flex items-end md:items-stretch md:justify-end bg-black/60 backdrop-blur-xs transition-opacity duration-250 ease-out",
+        isOpen ? "opacity-100" : "opacity-0 pointer-events-none",
       )}
       onClick={handleClose}
     >
       {/* Container: Bottom sheet on mobile, right drawer on desktop */}
       <div
         className={cn(
-          "w-full md:w-[480px] bg-[var(--color-surface)] border-t md:border-t-0 md:border-l border-[var(--color-border)] rounded-t-3xl md:rounded-none max-h-[88vh] md:max-h-full flex flex-col overflow-hidden shadow-2xl transition-transform duration-220 ease-in-out",
-          isClosing
-            ? "translate-y-full md:translate-y-0 md:translate-x-full"
-            : "translate-y-0 md:translate-x-0 animate-in slide-in-from-bottom md:slide-in-from-right duration-250 ease-out",
+          "w-full md:w-[480px] bg-[var(--color-surface)] border-t md:border-t-0 md:border-l border-[var(--color-border)] rounded-t-3xl md:rounded-none max-h-[88vh] md:max-h-full flex flex-col overflow-hidden shadow-2xl transition-transform duration-250 ease-[cubic-bezier(0.32,0.72,0,1)] will-change-transform",
+          isOpen
+            ? "translate-y-0 md:translate-x-0"
+            : "translate-y-full md:translate-y-0 md:translate-x-full",
         )}
         onClick={(e) => e.stopPropagation()}
       >
