@@ -67,6 +67,10 @@ export function usePesananOrders() {
   // Success Receipt Modal state
   const [completedTxData, setCompletedTxData] = useState<CompletedTxData | null>(null);
 
+  // Cancel Order Modal state
+  const [cancelTargetOrder, setCancelTargetOrder] = useState<OrderRecord | null>(null);
+  const [cancellingOrder, setCancellingOrder] = useState(false);
+
   // PWA Notification Banner state
   const [notifPermission, setNotifPermission] = useState<NotificationPermission>(() =>
     typeof window !== "undefined" ? getNotificationPermissionStatus() : "denied",
@@ -138,19 +142,46 @@ export function usePesananOrders() {
     }
   }, [updateStatusMutation]);
 
-  const handleCancelOrder = useCallback(async (orderId: Id<"online_orders">) => {
-    const reason = window.prompt("Alasan pembatalan pesanan (stok akan dikembalikan ke produk):");
-    if (reason === null) return;
-    try {
-      await cancelOrderMutation({ orderId, reason: reason.trim() || undefined });
-      toast.success("Pesanan dibatalkan dan stok produk dipulihkan.");
-      if (selectedOrder?._id === orderId) {
-        setSelectedOrder(null);
+  const handleOpenCancelOrder = useCallback((order: OrderRecord) => {
+    setCancelTargetOrder(order);
+  }, []);
+
+  const handleConfirmCancelOrder = useCallback(
+    async (reason: string) => {
+      if (!cancelTargetOrder) return;
+      setCancellingOrder(true);
+      try {
+        await cancelOrderMutation({
+          orderId: cancelTargetOrder._id,
+          reason: reason.trim() || undefined,
+        });
+        toast.success("Pesanan dibatalkan dan stok produk dipulihkan.");
+        if (selectedOrder?._id === cancelTargetOrder._id) {
+          setSelectedOrder(null);
+        }
+        setCancelTargetOrder(null);
+      } catch (err: any) {
+        toast.error(err?.message || "Gagal membatalkan pesanan.");
+      } finally {
+        setCancellingOrder(false);
       }
-    } catch (err: any) {
-      toast.error(err?.message || "Gagal membatalkan pesanan.");
-    }
-  }, [cancelOrderMutation, selectedOrder]);
+    },
+    [cancelOrderMutation, cancelTargetOrder, selectedOrder],
+  );
+
+  const handleCancelOrder = useCallback(
+    (orderOrId: OrderRecord | Id<"online_orders">) => {
+      if (typeof orderOrId === "object" && orderOrId !== null) {
+        handleOpenCancelOrder(orderOrId);
+      } else {
+        const found = orders?.find((o) => o._id === orderOrId);
+        if (found) {
+          handleOpenCancelOrder(found);
+        }
+      }
+    },
+    [orders, handleOpenCancelOrder],
+  );
 
   const handleSendReadyWhatsApp = useCallback((order: OrderRecord) => {
     const phone = normalizeIndonesianPhone(order.customerPhone);
@@ -252,7 +283,7 @@ export function usePesananOrders() {
     }
 
     if (targetStatus === "cancelled") {
-      await handleCancelOrder(order._id);
+      handleOpenCancelOrder(order);
       return;
     }
 
@@ -264,7 +295,7 @@ export function usePesananOrders() {
         toast.error(err?.message || "Gagal memperbarui status.");
       }
     }
-  }, [openPaymentModal, handleCancelOrder, updateStatusMutation]);
+  }, [openPaymentModal, handleOpenCancelOrder, updateStatusMutation]);
 
   return {
     store,
@@ -295,6 +326,11 @@ export function usePesananOrders() {
     cashInput,
     setCashInput,
     isCompleting,
+    cancelTargetOrder,
+    setCancelTargetOrder,
+    cancellingOrder,
+    handleOpenCancelOrder,
+    handleConfirmCancelOrder,
     completedTxData,
     setCompletedTxData,
     notifPermission,

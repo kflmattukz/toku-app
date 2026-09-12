@@ -20,6 +20,7 @@ function PesananContent() {
       <OrderView.DetailDrawer />
       <OrderView.PaymentModal />
       <OrderView.ReceiptModal />
+      <OrderView.CancelModal />
     </div>
   );
 }

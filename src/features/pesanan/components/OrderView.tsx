@@ -31,6 +31,7 @@ import { Pagination } from "#/components/ui";
 import { usePesananOrders } from "../hooks/usePesananOrders";
 import { useOrderDragAndDrop } from "../hooks/useOrderDragAndDrop";
 import type { OrderRecord, OrderStatus, OrderStatusFilter } from "../types";
+import { OrderCancelModal } from "./OrderCancelModal";
 
 // Context
 type PesananContextType = ReturnType<typeof usePesananOrders> &
@@ -777,10 +778,12 @@ function Table() {
                             </>
                           )}
 
-                          {(order.status === "pending" || order.status === "preparing") && (
+                          {(order.status === "pending" ||
+                            order.status === "preparing" ||
+                            order.status === "ready_for_pickup") && (
                             <button
                               type="button"
-                              onClick={() => handleCancelOrder(order._id)}
+                              onClick={() => handleCancelOrder(order)}
                               className="p-1.5 rounded-xl text-rose-500 hover:bg-rose-500/10 transition-colors"
                               title="Batalkan Pesanan"
                             >
@@ -1053,7 +1056,7 @@ function DetailDrawer() {
               </button>
               <button
                 type="button"
-                onClick={() => handleCancelOrder(selectedOrder._id)}
+                onClick={() => handleCancelOrder(selectedOrder)}
                 className="px-3 py-2.5 rounded-xl bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 text-xs font-semibold active:scale-95 transition-all"
                 title="Batalkan"
               >
@@ -1074,7 +1077,7 @@ function DetailDrawer() {
               </button>
               <button
                 type="button"
-                onClick={() => handleCancelOrder(selectedOrder._id)}
+                onClick={() => handleCancelOrder(selectedOrder)}
                 className="px-3 py-2.5 rounded-xl bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 text-xs font-semibold active:scale-95 transition-all"
                 title="Batalkan"
               >
@@ -1104,7 +1107,7 @@ function DetailDrawer() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleCancelOrder(selectedOrder._id)}
+                  onClick={() => handleCancelOrder(selectedOrder)}
                   className="px-3 py-2.5 rounded-xl bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 text-xs font-semibold active:scale-95 transition-all"
                   title="Batalkan"
                 >
@@ -1451,6 +1454,25 @@ function ReceiptModal() {
   );
 }
 
+function CancelModal() {
+  const {
+    cancelTargetOrder,
+    setCancelTargetOrder,
+    cancellingOrder,
+    handleConfirmCancelOrder,
+  } = useOrderViewContext();
+
+  return (
+    <OrderCancelModal
+      order={cancelTargetOrder}
+      open={Boolean(cancelTargetOrder)}
+      onClose={() => setCancelTargetOrder(null)}
+      onConfirm={handleConfirmCancelOrder}
+      cancelling={cancellingOrder}
+    />
+  );
+}
+
 // Attach compound subcomponents to OrderView namespace
 export const OrderView = Object.assign(Root, {
   Root,
@@ -1462,4 +1484,5 @@ export const OrderView = Object.assign(Root, {
   DetailDrawer,
   PaymentModal,
   ReceiptModal,
+  CancelModal,
 });
