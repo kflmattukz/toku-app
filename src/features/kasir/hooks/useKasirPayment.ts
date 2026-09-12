@@ -55,6 +55,8 @@ export function useKasirPayment({
         const disc = calculateItemDiscount(i.price, i.discountType, i.discountValue);
         return {
           productId: i.productId,
+          variantId: i.variantId,
+          variantName: i.variantName,
           name: i.name,
           price: i.price,
           costPrice: i.costPrice,

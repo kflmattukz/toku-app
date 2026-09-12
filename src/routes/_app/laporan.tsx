@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { useAppStore } from "#/lib/store-context";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { dayRange, weekRange, monthRange } from "#/lib/utils";
 import { EyeIcon, EyeSlashIcon, DownloadSimpleIcon } from "@phosphor-icons/react";
 import { Button } from "#/components/ui";

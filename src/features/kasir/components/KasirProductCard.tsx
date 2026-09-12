@@ -14,6 +14,7 @@ import type { CartItem, Product } from "../types";
 interface KasirProductCardProps {
   product: Product;
   inCart?: CartItem;
+  totalInCartQty?: number;
   onAddToCart: (product: Product) => void;
   onUpdateQty: (productId: string, delta: number) => void;
   onSelectVariant?: (product: Product) => void;
@@ -22,6 +23,7 @@ interface KasirProductCardProps {
 export function KasirProductCard({
   product,
   inCart,
+  totalInCartQty,
   onAddToCart,
   onUpdateQty,
   onSelectVariant,
@@ -30,6 +32,8 @@ export function KasirProductCard({
   const hasVariants = Boolean(product.hasVariants && product.variants && product.variants.length > 0);
   const isOutOfStock = product.stock <= 0;
   const isMaxStock = Boolean(inCart && inCart.qty >= product.stock);
+  const displayInCartQty = hasVariants ? (totalInCartQty ?? 0) : (inCart?.qty ?? 0);
+  const isInCart = displayInCartQty > 0;
 
   const handleClick = () => {
     if (isOutOfStock) return;
@@ -53,12 +57,12 @@ export function KasirProductCard({
           : "product-card-interactive cursor-pointer"
       }`}
       style={{
-        border: inCart
+        border: isInCart
           ? "2px solid var(--color-brand)"
           : isOutOfStock
             ? "1.5px dashed var(--color-border)"
             : "1.5px solid var(--color-border)",
-        boxShadow: inCart ? "0 8px 24px rgba(234, 88, 12, 0.2)" : "var(--shadow-sm)",
+        boxShadow: isInCart ? "0 8px 24px rgba(234, 88, 12, 0.2)" : "var(--shadow-sm)",
       }}
     >
       {/* 1:1 Box Style Image Container */}
@@ -80,10 +84,10 @@ export function KasirProductCard({
           </div>
         )}
 
-        {inCart && (
+        {isInCart && (
           <div className="shadow-primary-500/30 absolute top-2 right-2 z-2 flex items-center gap-1 rounded-full bg-[var(--color-brand)] px-2 py-0.5 text-xs font-extrabold text-white shadow-md">
             <CheckCircleIcon size={13} weight="fill" />
-            <span>{inCart.qty}x</span>
+            <span>{displayInCartQty}x</span>
           </div>
         )}
 
@@ -105,7 +109,7 @@ export function KasirProductCard({
                 : `-${formatIDR(product.discountValue ?? 0)}`}
             </span>
           </div>
-        ) : product.stock <= 5 && !inCart ? (
+        ) : product.stock <= 5 && !isInCart ? (
           <div className="absolute top-2 left-2 z-2 flex items-center gap-0.5 rounded-full bg-rose-600 px-1.5 py-0.5 text-[10px] font-extrabold text-white shadow-xs">
             <WarningIcon size={11} weight="fill" />
             <span>Stok {product.stock}</span>
@@ -138,8 +142,29 @@ export function KasirProductCard({
         </div>
       </div>
 
-      {/* Integrated Quantity Stepper Controls (When in cart and non-variant) */}
-      {inCart && !hasVariants && (
+      {/* Footer action: Stepper for non-variants in cart, or "Pilih Varian" button for variants */}
+      {hasVariants ? (
+        <div className="mt-2.5 border-t border-[var(--color-border-subtle)] pt-2">
+          <button
+            type="button"
+            disabled={isOutOfStock}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (isOutOfStock) return;
+              if (onSelectVariant) onSelectVariant(product);
+            }}
+            className={`w-full py-1 px-2 text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-1 ${
+              isOutOfStock
+                ? "bg-[var(--color-surface-3)] text-[var(--color-text-3)] cursor-not-allowed"
+                : isInCart
+                  ? "bg-[var(--color-brand)] text-white shadow-xs hover:opacity-95"
+                  : "bg-[var(--color-surface-2)] text-[var(--color-text)] border border-[var(--color-border)] hover:bg-[var(--color-surface-3)]"
+            }`}
+          >
+            <span>{isInCart ? "Ubah Varian" : "Pilih Varian"}</span>
+          </button>
+        </div>
+      ) : inCart ? (
         <div className="mt-2.5 flex items-center justify-between border-t border-[var(--color-border-subtle)] pt-2">
           <button
             type="button"
@@ -183,7 +208,7 @@ export function KasirProductCard({
             <PlusIcon size={12} weight="bold" />
           </button>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

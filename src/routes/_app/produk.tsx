@@ -113,6 +113,7 @@ function Produk() {
 
       {/* Add / Edit Form Modal */}
       <ProductFormModal
+        key={showModal ? (editId ? String(editId) : "add") : "closed"}
         open={showModal}
         onClose={() => setShowModal(false)}
         editId={editId}

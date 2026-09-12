@@ -2,7 +2,12 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
-import { formatIDRInput, parseIDRInput, compressImageToBlob } from "#/lib/utils";
+import {
+  formatIDRInput,
+  parseIDRInput,
+  compressImageToBlob,
+  generateVariantCombinations,
+} from "#/lib/utils";
 import { emptyProductForm, type Product, type ProductFormState } from "../types";
 import type { Id } from "../../../../convex/_generated/dataModel";
 
@@ -42,12 +47,59 @@ export function useProductManager({ storeId }: UseProductManagerProps) {
 
   const openEdit = (p: Product) => {
     setEditId(p._id);
+    const hasVariants = Boolean(p.hasVariants);
+    let mappedVariants = (p.variants ?? []).map((v) => ({
+      id: v.id,
+      name: v.name,
+      combination: v.combination,
+      price: formatIDRInput(v.price),
+      costPrice: v.costPrice !== undefined ? formatIDRInput(v.costPrice) : "",
+      stock: String(v.stock ?? 0),
+      barcode: v.barcode ?? "",
+    }));
+
+    // If product has variants enabled and has variant options, but variants array was empty
+    if (
+      hasVariants &&
+      mappedVariants.length === 0 &&
+      p.variantOptions &&
+      p.variantOptions.length > 0
+    ) {
+      const combos = generateVariantCombinations(p.variantOptions);
+      mappedVariants = combos.map((c, i) => ({
+        id: `v_${Date.now()}_${i}`,
+        name: c.name,
+        combination: c.combination,
+        price: formatIDRInput(p.price),
+        costPrice: p.costPrice !== undefined ? formatIDRInput(p.costPrice) : "",
+        stock: String(p.stock ?? 0),
+        barcode: "",
+      }));
+    }
+
+    // Determine accurate total stock
+    let totalStockNum = p.stock ?? 0;
+    if (hasVariants && mappedVariants.length > 0) {
+      const variantSum = mappedVariants.reduce(
+        (sum, v) => sum + (parseInt(v.stock, 10) || 0),
+        0,
+      );
+      // If child variants were never initialized with stock (all 0) but parent product has stock > 0:
+      if (variantSum === 0 && totalStockNum > 0 && mappedVariants.length === 1) {
+        mappedVariants[0].stock = String(totalStockNum);
+      }
+      totalStockNum = mappedVariants.reduce(
+        (sum, v) => sum + (parseInt(v.stock, 10) || 0),
+        0,
+      );
+    }
+
     setForm({
       name: p.name,
       category: p.category,
       price: formatIDRInput(p.price),
       costPrice: p.costPrice !== undefined ? formatIDRInput(p.costPrice) : "",
-      stock: String(p.stock),
+      stock: String(totalStockNum),
       barcode: p.barcode ?? "",
       imageId: p.imageId ?? "",
       discountType: p.discountType ?? "none",
@@ -57,17 +109,9 @@ export function useProductManager({ storeId }: UseProductManagerProps) {
           : p.discountType === "nominal"
             ? formatIDRInput(p.discountValue ?? "")
             : "",
-      hasVariants: p.hasVariants ?? false,
+      hasVariants,
       variantOptions: p.variantOptions ?? [],
-      variants: (p.variants ?? []).map((v) => ({
-        id: v.id,
-        name: v.name,
-        combination: v.combination,
-        price: formatIDRInput(v.price),
-        costPrice: v.costPrice !== undefined ? formatIDRInput(v.costPrice) : "",
-        stock: String(v.stock),
-        barcode: v.barcode ?? "",
-      })),
+      variants: mappedVariants,
     });
     setImagePreview(p.imageUrl ?? p.imageId ?? "");
     setShowModal(true);

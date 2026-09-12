@@ -27,6 +27,7 @@ import {
 import { formatIDR, cn, normalizeIndonesianPhone } from "#/lib/utils";
 import { shareReceiptWhatsApp, shareReceiptWhatsAppImage } from "#/lib/print";
 import { isNotificationSupported } from "#/lib/pwa-notifications";
+import { Pagination } from "#/components/ui";
 import { usePesananOrders } from "../hooks/usePesananOrders";
 import { useOrderDragAndDrop } from "../hooks/useOrderDragAndDrop";
 import type { OrderRecord, OrderStatus, OrderStatusFilter } from "../types";
@@ -588,6 +589,10 @@ function Table() {
     handleSendReadyWhatsApp,
     openPaymentModal,
     handleCancelOrder,
+    currentPage,
+    setCurrentPage,
+    pageSize,
+    setPageSize,
   } = useOrderViewContext();
 
   const tableTabs: Array<{ id: OrderStatusFilter; label: string; count?: number }> = [
@@ -603,6 +608,12 @@ function Table() {
     selectedStatus === "all"
       ? filteredOrders
       : filteredOrders.filter((o) => o.status === selectedStatus);
+
+  const totalCount = tableOrders.length;
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+  const safePage = Math.min(Math.max(1, currentPage), totalPages);
+  const startIndex = (safePage - 1) * pageSize;
+  const pagedOrders = tableOrders.slice(startIndex, startIndex + pageSize);
 
   return (
     <div className="flex-1 min-h-0 flex flex-col space-y-3">
@@ -640,8 +651,8 @@ function Table() {
       </div>
 
       {/* Table Container */}
-      <div className="flex-1 min-h-0 overflow-auto rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-xs custom-scrollbar">
-        <div className="overflow-x-auto">
+      <div className="flex-1 min-h-0 flex flex-col rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-xs overflow-hidden">
+        <div className="flex-1 min-h-0 overflow-auto custom-scrollbar">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="border-b border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-text-2)] font-bold">
@@ -667,7 +678,7 @@ function Table() {
                   </td>
                 </tr>
               ) : (
-                tableOrders.map((order) => {
+                pagedOrders.map((order) => {
                   return (
                     <tr
                       key={order._id}
@@ -785,6 +796,18 @@ function Table() {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Bar */}
+        <Pagination
+          currentPage={safePage}
+          totalPages={totalPages}
+          totalCount={totalCount}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={setPageSize}
+          itemLabel="pesanan"
+          pageSizeOptions={[10, 20, 50]}
+        />
       </div>
     </div>
   );

@@ -11,6 +11,8 @@ export type OfflineTx = {
   storeId: string;
   items: Array<{
     productId: string;
+    variantId?: string;
+    variantName?: string;
     name: string;
     price: number;
     qty: number;

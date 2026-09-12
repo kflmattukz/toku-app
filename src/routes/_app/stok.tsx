@@ -4,7 +4,13 @@ import { api } from "../../../convex/_generated/api";
 import { useAppStore } from "#/lib/store-context";
 import { useState } from "react";
 import { toast } from "sonner";
-import { StockOverviewCards, StockTable, RestockModal, StokSkeleton } from "#/features/stok";
+import {
+  StockOverviewCards,
+  StockTable,
+  RestockModal,
+  StokSkeleton,
+  type VariantStockAdjustment,
+} from "#/features/stok";
 import type { Product } from "#/features/produk";
 
 export const Route = createFileRoute("/_app/stok")({ component: Stok });
@@ -20,27 +26,46 @@ function Stok() {
   const [restockAmt, setRestockAmt] = useState("10");
   const [saving, setSaving] = useState(false);
 
-  const lowStock = products.filter((p) => p.stock <= threshold);
-  const okStock = products.filter((p) => p.stock > threshold);
+  const isLowStockProduct = (p: Product) => {
+    if (p.hasVariants && p.variants && p.variants.length > 0) {
+      return p.stock <= threshold || p.variants.some((v) => v.stock <= threshold);
+    }
+    return p.stock <= threshold;
+  };
+
+  const lowStock = products.filter(isLowStockProduct);
+  const okStock = products.filter((p) => !isLowStockProduct(p));
 
   const openRestock = (p: Product) => {
     setActiveRestockProduct(p);
     setRestockAmt("10");
   };
 
-  const handleRestock = async () => {
+  const handleRestock = async (variantAdjustments?: VariantStockAdjustment[]) => {
     if (!activeRestockProduct) return;
-    const amt = parseInt(restockAmt, 10) || 0;
-    if (amt <= 0) {
-      toast.error("Jumlah restok harus minimal 1 pcs");
-      return;
-    }
     setSaving(true);
     try {
-      await adjustStock({ id: activeRestockProduct._id, delta: amt });
-      toast.success(`Stok ${activeRestockProduct.name} bertambah ${amt} pcs!`, {
-        description: `Stok sekarang: ${(activeRestockProduct.stock ?? 0) + amt} pcs`,
-      });
+      if (variantAdjustments && variantAdjustments.length > 0) {
+        const totalAdded = variantAdjustments.reduce((sum, a) => sum + a.delta, 0);
+        await adjustStock({
+          id: activeRestockProduct._id,
+          variantAdjustments,
+        });
+        toast.success(`Stok varian ${activeRestockProduct.name} berhasil diperbarui!`, {
+          description: `Total bertambah: +${totalAdded} pcs (Stok sekarang: ${(activeRestockProduct.stock ?? 0) + totalAdded} pcs)`,
+        });
+      } else {
+        const amt = parseInt(restockAmt, 10) || 0;
+        if (amt <= 0) {
+          toast.error("Jumlah restok harus minimal 1 pcs");
+          setSaving(false);
+          return;
+        }
+        await adjustStock({ id: activeRestockProduct._id, delta: amt });
+        toast.success(`Stok ${activeRestockProduct.name} bertambah ${amt} pcs!`, {
+          description: `Stok sekarang: ${(activeRestockProduct.stock ?? 0) + amt} pcs`,
+        });
+      }
       setActiveRestockProduct(null);
       setRestockAmt("10");
     } catch {

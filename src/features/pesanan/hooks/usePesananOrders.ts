@@ -32,8 +32,26 @@ export function usePesananOrders() {
     } catch {}
   }, []);
 
-  const [selectedStatus, setSelectedStatus] = useState<OrderStatusFilter>("all");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedStatus, setSelectedStatusState] = useState<OrderStatusFilter>("all");
+  const [searchQuery, setSearchQueryState] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSizeState] = useState(10);
+
+  const setSelectedStatus = useCallback((status: OrderStatusFilter) => {
+    setSelectedStatusState(status);
+    setCurrentPage(1);
+  }, []);
+
+  const setSearchQuery = useCallback((query: string) => {
+    setSearchQueryState(query);
+    setCurrentPage(1);
+  }, []);
+
+  const setPageSize = useCallback((size: number) => {
+    setPageSizeState(size);
+    setCurrentPage(1);
+  }, []);
+
   const [showCancelledColumn, setShowCancelledColumn] = useState(false);
   const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
 
@@ -257,6 +275,10 @@ export function usePesananOrders() {
     setSelectedStatus,
     searchQuery,
     setSearchQuery,
+    currentPage,
+    setCurrentPage,
+    pageSize,
+    setPageSize,
     showCancelledColumn,
     setShowCancelledColumn,
     checkedItems,

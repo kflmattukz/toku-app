@@ -11,7 +11,7 @@ import { Pagination } from "#/components/ui/Pagination";
 import { SearchFilter } from "#/components/ui/SearchFilter";
 import { Button, DataTable } from "#/components/ui";
 import { useAppTable, createAppColumnHelper } from "#/lib/table";
-import type { Product } from "#/features/produk";
+import type { Product, ProductVariant } from "#/features/produk";
 
 interface StockTableProps {
   products: Product[];
@@ -22,10 +22,46 @@ interface StockTableProps {
 
 type StockLevel = "empty" | "low" | "safe";
 
-function getStockLevel(stock: number, threshold: number): StockLevel {
-  if (stock <= 0) return "empty";
-  if (stock <= threshold) return "low";
-  return "safe";
+interface ProductStockStatus {
+  level: StockLevel;
+  emptyVariants: ProductVariant[];
+  lowVariants: ProductVariant[];
+  totalLowVariants: ProductVariant[];
+  hasVariants: boolean;
+}
+
+function getProductStockStatus(product: Product, threshold: number): ProductStockStatus {
+  const hasVariants = Boolean(product.hasVariants && product.variants && product.variants.length > 0);
+  if (!hasVariants) {
+    const level: StockLevel = product.stock <= 0 ? "empty" : product.stock <= threshold ? "low" : "safe";
+    return {
+      level,
+      emptyVariants: [],
+      lowVariants: [],
+      totalLowVariants: [],
+      hasVariants: false,
+    };
+  }
+
+  const variants = product.variants || [];
+  const emptyVariants = variants.filter((v) => v.stock <= 0);
+  const lowVariants = variants.filter((v) => v.stock > 0 && v.stock <= threshold);
+  const totalLowVariants = [...emptyVariants, ...lowVariants];
+
+  let level: StockLevel = "safe";
+  if (product.stock <= 0 || emptyVariants.length > 0) {
+    level = "empty";
+  } else if (product.stock <= threshold || lowVariants.length > 0) {
+    level = "low";
+  }
+
+  return {
+    level,
+    emptyVariants,
+    lowVariants,
+    totalLowVariants,
+    hasVariants: true,
+  };
 }
 
 const columnHelper = createAppColumnHelper<Product>();
@@ -45,7 +81,9 @@ export function StockTable({
       (p) =>
         p.name.toLowerCase().includes(search.toLowerCase()) ||
         p.category.toLowerCase().includes(search.toLowerCase()) ||
-        (p.barcode && p.barcode.includes(search)),
+        (p.barcode && p.barcode.includes(search)) ||
+        (p.variants &&
+          p.variants.some((v) => v.name.toLowerCase().includes(search.toLowerCase()))),
     );
   }, [products, search]);
 
@@ -54,9 +92,42 @@ export function StockTable({
       columnHelper.columns([
         columnHelper.accessor("name", {
           header: "Nama Produk",
-          cell: (info) => (
-            <div className="text-sm font-bold text-[var(--color-text)]">{info.getValue()}</div>
-          ),
+          cell: (info) => {
+            const p = info.row.original;
+            const status = getProductStockStatus(p, threshold);
+            return (
+              <div className="flex flex-col gap-0.5">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-sm font-bold text-[var(--color-text)]">{p.name}</span>
+                  {status.hasVariants && (
+                    <span className="rounded-full bg-[var(--color-surface-2)] border border-[var(--color-border)] px-2 py-0.5 text-[10px] font-extrabold text-[var(--color-brand)]">
+                      {p.variants?.length} Varian
+                    </span>
+                  )}
+                </div>
+                {status.hasVariants && status.totalLowVariants.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {status.totalLowVariants.map((v) => {
+                      const isVEmpty = v.stock <= 0;
+                      return (
+                        <span
+                          key={v.id}
+                          className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-bold border ${
+                            isVEmpty
+                              ? "border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400"
+                              : "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                          }`}
+                        >
+                          <span>{v.name || Object.values(v.combination).join("/")}</span>
+                          <span className="font-mono font-extrabold">{v.stock} pcs</span>
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          },
         }),
         columnHelper.accessor("category", {
           header: "Kategori",
@@ -69,29 +140,63 @@ export function StockTable({
         columnHelper.accessor("stock", {
           header: "Stok Saat Ini",
           cell: (info) => {
-            const stock = info.getValue();
-            const level = getStockLevel(stock, threshold);
+            const p = info.row.original;
+            const status = getProductStockStatus(p, threshold);
             return (
-              <span
-                className={`price text-sm ${
-                  level === "empty"
-                    ? "font-black text-rose-600 dark:text-rose-400"
-                    : level === "low"
-                      ? "font-black text-amber-600 dark:text-amber-400"
-                      : "font-black text-[var(--color-text)]"
-                }`}
-              >
-                {stock} pcs
-              </span>
+              <div className="flex flex-col">
+                <span
+                  className={`price text-sm ${
+                    status.level === "empty"
+                      ? "font-black text-rose-600 dark:text-rose-400"
+                      : status.level === "low"
+                        ? "font-black text-amber-600 dark:text-amber-400"
+                        : "font-black text-[var(--color-text)]"
+                  }`}
+                >
+                  {p.stock} pcs
+                </span>
+                {status.hasVariants && (
+                  <span className="text-[10px] text-[var(--color-text-3)] font-semibold">
+                    Total semua varian
+                  </span>
+                )}
+              </div>
             );
           },
         }),
-        columnHelper.accessor((row) => getStockLevel(row.stock, threshold), {
+        columnHelper.display({
           id: "status",
           header: "Status Persediaan",
           cell: (info) => {
-            const level = getStockLevel(info.row.original.stock, threshold);
-            if (level === "empty") {
+            const p = info.row.original;
+            const status = getProductStockStatus(p, threshold);
+
+            if (status.hasVariants) {
+              if (status.emptyVariants.length > 0) {
+                return (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-rose-500/30 bg-rose-500/10 px-3 py-1 text-xs font-extrabold text-rose-600 dark:text-rose-400">
+                    <XCircleIcon size={13} weight="fill" />
+                    <span>{status.emptyVariants.length} Varian Habis</span>
+                  </span>
+                );
+              }
+              if (status.lowVariants.length > 0) {
+                return (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/35 bg-amber-500/10 px-3 py-1 text-xs font-extrabold text-amber-600 dark:text-amber-400">
+                    <WarningIcon size={12} weight="fill" />
+                    <span>{status.lowVariants.length} Varian Menipis</span>
+                  </span>
+                );
+              }
+              return (
+                <span className="inline-flex items-center gap-1 rounded-full border border-[var(--color-brand)] bg-[var(--color-brand-light)] px-3 py-1 text-xs font-extrabold text-[var(--color-brand)]">
+                  <CheckCircleIcon size={12} weight="fill" />
+                  <span>Semua Aman</span>
+                </span>
+              );
+            }
+
+            if (status.level === "empty") {
               return (
                 <span className="inline-flex items-center gap-1 rounded-full border border-rose-500/30 bg-rose-500/10 px-3 py-1 text-xs font-extrabold text-rose-600 dark:text-rose-400">
                   <XCircleIcon size={13} weight="fill" />
@@ -99,7 +204,7 @@ export function StockTable({
                 </span>
               );
             }
-            if (level === "low") {
+            if (status.level === "low") {
               return (
                 <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/35 bg-amber-500/10 px-3 py-1 text-xs font-extrabold text-amber-600 dark:text-amber-400">
                   <WarningIcon size={12} weight="fill" />
@@ -169,8 +274,8 @@ export function StockTable({
 
           <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
             {lowStockProducts.map((p) => {
-              const level = getStockLevel(p.stock, threshold);
-              const isEmpty = level === "empty";
+              const status = getProductStockStatus(p, threshold);
+              const isEmpty = status.level === "empty";
               return (
                 <div
                   key={p._id}
@@ -193,23 +298,63 @@ export function StockTable({
                               : "border border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400"
                           }`}
                         >
-                          {isEmpty ? "Habis" : "Menipis"}
+                          {status.hasVariants
+                            ? status.emptyVariants.length > 0
+                              ? `${status.emptyVariants.length} Varian Habis`
+                              : `${status.lowVariants.length} Varian Menipis`
+                            : isEmpty
+                              ? "Habis"
+                              : "Menipis"}
                         </span>
                       </div>
                       <span className="text-xs font-semibold text-[var(--color-text-3)]">
-                        {p.category}
+                        {p.category} {status.hasVariants && `· ${p.variants?.length} Varian`}
                       </span>
                     </div>
-                    <span
-                      className={`price shrink-0 text-lg font-black ${
-                        isEmpty
-                          ? "text-rose-600 dark:text-rose-400"
-                          : "text-amber-600 dark:text-amber-400"
-                      }`}
-                    >
-                      {p.stock} pcs
-                    </span>
+                    <div className="text-right shrink-0">
+                      <span
+                        className={`price text-lg font-black ${
+                          isEmpty
+                            ? "text-rose-600 dark:text-rose-400"
+                            : "text-amber-600 dark:text-amber-400"
+                        }`}
+                      >
+                        {p.stock} pcs
+                      </span>
+                      {status.hasVariants && (
+                        <div className="text-[10px] font-semibold text-[var(--color-text-3)]">
+                          Total
+                        </div>
+                      )}
+                    </div>
                   </div>
+
+                  {/* Warning chips for low / empty variants */}
+                  {status.hasVariants && status.totalLowVariants.length > 0 && (
+                    <div className="rounded-xl border border-[var(--color-border-subtle)] bg-[var(--color-surface)] p-2">
+                      <div className="mb-1 text-[10px] font-extrabold uppercase tracking-wider text-[var(--color-text-3)]">
+                        Varian Perlu Restok:
+                      </div>
+                      <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-0.5">
+                        {status.totalLowVariants.map((v) => {
+                          const isVEmpty = v.stock <= 0;
+                          return (
+                            <span
+                              key={v.id}
+                              className={`inline-flex items-center gap-1 rounded-lg border px-2 py-0.5 text-[11px] font-bold ${
+                                isVEmpty
+                                  ? "border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400"
+                                  : "border-amber-500/35 bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                              }`}
+                            >
+                              <span>{v.name || Object.values(v.combination).join("/")}</span>
+                              <span className="font-mono font-black">({v.stock} pcs)</span>
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
 
                   <div className="flex items-center justify-between border-t border-[var(--color-border)] pt-3">
                     <span className="price text-xs font-bold text-[var(--color-brand)]">
@@ -244,7 +389,7 @@ export function StockTable({
                 setSearch(v);
                 setPage(1);
               }}
-              placeholder="Cari nama atau kategori..."
+              placeholder="Cari nama, kategori, varian..."
             />
           </div>
         </div>
@@ -262,9 +407,9 @@ export function StockTable({
                 <DataTable
                   table={table}
                   rowClassName={(row) => {
-                    const level = getStockLevel(row.original.stock, threshold);
-                    if (level === "empty") return "bg-rose-500/[0.035] hover:bg-rose-500/[0.07]";
-                    if (level === "low") return "bg-amber-500/[0.035] hover:bg-amber-500/[0.07]";
+                    const status = getProductStockStatus(row.original, threshold);
+                    if (status.level === "empty") return "bg-rose-500/[0.035] hover:bg-rose-500/[0.07]";
+                    if (status.level === "low") return "bg-amber-500/[0.035] hover:bg-amber-500/[0.07]";
                     return "hover:bg-[var(--color-surface-2)]";
                   }}
                 />
@@ -274,33 +419,58 @@ export function StockTable({
               <div className="mobile-only flex flex-col divide-y divide-[var(--color-border)]">
                 {pagedRows.map((row: any) => {
                   const p = row.original;
-                  const level = getStockLevel(p.stock, threshold);
+                  const status = getProductStockStatus(p, threshold);
+                  const isEmpty = status.level === "empty";
                   return (
                     <div
                       key={p._id}
                       className={`flex flex-col gap-3 p-4 transition-colors ${
-                        level === "empty"
+                        isEmpty
                           ? "bg-rose-500/[0.035]"
-                          : level === "low"
+                          : status.level === "low"
                             ? "bg-amber-500/[0.035]"
                             : "bg-[var(--color-surface)]"
                       }`}
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div>
-                          <div className="text-sm font-extrabold text-[var(--color-text)]">
-                            {p.name}
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-sm font-extrabold text-[var(--color-text)]">
+                              {p.name}
+                            </span>
+                            {status.hasVariants && (
+                              <span className="rounded-full bg-[var(--color-surface-2)] border border-[var(--color-border)] px-1.5 py-0.2 text-[10px] font-extrabold text-[var(--color-brand)]">
+                                {p.variants?.length} Varian
+                              </span>
+                            )}
                           </div>
                           <span className="text-xs font-semibold text-[var(--color-text-3)]">
                             {p.category} · {formatIDR(p.price)}
                           </span>
                         </div>
-                        {level === "empty" ? (
+                        {status.hasVariants ? (
+                          status.emptyVariants.length > 0 ? (
+                            <span className="inline-flex items-center gap-1 rounded-full border border-rose-500/30 bg-rose-500/10 px-2.5 py-0.5 text-[10px] font-extrabold text-rose-600 dark:text-rose-400">
+                              <XCircleIcon size={12} weight="fill" />
+                              <span>{status.emptyVariants.length} Varian Habis</span>
+                            </span>
+                          ) : status.lowVariants.length > 0 ? (
+                            <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/35 bg-amber-500/10 px-2.5 py-0.5 text-[10px] font-extrabold text-amber-600 dark:text-amber-400">
+                              <WarningIcon size={11} weight="fill" />
+                              <span>{status.lowVariants.length} Varian Menipis</span>
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 rounded-full border border-[var(--color-brand)]/20 bg-[var(--color-brand-light)] px-2.5 py-0.5 text-[10px] font-extrabold text-[var(--color-brand)]">
+                              <CheckCircleIcon size={11} weight="fill" />
+                              <span>Aman</span>
+                            </span>
+                          )
+                        ) : isEmpty ? (
                           <span className="inline-flex items-center gap-1 rounded-full border border-rose-500/30 bg-rose-500/10 px-2.5 py-0.5 text-[10px] font-extrabold text-rose-600 dark:text-rose-400">
                             <XCircleIcon size={12} weight="fill" />
                             <span>Stok Habis</span>
                           </span>
-                        ) : level === "low" ? (
+                        ) : status.level === "low" ? (
                           <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/35 bg-amber-500/10 px-2.5 py-0.5 text-[10px] font-extrabold text-amber-600 dark:text-amber-400">
                             <WarningIcon size={11} weight="fill" />
                             <span>Stok Menipis</span>
@@ -313,20 +483,47 @@ export function StockTable({
                         )}
                       </div>
 
+                      {/* Variant chips in mobile card */}
+                      {status.hasVariants && status.totalLowVariants.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {status.totalLowVariants.map((v) => {
+                            const isVEmpty = v.stock <= 0;
+                            return (
+                              <span
+                                key={v.id}
+                                className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-bold border ${
+                                  isVEmpty
+                                    ? "border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400"
+                                    : "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                                }`}
+                              >
+                                <span>{v.name || Object.values(v.combination).join("/")}</span>
+                                <span className="font-mono font-extrabold">{v.stock} pcs</span>
+                              </span>
+                            );
+                          })}
+                        </div>
+                      )}
+
                       <div className="flex items-center justify-between pt-2">
                         <div className="text-xs font-bold text-[var(--color-text-2)]">
                           Stok:{" "}
                           <span
                             className={`font-black ${
-                              level === "empty"
+                              isEmpty
                                 ? "text-rose-600 dark:text-rose-400"
-                                : level === "low"
+                                : status.level === "low"
                                   ? "text-amber-600 dark:text-amber-400"
                                   : "text-[var(--color-text)]"
                             }`}
                           >
                             {p.stock} pcs
                           </span>
+                          {status.hasVariants && (
+                            <span className="text-[10px] text-[var(--color-text-3)] font-normal ml-1">
+                              (Total)
+                            </span>
+                          )}
                         </div>
                         <Button
                           type="button"

@@ -170,17 +170,40 @@ export const remove = mutation({
 export const adjustStock = mutation({
   args: {
     id: v.id("products"),
-    delta: v.number(),
+    delta: v.optional(v.number()),
     variantId: v.optional(v.string()),
+    variantAdjustments: v.optional(
+      v.array(
+        v.object({
+          variantId: v.string(),
+          delta: v.number(),
+        })
+      )
+    ),
   },
-  handler: async (ctx, { id, delta, variantId }) => {
+  handler: async (ctx, { id, delta, variantId, variantAdjustments }) => {
     const product = await ctx.db.get(id);
     if (!product) throw new Error("Product not found");
 
-    if (variantId && product.hasVariants && product.variants) {
+    if (variantAdjustments && variantAdjustments.length > 0 && product.hasVariants && product.variants) {
+      const adjustmentMap = new Map(variantAdjustments.map((a) => [a.variantId, a.delta]));
+      const updatedVariants = product.variants.map((vItem) => {
+        const d = adjustmentMap.get(vItem.id);
+        if (d !== undefined && d !== 0) {
+          return { ...vItem, stock: Math.max(0, vItem.stock + d) };
+        }
+        return vItem;
+      });
+      const totalStock = updatedVariants.reduce((sum, item) => sum + item.stock, 0);
+      await ctx.db.patch(id, {
+        variants: updatedVariants,
+        stock: totalStock,
+      });
+    } else if (variantId && product.hasVariants && product.variants) {
+      const d = delta ?? 0;
       const updatedVariants = product.variants.map((vItem) => {
         if (vItem.id === variantId) {
-          return { ...vItem, stock: Math.max(0, vItem.stock + delta) };
+          return { ...vItem, stock: Math.max(0, vItem.stock + d) };
         }
         return vItem;
       });
@@ -190,7 +213,9 @@ export const adjustStock = mutation({
         stock: totalStock,
       });
     } else {
-      await ctx.db.patch(id, { stock: Math.max(0, product.stock + delta) });
+      const d = delta ?? 0;
+      await ctx.db.patch(id, { stock: Math.max(0, product.stock + d) });
     }
   },
 });
+

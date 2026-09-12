@@ -1,15 +1,16 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Modal } from "#/components/Modal";
-import { formatIDR, calculateItemDiscount } from "#/lib/utils";
+import { formatIDR, calculateItemDiscount, cn } from "#/lib/utils";
 import { Button } from "#/components/ui";
 import { PackageIcon, CheckIcon, XIcon, WarningIcon } from "@phosphor-icons/react";
-import type { Product, ProductVariant } from "../produk/types";
+import type { Product, ProductVariant } from "../types";
 
 interface VariantSelectionModalProps {
   open: boolean;
   onClose: () => void;
   product: Product | null;
   onSelectVariant: (product: Product, variant: ProductVariant) => void;
+  cartItems?: { productId: string; variantId?: string; qty: number }[];
 }
 
 export function VariantSelectionModal({
@@ -17,20 +18,54 @@ export function VariantSelectionModal({
   onClose,
   product,
   onSelectVariant,
+  cartItems,
 }: VariantSelectionModalProps) {
   if (!open || !product || !product.hasVariants || !product.variants) return null;
 
   const options = product.variantOptions || [];
-  // Initialize selections with first available option value
-  const [selectedValues, setSelectedValues] = useState<Record<string, string>>(() => {
-    const initial: Record<string, string> = {};
+
+  // Helper to find initial selection: prefer first variant with remaining stock > 0
+  const getInitialSelection = (): Record<string, string> => {
+    if (!product?.variants || product.variants.length === 0) {
+      const initial: Record<string, string> = {};
+      for (const opt of options) {
+        if (opt.values && opt.values.length > 0) {
+          initial[opt.name] = opt.values[0];
+        }
+      }
+      return initial;
+    }
+
+    const inStockVariant = product.variants.find((v) => {
+      const inCart = cartItems?.find((i) => i.productId === product._id && i.variantId === v.id)?.qty ?? 0;
+      return v.stock > inCart;
+    }) || product.variants.find((v) => v.stock > 0);
+
+    if (inStockVariant?.combination) {
+      return { ...inStockVariant.combination };
+    }
+
+    const firstVariant = product.variants[0];
+    if (firstVariant?.combination) {
+      return { ...firstVariant.combination };
+    }
+
+    const fallback: Record<string, string> = {};
     for (const opt of options) {
       if (opt.values && opt.values.length > 0) {
-        initial[opt.name] = opt.values[0];
+        fallback[opt.name] = opt.values[0];
       }
     }
-    return initial;
-  });
+    return fallback;
+  };
+
+  const [selectedValues, setSelectedValues] = useState<Record<string, string>>(getInitialSelection);
+
+  useEffect(() => {
+    if (open && product) {
+      setSelectedValues(getInitialSelection());
+    }
+  }, [open, product?._id]);
 
   // Find the variant matching selectedValues
   const currentVariant = useMemo(() => {
@@ -41,14 +76,53 @@ export function VariantSelectionModal({
     });
   }, [product.variants, selectedValues]);
 
+  const qtyInCart = useMemo(() => {
+    if (!currentVariant || !cartItems) return 0;
+    return cartItems.find((i) => i.productId === product._id && i.variantId === currentVariant.id)?.qty ?? 0;
+  }, [cartItems, currentVariant, product._id]);
+
+  const remainingStock = currentVariant ? Math.max(0, currentVariant.stock - qtyInCart) : 0;
   const isOutOfStock = !currentVariant || currentVariant.stock <= 0;
+  const isMaxCartStock = !isOutOfStock && remainingStock <= 0;
+  const isAddDisabled = isOutOfStock || isMaxCartStock;
+
+  // Determine option value status (disabled, label: "Habis" | "Maksimal")
+  const getOptionValueStatus = (optName: string, val: string) => {
+    if (!product?.variants || product.variants.length === 0) return { disabled: false, label: "" };
+
+    const candidateCombination = { ...selectedValues, [optName]: val };
+    const exactMatch = product.variants.find((v) =>
+      Object.entries(candidateCombination).every(
+        ([k, vVal]) => v.combination?.[k] === vVal,
+      ),
+    );
+
+    if (exactMatch) {
+      if (exactMatch.stock <= 0) return { disabled: true, label: "Habis" };
+      const inCart = cartItems?.find((i) => i.productId === product._id && i.variantId === exactMatch.id)?.qty ?? 0;
+      if (inCart >= exactMatch.stock) return { disabled: true, label: "Maksimal" };
+      return { disabled: false, label: "" };
+    }
+
+    const hasAnyInStock = product.variants.some((v) => v.combination?.[optName] === val && v.stock > 0);
+    if (!hasAnyInStock) return { disabled: true, label: "Habis" };
+
+    const hasAnyAvailable = product.variants.some((v) => {
+      if (v.combination?.[optName] !== val) return false;
+      const inCart = cartItems?.find((i) => i.productId === product._id && i.variantId === v.id)?.qty ?? 0;
+      return v.stock > inCart;
+    });
+    if (!hasAnyAvailable) return { disabled: true, label: "Maksimal" };
+
+    return { disabled: false, label: "" };
+  };
 
   const handleSelectValue = (optName: string, val: string) => {
     setSelectedValues((prev) => ({ ...prev, [optName]: val }));
   };
 
   const handleAdd = () => {
-    if (!currentVariant || isOutOfStock) return;
+    if (!currentVariant || isAddDisabled) return;
     onSelectVariant(product, currentVariant);
     onClose();
   };
@@ -100,19 +174,30 @@ export function VariantSelectionModal({
             <div className="flex flex-wrap gap-2">
               {opt.values.map((val) => {
                 const isSelected = selectedValues[opt.name] === val;
+                const status = getOptionValueStatus(opt.name, val);
                 return (
                   <button
                     key={val}
                     type="button"
+                    disabled={status.disabled}
                     onClick={() => handleSelectValue(opt.name, val)}
-                    className={`press-tactile flex cursor-pointer items-center gap-1.5 rounded-xl border px-3.5 py-2 text-xs font-bold transition-all ${
-                      isSelected
-                        ? "border-[var(--color-brand)] bg-[var(--color-brand-light)] text-[var(--color-brand)] shadow-xs"
-                        : "border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-2)] hover:border-[var(--color-brand)]/40"
-                    }`}
+                    className={cn(
+                      "press-tactile flex items-center gap-1.5 rounded-xl border px-3.5 py-2 text-xs font-bold transition-all",
+                      status.disabled
+                        ? "cursor-not-allowed border-[var(--color-border)] bg-[var(--color-surface-3)] text-[var(--color-text-3)] opacity-60 line-through"
+                        : isSelected
+                          ? "cursor-pointer border-[var(--color-brand)] bg-[var(--color-brand-light)] text-[var(--color-brand)] shadow-xs"
+                          : "cursor-pointer border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-2)] hover:border-[var(--color-brand)]/40 hover:text-[var(--color-text)]",
+                    )}
+                    title={status.disabled ? `${val} (${status.label})` : val}
                   >
-                    {isSelected && <CheckIcon size={12} weight="bold" />}
+                    {isSelected && !status.disabled && <CheckIcon size={12} weight="bold" />}
                     <span>{val}</span>
+                    {status.disabled && (
+                      <span className="no-underline text-[9px] font-extrabold uppercase px-1 py-0.2 rounded bg-rose-500/10 text-rose-500 ml-0.5">
+                        {status.label}
+                      </span>
+                    )}
                   </button>
                 );
               })}
@@ -156,9 +241,13 @@ export function VariantSelectionModal({
             <span className="flex items-center gap-1 font-bold text-rose-500">
               <WarningIcon size={13} weight="fill" /> Stok Habis
             </span>
+          ) : isMaxCartStock ? (
+            <span className="flex items-center gap-1 font-bold text-amber-500">
+              <WarningIcon size={13} weight="fill" /> Maksimal di keranjang ({currentVariant?.stock} pcs)
+            </span>
           ) : (
             <span className="font-bold text-[var(--color-text)]">
-              {currentVariant?.stock} pcs tersedia
+              {remainingStock} pcs tersedia {qtyInCart > 0 && <span className="font-normal text-[var(--color-text-3)]">({qtyInCart} di keranjang)</span>}
             </span>
           )}
         </div>
@@ -172,10 +261,14 @@ export function VariantSelectionModal({
         <Button
           variant="primary"
           size="md"
-          disabled={isOutOfStock}
+          disabled={isAddDisabled}
           onClick={handleAdd}
         >
-          {isOutOfStock ? "Stok Habis" : "Tambah ke Keranjang"}
+          {isOutOfStock
+            ? "Stok Habis"
+            : isMaxCartStock
+              ? "Maksimal di Keranjang"
+              : "Tambah ke Keranjang"}
         </Button>
       </div>
     </Modal>

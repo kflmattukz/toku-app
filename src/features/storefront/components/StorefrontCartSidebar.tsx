@@ -78,6 +78,8 @@ export function StorefrontCartSidebar({
               item.variantId && product?.variants
                 ? product.variants.find((v) => v.id === item.variantId)
                 : undefined;
+            const maxStock = variantObj ? variantObj.stock : (product?.stock ?? 999);
+            const isMaxStock = item.qty >= maxStock;
 
             return (
               <div
@@ -118,9 +120,15 @@ export function StorefrontCartSidebar({
                     <span className="w-5 text-center font-bold text-xs font-mono">{item.qty}</span>
                     <button
                       type="button"
+                      disabled={isMaxStock}
                       onClick={() => onUpdateQty(product, 1, variantObj)}
                       aria-label={`Tambah 1 ${item.name}`}
-                      className="w-6 h-6 rounded bg-[var(--color-brand)] text-white flex items-center justify-center active:scale-90 transition-all"
+                      title={isMaxStock ? `Maksimal stok tercapai (${maxStock} pcs)` : `Tambah 1 ${item.name}`}
+                      className={`w-6 h-6 rounded flex items-center justify-center transition-all ${
+                        isMaxStock
+                          ? "opacity-40 cursor-not-allowed bg-[var(--color-surface-3)] text-[var(--color-text-3)]"
+                          : "bg-[var(--color-brand)] text-white active:scale-90"
+                      }`}
                     >
                       <PlusIcon size={10} weight="bold" />
                     </button>

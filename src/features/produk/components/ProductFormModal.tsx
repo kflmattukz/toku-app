@@ -25,12 +25,13 @@ import { ImagePreviewModal } from "#/components/ui/ImagePreviewModal";
 import { BarcodeScannerModal } from "#/components/BarcodeScannerModal";
 import { triggerScanFeedback } from "#/lib/scan-feedback";
 import { Button } from "#/components/ui";
-import type { ProductFormState, VariantOptionGroup, ProductVariantFormItem } from "../types";
+import type { Id } from "../../../../convex/_generated/dataModel";
+import type { ProductFormState, ProductVariantFormItem, VariantOptionGroup } from "../types";
 
 interface ProductFormModalProps {
   open: boolean;
   onClose: () => void;
-  editId: any;
+  editId: Id<"products"> | null;
   form: ProductFormState;
   onChangeForm: (updater: (prev: ProductFormState) => ProductFormState) => void;
   imagePreview: string;
@@ -399,7 +400,17 @@ export function ProductFormModal({
                         onChange={(e) => {
                           const checked = e.target.checked;
                           field.handleChange(checked);
-                          onChangeForm((p) => ({ ...p, hasVariants: checked }));
+                          const currentVars = productForm.getFieldValue("variants") || [];
+                          const totalVStock = currentVars.reduce(
+                            (sum, v) => sum + (parseInt(v.stock, 10) || 0),
+                            0,
+                          );
+                          if (currentVars.length > 0) {
+                            productForm.setFieldValue("stock", String(totalVStock));
+                            onChangeForm((p) => ({ ...p, hasVariants: checked, stock: String(totalVStock) }));
+                          } else {
+                            onChangeForm((p) => ({ ...p, hasVariants: checked }));
+                          }
                         }}
                         className="peer sr-only"
                       />
@@ -409,361 +420,454 @@ export function ProductFormModal({
 
                   {/* Varian Builder Container */}
                   {field.state.value && (
-                    <div className="mt-4 flex flex-col gap-4 border-t border-[var(--color-border)] pt-4">
-                      {/* 1. Opsi / Atribut Varian */}
-                      <div>
-                        <div className="mb-2 flex items-center justify-between">
-                          <label className="text-xs font-bold text-[var(--color-text)]">
-                            Tipe Pilihan / Atribut (maks. 3)
-                          </label>
-                          <span className="text-[10px] text-[var(--color-text-3)]">
-                            cth: Ukuran, Suhu, Rasa
-                          </span>
-                        </div>
+                    <productForm.Subscribe
+                      selector={(state: { values: ProductFormState }) => ({
+                        variantOptions: state.values.variantOptions,
+                        variants: state.values.variants,
+                      })}
+                    >
+                      {({
+                        variantOptions,
+                        variants,
+                      }: {
+                        variantOptions?: VariantOptionGroup[];
+                        variants?: ProductVariantFormItem[];
+                      }) => {
+                        const totalVariantStock = (variants || []).reduce(
+                          (sum: number, v: ProductVariantFormItem) => sum + (parseInt(v.stock, 10) || 0),
+                          0,
+                        );
 
-                        {/* List existing options */}
-                        <div className="flex flex-col gap-3">
-                          {productForm.getFieldValue("variantOptions").map((opt, optIdx) => (
-                            <div
-                              key={optIdx}
-                              className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-2)] p-3"
-                            >
+                        return (
+                          <div className="mt-4 flex flex-col gap-4 border-t border-[var(--color-border)] pt-4">
+                            {/* 1. Opsi / Atribut Varian */}
+                            <div>
                               <div className="mb-2 flex items-center justify-between">
-                                <span className="text-xs font-black text-[var(--color-brand)]">
-                                  {opt.name}
+                                <label className="text-xs font-bold text-[var(--color-text)]">
+                                  Tipe Pilihan / Atribut (maks. 3)
+                                </label>
+                                <span className="text-[10px] text-[var(--color-text-3)]">
+                                  cth: Ukuran, Suhu, Rasa
                                 </span>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    const currentOpts = [
-                                      ...productForm.getFieldValue("variantOptions"),
-                                    ];
-                                    currentOpts.splice(optIdx, 1);
-                                    productForm.setFieldValue("variantOptions", currentOpts);
-
-                                    // Regenerate combinations
-                                    const combos = generateVariantCombinations(currentOpts);
-                                    const newVariants: ProductVariantFormItem[] = combos.map(
-                                      (c, i) => ({
-                                        id: `v_${Date.now()}_${i}`,
-                                        name: c.name,
-                                        combination: c.combination,
-                                        price: form.price || "0",
-                                        costPrice: form.costPrice || "",
-                                        stock: "10",
-                                        barcode: "",
-                                      }),
-                                    );
-                                    productForm.setFieldValue("variants", newVariants);
-                                    onChangeForm((p) => ({
-                                      ...p,
-                                      variantOptions: currentOpts,
-                                      variants: newVariants,
-                                    }));
-                                  }}
-                                  className="text-[var(--color-text-3)] hover:text-rose-500"
-                                >
-                                  <TrashIcon size={14} weight="bold" />
-                                </button>
                               </div>
 
-                              {/* Value Pills */}
-                              <div className="flex flex-wrap items-center gap-1.5">
-                                {opt.values.map((val, valIdx) => (
-                                  <span
-                                    key={valIdx}
-                                    className="inline-flex items-center gap-1 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-2 py-1 text-xs font-bold text-[var(--color-text)]"
+                              {/* List existing options */}
+                              <div className="flex flex-col gap-3">
+                                {(variantOptions || []).map((opt: VariantOptionGroup, optIdx: number) => (
+                                  <div
+                                    key={optIdx}
+                                    className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-2)] p-3"
                                   >
-                                    {val}
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        const currentOpts = [
-                                          ...productForm.getFieldValue("variantOptions"),
-                                        ];
-                                        currentOpts[optIdx].values.splice(valIdx, 1);
-                                        productForm.setFieldValue("variantOptions", currentOpts);
+                                    <div className="mb-2 flex items-center justify-between">
+                                      <span className="text-xs font-black text-[var(--color-brand)]">
+                                        {opt.name}
+                                      </span>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const currentOpts = [...(variantOptions || [])];
+                                          currentOpts.splice(optIdx, 1);
+                                          productForm.setFieldValue("variantOptions", currentOpts);
 
-                                        const combos = generateVariantCombinations(currentOpts);
-                                        const newVariants: ProductVariantFormItem[] = combos.map(
-                                          (c, i) => ({
-                                            id: `v_${Date.now()}_${i}`,
-                                            name: c.name,
-                                            combination: c.combination,
-                                            price: form.price || "0",
-                                            costPrice: form.costPrice || "",
-                                            stock: "10",
-                                            barcode: "",
-                                          }),
-                                        );
-                                        productForm.setFieldValue("variants", newVariants);
-                                        onChangeForm((p) => ({
-                                          ...p,
-                                          variantOptions: currentOpts,
-                                          variants: newVariants,
-                                        }));
-                                      }}
-                                      className="text-[var(--color-text-3)] hover:text-rose-500"
-                                    >
-                                      ×
-                                    </button>
-                                  </span>
-                                ))}
+                                          // Regenerate combinations
+                                          const combos = generateVariantCombinations(currentOpts);
+                                          const existing = variants || [];
+                                          const newVariants: ProductVariantFormItem[] = combos.map(
+                                            (c, i) => {
+                                              const match = existing.find((ex: ProductVariantFormItem) => ex.name === c.name);
+                                              return (
+                                                match ?? {
+                                                  id: `v_${Date.now()}_${i}`,
+                                                  name: c.name,
+                                                  combination: c.combination,
+                                                  price: form.price || "0",
+                                                  costPrice: form.costPrice || "",
+                                                  stock: "0",
+                                                  barcode: "",
+                                                }
+                                              );
+                                            },
+                                          );
+                                          const newTotal = newVariants.reduce(
+                                            (sum: number, v: ProductVariantFormItem) => sum + (parseInt(v.stock, 10) || 0),
+                                            0,
+                                          );
+                                          productForm.setFieldValue("variants", newVariants);
+                                          productForm.setFieldValue("stock", String(newTotal));
+                                          onChangeForm((p) => ({
+                                            ...p,
+                                            variantOptions: currentOpts,
+                                            variants: newVariants,
+                                            stock: String(newTotal),
+                                          }));
+                                        }}
+                                        className="text-[var(--color-text-3)] hover:text-rose-500"
+                                      >
+                                        <TrashIcon size={14} weight="bold" />
+                                      </button>
+                                    </div>
 
-                                {/* Add value pill input */}
-                                <div className="flex items-center gap-1">
-                                  <input
-                                    type="text"
-                                    placeholder="+ Nilai (lalu Enter)"
-                                    value={newOptionValueInputs[optIdx] || ""}
-                                    onChange={(e) =>
-                                      setNewOptionValueInputs((prev) => ({
-                                        ...prev,
-                                        [optIdx]: e.target.value,
-                                      }))
-                                    }
-                                    onKeyDown={(e) => {
-                                      if (e.key === "Enter") {
-                                        e.preventDefault();
-                                        const val = (newOptionValueInputs[optIdx] || "").trim();
-                                        if (val) {
-                                          const currentOpts = [
-                                            ...productForm.getFieldValue("variantOptions"),
-                                          ];
-                                          if (!currentOpts[optIdx].values.includes(val)) {
-                                            currentOpts[optIdx].values.push(val);
-                                            productForm.setFieldValue(
-                                              "variantOptions",
-                                              currentOpts,
-                                            );
+                                    {/* Value Pills */}
+                                    <div className="flex flex-wrap items-center gap-1.5">
+                                      {opt.values.map((val: string, valIdx: number) => (
+                                        <span
+                                          key={valIdx}
+                                          className="inline-flex items-center gap-1 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-2 py-1 text-xs font-bold text-[var(--color-text)]"
+                                        >
+                                          {val}
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              const currentOpts = [...(variantOptions || [])];
+                                              currentOpts[optIdx].values.splice(valIdx, 1);
+                                              productForm.setFieldValue("variantOptions", currentOpts);
+
+                                              const combos = generateVariantCombinations(currentOpts);
+                                              const existing = variants || [];
+                                              const newVariants: ProductVariantFormItem[] = combos.map(
+                                                (c, i) => {
+                                                  const match = existing.find((ex: ProductVariantFormItem) => ex.name === c.name);
+                                                  return (
+                                                    match ?? {
+                                                      id: `v_${Date.now()}_${i}`,
+                                                      name: c.name,
+                                                      combination: c.combination,
+                                                      price: form.price || "0",
+                                                      costPrice: form.costPrice || "",
+                                                      stock: "0",
+                                                      barcode: "",
+                                                    }
+                                                  );
+                                                },
+                                              );
+                                              const newTotal = newVariants.reduce(
+                                                (sum: number, v: ProductVariantFormItem) => sum + (parseInt(v.stock, 10) || 0),
+                                                0,
+                                              );
+                                              productForm.setFieldValue("variants", newVariants);
+                                              productForm.setFieldValue("stock", String(newTotal));
+                                              onChangeForm((p) => ({
+                                                ...p,
+                                                variantOptions: currentOpts,
+                                                variants: newVariants,
+                                                stock: String(newTotal),
+                                              }));
+                                            }}
+                                            className="text-[var(--color-text-3)] hover:text-rose-500"
+                                          >
+                                            ×
+                                          </button>
+                                        </span>
+                                      ))}
+
+                                      {/* Add value pill input */}
+                                      <div className="flex items-center gap-1">
+                                        <input
+                                          type="text"
+                                          placeholder="+ Nilai (lalu Enter)"
+                                          value={newOptionValueInputs[optIdx] || ""}
+                                          onChange={(e) =>
                                             setNewOptionValueInputs((prev) => ({
                                               ...prev,
-                                              [optIdx]: "",
-                                            }));
+                                              [optIdx]: e.target.value,
+                                            }))
+                                          }
+                                          onKeyDown={(e) => {
+                                            if (e.key === "Enter") {
+                                              e.preventDefault();
+                                              const val = (newOptionValueInputs[optIdx] || "").trim();
+                                              if (val) {
+                                                const currentOpts = [...(variantOptions || [])];
+                                                if (!currentOpts[optIdx].values.includes(val)) {
+                                                  currentOpts[optIdx].values.push(val);
+                                                  productForm.setFieldValue(
+                                                    "variantOptions",
+                                                    currentOpts,
+                                                  );
+                                                  setNewOptionValueInputs((prev) => ({
+                                                    ...prev,
+                                                    [optIdx]: "",
+                                                  }));
 
-                                            const combos = generateVariantCombinations(currentOpts);
-                                            const existing =
-                                              productForm.getFieldValue("variants") || [];
-                                            const newVariants: ProductVariantFormItem[] =
-                                              combos.map((c, i) => {
-                                                const match = existing.find(
-                                                  (ex) => ex.name === c.name,
-                                                );
-                                                return (
-                                                  match ?? {
-                                                    id: `v_${Date.now()}_${i}`,
-                                                    name: c.name,
-                                                    combination: c.combination,
-                                                    price: form.price || "0",
-                                                    costPrice: form.costPrice || "",
-                                                    stock: "10",
-                                                    barcode: "",
-                                                  }
-                                                );
-                                              });
-                                            productForm.setFieldValue("variants", newVariants);
-                                            onChangeForm((p) => ({
-                                              ...p,
-                                              variantOptions: currentOpts,
-                                              variants: newVariants,
-                                            }));
+                                                  const combos = generateVariantCombinations(currentOpts);
+                                                  const existing = variants || [];
+                                                  const newVariants: ProductVariantFormItem[] =
+                                                    combos.map((c, i) => {
+                                                      const match = existing.find(
+                                                        (ex: ProductVariantFormItem) => ex.name === c.name,
+                                                      );
+                                                      return (
+                                                        match ?? {
+                                                          id: `v_${Date.now()}_${i}`,
+                                                          name: c.name,
+                                                          combination: c.combination,
+                                                          price: form.price || "0",
+                                                          costPrice: form.costPrice || "",
+                                                          stock: "0",
+                                                          barcode: "",
+                                                        }
+                                                      );
+                                                    });
+                                                  const newTotal = newVariants.reduce(
+                                                    (sum: number, v: ProductVariantFormItem) => sum + (parseInt(v.stock, 10) || 0),
+                                                    0,
+                                                  );
+                                                  productForm.setFieldValue("variants", newVariants);
+                                                  productForm.setFieldValue("stock", String(newTotal));
+                                                  onChangeForm((p) => ({
+                                                    ...p,
+                                                    variantOptions: currentOpts,
+                                                    variants: newVariants,
+                                                    stock: String(newTotal),
+                                                  }));
+                                                }
+                                              }
+                                            }
+                                          }}
+                                          className="h-7 w-28 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-2 text-xs text-[var(--color-text)] focus:border-[var(--color-brand)] focus:outline-none"
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+
+                                {/* Form add new option group */}
+                                {(variantOptions || []).length < 3 && (
+                                  <div className="flex items-center gap-2">
+                                    <input
+                                      type="text"
+                                      placeholder="Nama opsi baru (cth: Ukuran)"
+                                      value={newOptionName}
+                                      onChange={(e) => setNewOptionName(e.target.value)}
+                                      onKeyDown={(e) => {
+                                        if (e.key === "Enter") {
+                                          e.preventDefault();
+                                          const trimmed = newOptionName.trim();
+                                          if (trimmed) {
+                                            const current = [
+                                              ...(variantOptions || []),
+                                              { name: trimmed, values: [] },
+                                            ];
+                                            productForm.setFieldValue("variantOptions", current);
+                                            onChangeForm((p) => ({ ...p, variantOptions: current }));
+                                            setNewOptionName("");
                                           }
                                         }
-                                      }
-                                    }}
-                                    className="h-7 w-28 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-2 text-xs text-[var(--color-text)] focus:border-[var(--color-brand)] focus:outline-none"
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-
-                          {/* Form add new option group */}
-                          {productForm.getFieldValue("variantOptions").length < 3 && (
-                            <div className="flex items-center gap-2">
-                              <input
-                                type="text"
-                                placeholder="Nama opsi baru (cth: Ukuran)"
-                                value={newOptionName}
-                                onChange={(e) => setNewOptionName(e.target.value)}
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter") {
-                                    e.preventDefault();
-                                    const trimmed = newOptionName.trim();
-                                    if (trimmed) {
-                                      const current = [
-                                        ...productForm.getFieldValue("variantOptions"),
-                                        { name: trimmed, values: [] },
-                                      ];
-                                      productForm.setFieldValue("variantOptions", current);
-                                      onChangeForm((p) => ({ ...p, variantOptions: current }));
-                                      setNewOptionName("");
-                                    }
-                                  }
-                                }}
-                                className="flex-1 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-xs font-medium text-[var(--color-text)] focus:border-[var(--color-brand)] focus:outline-none"
-                              />
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant="secondary"
-                                leftIcon={<PlusIcon size={14} weight="bold" />}
-                                onClick={() => {
-                                  const trimmed = newOptionName.trim();
-                                  if (trimmed) {
-                                    const current = [
-                                      ...productForm.getFieldValue("variantOptions"),
-                                      { name: trimmed, values: [] },
-                                    ];
-                                    productForm.setFieldValue("variantOptions", current);
-                                    onChangeForm((p) => ({ ...p, variantOptions: current }));
-                                    setNewOptionName("");
-                                  }
-                                }}
-                              >
-                                Tambah Opsi
-                              </Button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* 2. SKU Combination Matrix Table */}
-                      {productForm.getFieldValue("variants").length > 0 && (
-                        <div>
-                          <div className="mb-2 flex items-center justify-between">
-                            <label className="text-xs font-black text-[var(--color-text)]">
-                              Daftar Kombinasi Varian (
-                              {productForm.getFieldValue("variants").length})
-                            </label>
-                            {/* Bulk fill action */}
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const firstPrice =
-                                  productForm.getFieldValue("variants")[0]?.price || form.price;
-                                const firstCost =
-                                  productForm.getFieldValue("variants")[0]?.costPrice ||
-                                  form.costPrice;
-                                const firstStock =
-                                  productForm.getFieldValue("variants")[0]?.stock || "10";
-
-                                const updated = productForm
-                                  .getFieldValue("variants")
-                                  .map((v) => ({
-                                    ...v,
-                                    price: firstPrice,
-                                    costPrice: firstCost,
-                                    stock: firstStock,
-                                  }));
-                                productForm.setFieldValue("variants", updated);
-                                onChangeForm((p) => ({ ...p, variants: updated }));
-                                toast.success("Harga & stok disamakan ke semua varian");
-                              }}
-                              className="text-[11px] font-bold text-[var(--color-brand)] hover:underline"
-                            >
-                              Samakan Harga & Stok
-                            </button>
-                          </div>
-
-                          <div className="flex flex-col gap-2">
-                            {productForm.getFieldValue("variants").map((vItem, vIdx) => (
-                              <div
-                                key={vItem.id || vIdx}
-                                className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-2.5"
-                              >
-                                <div className="mb-1.5 flex items-center justify-between">
-                                  <span className="text-xs font-bold text-[var(--color-text)]">
-                                    {vItem.name}
-                                  </span>
-                                </div>
-                                <div className="grid grid-cols-3 gap-2">
-                                  <div>
-                                    <label className="mb-1 block text-[10px] font-bold text-[var(--color-text-3)]">
-                                      Harga Jual *
-                                    </label>
-                                    <div className="relative flex items-center">
-                                      <span className="absolute left-2 text-[10px] font-bold text-[var(--color-brand)]">
-                                        Rp
-                                      </span>
-                                      <input
-                                        type="text"
-                                        inputMode="numeric"
-                                        value={vItem.price}
-                                        onChange={(e) => {
-                                          const formatted = formatIDRInput(e.target.value);
-                                          const list = [
-                                            ...productForm.getFieldValue("variants"),
-                                          ];
-                                          list[vIdx] = { ...list[vIdx], price: formatted };
-                                          productForm.setFieldValue("variants", list);
-                                          onChangeForm((p) => ({ ...p, variants: list }));
-                                        }}
-                                        className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-2)] py-1.5 pr-2 pl-6 text-xs font-extrabold text-[var(--color-text)] focus:border-[var(--color-brand)] focus:outline-none"
-                                      />
-                                    </div>
-                                  </div>
-
-                                  <div>
-                                    <label className="mb-1 block text-[10px] font-bold text-[var(--color-text-3)]">
-                                      Modal (HPP)
-                                    </label>
-                                    <div className="relative flex items-center">
-                                      <span className="absolute left-2 text-[10px] font-bold text-[var(--color-text-3)]">
-                                        Rp
-                                      </span>
-                                      <input
-                                        type="text"
-                                        inputMode="numeric"
-                                        value={vItem.costPrice}
-                                        placeholder="Opsional"
-                                        onChange={(e) => {
-                                          const formatted = formatIDRInput(e.target.value);
-                                          const list = [
-                                            ...productForm.getFieldValue("variants"),
-                                          ];
-                                          list[vIdx] = { ...list[vIdx], costPrice: formatted };
-                                          productForm.setFieldValue("variants", list);
-                                          onChangeForm((p) => ({ ...p, variants: list }));
-                                        }}
-                                        className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-2)] py-1.5 pr-2 pl-6 text-xs font-bold text-[var(--color-text)] focus:border-[var(--color-brand)] focus:outline-none"
-                                      />
-                                    </div>
-                                  </div>
-
-                                  <div>
-                                    <label className="mb-1 block text-[10px] font-bold text-[var(--color-text-3)]">
-                                      Stok *
-                                    </label>
-                                    <input
-                                      type="number"
-                                      min="0"
-                                      value={vItem.stock}
-                                      onChange={(e) => {
-                                        const list = [...productForm.getFieldValue("variants")];
-                                        list[vIdx] = { ...list[vIdx], stock: e.target.value };
-                                        productForm.setFieldValue("variants", list);
-                                        onChangeForm((p) => ({ ...p, variants: list }));
                                       }}
-                                      className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-2)] px-2.5 py-1.5 text-xs font-bold text-[var(--color-text)] focus:border-[var(--color-brand)] focus:outline-none"
+                                      className="flex-1 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-xs font-medium text-[var(--color-text)] focus:border-[var(--color-brand)] focus:outline-none"
                                     />
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant="secondary"
+                                      leftIcon={<PlusIcon size={14} weight="bold" />}
+                                      onClick={() => {
+                                        const trimmed = newOptionName.trim();
+                                        if (trimmed) {
+                                          const current = [
+                                            ...(variantOptions || []),
+                                            { name: trimmed, values: [] },
+                                          ];
+                                          productForm.setFieldValue("variantOptions", current);
+                                          onChangeForm((p) => ({ ...p, variantOptions: current }));
+                                          setNewOptionName("");
+                                        }
+                                      }}
+                                    >
+                                      Tambah Opsi
+                                    </Button>
                                   </div>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* 2. SKU Combination Matrix Table */}
+                            {(variants || []).length > 0 && (
+                              <div>
+                                <div className="mb-2 flex items-center justify-between">
+                                  <div>
+                                    <label className="text-xs font-black text-[var(--color-text)]">
+                                      Daftar Kombinasi Varian ({(variants || []).length})
+                                    </label>
+                                    <div className="mt-0.5 flex items-center gap-1.5 text-[11px] font-medium text-[var(--color-text-3)]">
+                                      <span>Total Stok:</span>
+                                      <span className="rounded-md bg-[var(--color-brand)]/10 px-1.5 py-0.5 font-extrabold text-[var(--color-brand)]">
+                                        {totalVariantStock} pcs
+                                      </span>
+                                    </div>
+                                  </div>
+                                  {/* Bulk fill action */}
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const firstPrice =
+                                        variants?.[0]?.price || form.price;
+                                      const firstCost =
+                                        variants?.[0]?.costPrice || form.costPrice;
+                                      const firstStock =
+                                        variants?.[0]?.stock || "0";
+
+                                      const updated = (variants || []).map((v: ProductVariantFormItem) => ({
+                                        ...v,
+                                        price: firstPrice,
+                                        costPrice: firstCost,
+                                        stock: firstStock,
+                                      }));
+                                      const newTotal = updated.reduce(
+                                        (sum: number, v: ProductVariantFormItem) => sum + (parseInt(v.stock, 10) || 0),
+                                        0,
+                                      );
+                                      productForm.setFieldValue("variants", updated);
+                                      productForm.setFieldValue("stock", String(newTotal));
+                                      onChangeForm((p) => ({ ...p, variants: updated, stock: String(newTotal) }));
+                                      toast.success("Harga & stok disamakan ke semua varian");
+                                    }}
+                                    className="text-[11px] font-bold text-[var(--color-brand)] hover:underline"
+                                  >
+                                    Samakan Harga & Stok
+                                  </button>
+                                </div>
+
+                                <div className="flex flex-col gap-2">
+                                  {(variants || []).map((vItem: ProductVariantFormItem, vIdx: number) => (
+                                    <div
+                                      key={vItem.id || vIdx}
+                                      className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-2.5"
+                                    >
+                                      <div className="mb-1.5 flex items-center justify-between">
+                                        <span className="text-xs font-bold text-[var(--color-text)]">
+                                          {vItem.name}
+                                        </span>
+                                      </div>
+                                      <div className="grid grid-cols-3 gap-2">
+                                        <div>
+                                          <label className="mb-1 block text-[10px] font-bold text-[var(--color-text-3)]">
+                                            Harga Jual *
+                                          </label>
+                                          <div className="relative flex items-center">
+                                            <span className="absolute left-2 text-[10px] font-bold text-[var(--color-brand)]">
+                                              Rp
+                                            </span>
+                                            <input
+                                              type="text"
+                                              inputMode="numeric"
+                                              value={vItem.price}
+                                              onChange={(e) => {
+                                                const formatted = formatIDRInput(e.target.value);
+                                                const list = [...(variants || [])];
+                                                list[vIdx] = { ...list[vIdx], price: formatted };
+                                                productForm.setFieldValue("variants", list);
+                                                onChangeForm((p) => ({ ...p, variants: list }));
+                                              }}
+                                              className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-2)] py-1.5 pr-2 pl-6 text-xs font-extrabold text-[var(--color-text)] focus:border-[var(--color-brand)] focus:outline-none"
+                                            />
+                                          </div>
+                                        </div>
+
+                                        <div>
+                                          <label className="mb-1 block text-[10px] font-bold text-[var(--color-text-3)]">
+                                            Modal (HPP)
+                                          </label>
+                                          <div className="relative flex items-center">
+                                            <span className="absolute left-2 text-[10px] font-bold text-[var(--color-text-3)]">
+                                              Rp
+                                            </span>
+                                            <input
+                                              type="text"
+                                              inputMode="numeric"
+                                              value={vItem.costPrice}
+                                              placeholder="Opsional"
+                                              onChange={(e) => {
+                                                const formatted = formatIDRInput(e.target.value);
+                                                const list = [...(variants || [])];
+                                                list[vIdx] = { ...list[vIdx], costPrice: formatted };
+                                                productForm.setFieldValue("variants", list);
+                                                onChangeForm((p) => ({ ...p, variants: list }));
+                                              }}
+                                              className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-2)] py-1.5 pr-2 pl-6 text-xs font-bold text-[var(--color-text)] focus:border-[var(--color-brand)] focus:outline-none"
+                                            />
+                                          </div>
+                                        </div>
+
+                                        <div>
+                                          <label className="mb-1 block text-[10px] font-bold text-[var(--color-text-3)]">
+                                            Stok *
+                                          </label>
+                                          <input
+                                            type="number"
+                                            min="0"
+                                            value={vItem.stock}
+                                            onChange={(e) => {
+                                              const list = [...(variants || [])];
+                                              list[vIdx] = { ...list[vIdx], stock: e.target.value };
+                                              const newTotal = list.reduce(
+                                                (sum: number, v: ProductVariantFormItem) => sum + (parseInt(v.stock, 10) || 0),
+                                                0,
+                                              );
+                                              productForm.setFieldValue("variants", list);
+                                              productForm.setFieldValue("stock", String(newTotal));
+                                              onChangeForm((p) => ({ ...p, variants: list, stock: String(newTotal) }));
+                                            }}
+                                            className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-2)] px-2.5 py-1.5 text-xs font-bold text-[var(--color-text)] focus:border-[var(--color-brand)] focus:outline-none"
+                                          />
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
                                 </div>
                               </div>
-                            ))}
+                            )}
                           </div>
-                        </div>
-                      )}
-                    </div>
+                        );
+                      }}
+                    </productForm.Subscribe>
                   )}
                 </div>
               )}
             </productForm.Field>
 
-            {/* Harga Jual, Modal (HPP), dan Stok (Hanya Tampil Jika Produk TIDAK Memiliki Varian) */}
-            <productForm.Subscribe selector={(state) => state.values.hasVariants}>
-              {(hasVariants) => {
-                if (hasVariants) return null;
+            {/* Harga Jual, Modal (HPP), dan Stok */}
+            <productForm.Subscribe
+              selector={(state: { values: ProductFormState }) => ({
+                hasVariants: state.values.hasVariants,
+                variants: state.values.variants,
+              })}
+            >
+              {({
+                hasVariants,
+                variants,
+              }: {
+                hasVariants?: boolean;
+                variants?: ProductVariantFormItem[];
+              }) => {
+                if (hasVariants) {
+                  const totalVariantStock = (variants || []).reduce(
+                    (sum: number, v: ProductVariantFormItem) => sum + (parseInt(v.stock, 10) || 0),
+                    0,
+                  );
+                  return (
+                    <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3.5">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--color-brand)]/10 text-[var(--color-brand)]">
+                            <PackageIcon size={18} weight="bold" />
+                          </div>
+                          <div>
+                            <div className="text-xs font-bold text-[var(--color-text)]">
+                              Total Stok Produk
+                            </div>
+                            <div className="text-[11px] text-[var(--color-text-3)]">
+                              Akumulasi otomatis dari {(variants || []).length} kombinasi varian di atas
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5 rounded-lg border border-[var(--color-brand)]/30 bg-[var(--color-brand)]/10 px-3 py-1.5 text-sm font-black text-[var(--color-brand)]">
+                          <span>{totalVariantStock} pcs</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
                 return (
                   <>
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -935,24 +1039,24 @@ export function ProductFormModal({
               <productForm.Field name="discountType">
                 {(typeField) => (
                   <div className="mb-2.5 flex gap-1.5">
-                    {[
+                    {([
                       { key: "none", label: "Tanpa Diskon" },
                       { key: "percentage", label: "Persen (%)" },
                       { key: "nominal", label: "Nominal (Rp)" },
-                    ].map((t) => {
+                    ] as const).map((t) => {
                       const active = typeField.state.value === t.key;
                       return (
                         <button
                           key={t.key}
                           type="button"
                           onClick={() => {
-                            typeField.handleChange(t.key as any);
+                            typeField.handleChange(t.key);
                             if (t.key !== typeField.state.value) {
                               productForm.setFieldValue("discountValue", "");
                             }
                             onChangeForm((p) => ({
                               ...p,
-                              discountType: t.key as any,
+                              discountType: t.key,
                               discountValue: t.key === p.discountType ? p.discountValue : "",
                             }));
                           }}

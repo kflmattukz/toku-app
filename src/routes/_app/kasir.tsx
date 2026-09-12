@@ -332,6 +332,7 @@ function Kasir() {
         open={Boolean(variantSelectionProduct)}
         onClose={() => setVariantSelectionProduct(null)}
         product={variantSelectionProduct}
+        cartItems={cart}
         onSelectVariant={(prod, variant) => {
           addToCart(prod, variant);
           setVariantSelectionProduct(null);

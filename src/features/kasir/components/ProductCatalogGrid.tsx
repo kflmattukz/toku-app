@@ -157,6 +157,9 @@ export function ProductCatalogGrid({
         ) : (
           filtered.map((product, idx) => {
             const inCart = cart.find((i) => i.productId === product._id);
+            const totalInCartQty = cart
+              .filter((i) => i.productId === product._id)
+              .reduce((sum, i) => sum + i.qty, 0);
             return (
               <div
                 key={`${categoryFilter}-${product._id}`}
@@ -168,6 +171,7 @@ export function ProductCatalogGrid({
                 <KasirProductCard
                   product={product}
                   inCart={inCart}
+                  totalInCartQty={totalInCartQty}
                   onAddToCart={onAddToCart}
                   onUpdateQty={onUpdateQty}
                   onSelectVariant={onSelectVariant}

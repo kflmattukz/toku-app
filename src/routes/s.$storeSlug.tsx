@@ -220,6 +220,7 @@ function PublicStoreCatalog() {
         open={Boolean(variantModalProduct)}
         onClose={() => setVariantModalProduct(null)}
         product={variantModalProduct as any}
+        cartItems={Object.values(cart)}
         onSelectVariant={(prod, variant) => {
           updateQty(prod as any, 1, variant);
           setVariantModalProduct(null);
