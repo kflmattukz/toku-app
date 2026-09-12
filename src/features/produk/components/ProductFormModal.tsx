@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "@tanstack/react-form";
 import { Modal } from "#/components/Modal";
 import {
@@ -61,6 +61,7 @@ export function ProductFormModal({
   const [categoryInput, setCategoryInput] = useState("");
   const [newOptionName, setNewOptionName] = useState("");
   const [newOptionValueInputs, setNewOptionValueInputs] = useState<Record<number, string>>({});
+  const valueInputRefs = useRef<Record<number, HTMLInputElement | null>>({});
 
   const productForm = useForm({
     defaultValues: form,
@@ -540,6 +541,50 @@ export function ProductFormModal({
                           0,
                         );
 
+                        const handleAddVariantValue = (optIdx: number) => {
+                          const val = (newOptionValueInputs[optIdx] || "").trim();
+                          if (!val) return;
+                          const currentOpts = [...(variantOptions || [])];
+                          if (!currentOpts[optIdx].values.includes(val)) {
+                            currentOpts[optIdx].values.push(val);
+                            productForm.setFieldValue("variantOptions", currentOpts);
+                            setNewOptionValueInputs((prev) => ({
+                              ...prev,
+                              [optIdx]: "",
+                            }));
+
+                            const combos = generateVariantCombinations(currentOpts);
+                            const existing = variants || [];
+                            const newVariants: ProductVariantFormItem[] = combos.map((c, i) => {
+                              const match = existing.find((ex: ProductVariantFormItem) => ex.name === c.name);
+                              return (
+                                match ?? {
+                                  id: `v_${Date.now()}_${i}`,
+                                  name: c.name,
+                                  combination: c.combination,
+                                  price: form.price || "0",
+                                  costPrice: form.costPrice || "",
+                                  stock: "0",
+                                  barcode: "",
+                                }
+                              );
+                            });
+                            const newTotal = newVariants.reduce(
+                              (sum: number, v: ProductVariantFormItem) => sum + (parseInt(v.stock, 10) || 0),
+                              0,
+                            );
+                            productForm.setFieldValue("variants", newVariants);
+                            productForm.setFieldValue("stock", String(newTotal));
+                            onChangeForm((p) => ({
+                              ...p,
+                              variantOptions: currentOpts,
+                              variants: newVariants,
+                              stock: String(newTotal),
+                            }));
+                          }
+                          valueInputRefs.current[optIdx]?.focus();
+                        };
+
                         return (
                           <div className="mt-4 flex flex-col gap-4 border-t border-[var(--color-border)] pt-4">
                             {/* 1. Opsi / Atribut Varian */}
@@ -662,11 +707,15 @@ export function ProductFormModal({
                                         </span>
                                       ))}
 
-                                      {/* Add value pill input */}
-                                      <div className="flex items-center gap-1">
+                                      {/* Add value pill input with inline '+' button */}
+                                      <div className="relative inline-flex items-center">
                                         <input
+                                          ref={(el) => {
+                                            valueInputRefs.current[optIdx] = el;
+                                          }}
                                           type="text"
-                                          placeholder="+ Nilai (lalu Enter)"
+                                          enterKeyHint="done"
+                                          placeholder="+ Nilai..."
                                           value={newOptionValueInputs[optIdx] || ""}
                                           onChange={(e) =>
                                             setNewOptionValueInputs((prev) => ({
@@ -677,57 +726,25 @@ export function ProductFormModal({
                                           onKeyDown={(e) => {
                                             if (e.key === "Enter") {
                                               e.preventDefault();
-                                              const val = (newOptionValueInputs[optIdx] || "").trim();
-                                              if (val) {
-                                                const currentOpts = [...(variantOptions || [])];
-                                                if (!currentOpts[optIdx].values.includes(val)) {
-                                                  currentOpts[optIdx].values.push(val);
-                                                  productForm.setFieldValue(
-                                                    "variantOptions",
-                                                    currentOpts,
-                                                  );
-                                                  setNewOptionValueInputs((prev) => ({
-                                                    ...prev,
-                                                    [optIdx]: "",
-                                                  }));
-
-                                                  const combos = generateVariantCombinations(currentOpts);
-                                                  const existing = variants || [];
-                                                  const newVariants: ProductVariantFormItem[] =
-                                                    combos.map((c, i) => {
-                                                      const match = existing.find(
-                                                        (ex: ProductVariantFormItem) => ex.name === c.name,
-                                                      );
-                                                      return (
-                                                        match ?? {
-                                                          id: `v_${Date.now()}_${i}`,
-                                                          name: c.name,
-                                                          combination: c.combination,
-                                                          price: form.price || "0",
-                                                          costPrice: form.costPrice || "",
-                                                          stock: "0",
-                                                          barcode: "",
-                                                        }
-                                                      );
-                                                    });
-                                                  const newTotal = newVariants.reduce(
-                                                    (sum: number, v: ProductVariantFormItem) => sum + (parseInt(v.stock, 10) || 0),
-                                                    0,
-                                                  );
-                                                  productForm.setFieldValue("variants", newVariants);
-                                                  productForm.setFieldValue("stock", String(newTotal));
-                                                  onChangeForm((p) => ({
-                                                    ...p,
-                                                    variantOptions: currentOpts,
-                                                    variants: newVariants,
-                                                    stock: String(newTotal),
-                                                  }));
-                                                }
-                                              }
+                                              handleAddVariantValue(optIdx);
                                             }
                                           }}
-                                          className="h-7 w-28 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-2 text-xs text-[var(--color-text)] focus:border-[var(--color-brand)] focus:outline-none"
+                                          className="h-7 w-28 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] pl-2 pr-6 text-xs text-[var(--color-text)] placeholder:text-[var(--color-text-3)] focus:border-[var(--color-brand)] focus:outline-none transition-colors"
                                         />
+                                        <button
+                                          type="button"
+                                          disabled={!(newOptionValueInputs[optIdx] || "").trim()}
+                                          onClick={() => handleAddVariantValue(optIdx)}
+                                          className={`absolute right-1 flex h-5 w-5 items-center justify-center rounded transition-colors ${
+                                            (newOptionValueInputs[optIdx] || "").trim()
+                                              ? "bg-[var(--color-brand)] text-white hover:bg-[var(--color-brand-dark)] cursor-pointer shadow-xs"
+                                              : "text-[var(--color-text-3)] opacity-40 cursor-not-allowed"
+                                          }`}
+                                          title="Tambah nilai varian"
+                                          aria-label="Tambah nilai varian"
+                                        >
+                                          <PlusIcon size={11} weight="bold" />
+                                        </button>
                                       </div>
                                     </div>
                                   </div>
@@ -735,7 +752,7 @@ export function ProductFormModal({
 
                                 {/* Form add new option group */}
                                 {(variantOptions || []).length < 3 && (
-                                  <div className="flex items-center gap-2">
+                                  <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                                     <input
                                       type="text"
                                       placeholder="Nama opsi baru (cth: Ukuran)"
@@ -756,13 +773,14 @@ export function ProductFormModal({
                                           }
                                         }
                                       }}
-                                      className="flex-1 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-xs font-medium text-[var(--color-text)] focus:border-[var(--color-brand)] focus:outline-none"
+                                      className="w-full sm:w-auto flex-1 min-w-0 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-xs font-medium text-[var(--color-text)] focus:border-[var(--color-brand)] focus:outline-none"
                                     />
                                     <Button
                                       type="button"
                                       size="sm"
                                       variant="secondary"
                                       leftIcon={<PlusIcon size={14} weight="bold" />}
+                                      className="w-full sm:w-auto shrink-0 justify-center"
                                       onClick={() => {
                                         const trimmed = newOptionName.trim();
                                         if (trimmed) {
