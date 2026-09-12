@@ -18,7 +18,8 @@ interface ProductCatalogGridProps {
   onCategoryFilterChange: (cat: string) => void;
   cart: CartItem[];
   onAddToCart: (product: Product) => void;
-  onUpdateQty: (productId: string, delta: number) => void;
+  onUpdateQty: (productId: string, delta: number, variantId?: string) => void;
+  onSelectVariant?: (product: Product) => void;
   onOpenScanner?: () => void;
   isLoading?: boolean;
 }
@@ -33,6 +34,7 @@ export function ProductCatalogGrid({
   cart,
   onAddToCart,
   onUpdateQty,
+  onSelectVariant,
   onOpenScanner,
   isLoading = false,
 }: ProductCatalogGridProps) {
@@ -168,6 +170,7 @@ export function ProductCatalogGrid({
                   inCart={inCart}
                   onAddToCart={onAddToCart}
                   onUpdateQty={onUpdateQty}
+                  onSelectVariant={onSelectVariant}
                 />
               </div>
             );

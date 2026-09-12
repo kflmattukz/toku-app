@@ -11,6 +11,8 @@ export const create = mutation({
     items: v.array(
       v.object({
         productId: v.string(),
+        variantId: v.optional(v.string()),
+        variantName: v.optional(v.string()),
         name: v.string(),
         price: v.number(),
         costPrice: v.optional(v.number()),
@@ -49,12 +51,26 @@ export const create = mutation({
       if (!product) {
         throw new Error(`Produk "${item.name}" tidak ditemukan.`);
       }
-      if (product.stock < item.qty) {
+
+      let costPrice = product.costPrice ?? 0;
+      if (item.variantId && product.hasVariants && product.variants) {
+        const vItem = product.variants.find((v) => v.id === item.variantId);
+        const currentStock = vItem ? vItem.stock : 0;
+        if (vItem?.costPrice !== undefined) {
+          costPrice = vItem.costPrice;
+        }
+        if (currentStock < item.qty) {
+          insufficientStock.push(
+            `${item.name} (${item.variantName ?? "Varian"}) (tersisa ${currentStock}, dipesan ${item.qty})`,
+          );
+        }
+      } else if (product.stock < item.qty) {
         insufficientStock.push(`${item.name} (tersisa ${product.stock}, dipesan ${item.qty})`);
       }
+
       enrichedItems.push({
         ...item,
-        costPrice: product.costPrice ?? 0,
+        costPrice,
       });
     }
 
@@ -68,9 +84,23 @@ export const create = mutation({
       if (prodId) {
         const prod = await ctx.db.get(prodId);
         if (prod) {
-          await ctx.db.patch(prodId, {
-            stock: Math.max(0, prod.stock - item.qty),
-          });
+          if (item.variantId && prod.hasVariants && prod.variants) {
+            const updatedVariants = prod.variants.map((v) => {
+              if (v.id === item.variantId) {
+                return { ...v, stock: Math.max(0, v.stock - item.qty) };
+              }
+              return v;
+            });
+            const totalStock = updatedVariants.reduce((s, v) => s + v.stock, 0);
+            await ctx.db.patch(prodId, {
+              variants: updatedVariants,
+              stock: totalStock,
+            });
+          } else {
+            await ctx.db.patch(prodId, {
+              stock: Math.max(0, prod.stock - item.qty),
+            });
+          }
         }
       }
     }
@@ -335,9 +365,23 @@ export const cancel = mutation({
       if (prodId) {
         const prod = await ctx.db.get(prodId);
         if (prod) {
-          await ctx.db.patch(prodId, {
-            stock: prod.stock + item.qty,
-          });
+          if (item.variantId && prod.hasVariants && prod.variants) {
+            const updatedVariants = prod.variants.map((v) => {
+              if (v.id === item.variantId) {
+                return { ...v, stock: v.stock + item.qty };
+              }
+              return v;
+            });
+            const totalStock = updatedVariants.reduce((s, v) => s + v.stock, 0);
+            await ctx.db.patch(prodId, {
+              variants: updatedVariants,
+              stock: totalStock,
+            });
+          } else {
+            await ctx.db.patch(prodId, {
+              stock: prod.stock + item.qty,
+            });
+          }
         }
       }
     }
@@ -421,9 +465,23 @@ export const autoExpire = internalMutation({
         if (prodId) {
           const prod = await ctx.db.get(prodId);
           if (prod) {
-            await ctx.db.patch(prodId, {
-              stock: prod.stock + item.qty,
-            });
+            if (item.variantId && prod.hasVariants && prod.variants) {
+              const updatedVariants = prod.variants.map((v) => {
+                if (v.id === item.variantId) {
+                  return { ...v, stock: v.stock + item.qty };
+                }
+                return v;
+              });
+              const totalStock = updatedVariants.reduce((s, v) => s + v.stock, 0);
+              await ctx.db.patch(prodId, {
+                variants: updatedVariants,
+                stock: totalStock,
+              });
+            } else {
+              await ctx.db.patch(prodId, {
+                stock: prod.stock + item.qty,
+              });
+            }
           }
         }
       }

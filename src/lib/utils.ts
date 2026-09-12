@@ -290,3 +290,58 @@ export function normalizeIndonesianPhone(phone: string): string {
   return cleaned;
 }
 
+/**
+ * Generates all Cartesian product combinations from option groups.
+ * e.g. [{ name: "Ukuran", values: ["M", "L"] }, { name: "Suhu", values: ["Panas", "Dingin"] }]
+ */
+export function generateVariantCombinations(
+  options: { name: string; values: string[] }[],
+): { name: string; combination: Record<string, string> }[] {
+  const activeOptions = options.filter((o) => o.name.trim() && o.values.length > 0);
+  if (activeOptions.length === 0) return [];
+
+  let results: { name: string; combination: Record<string, string> }[] = [
+    { name: "", combination: {} },
+  ];
+
+  for (const opt of activeOptions) {
+    const nextResults: { name: string; combination: Record<string, string> }[] = [];
+    for (const current of results) {
+      for (const val of opt.values) {
+        const trimmedVal = val.trim();
+        if (!trimmedVal) continue;
+        const newName = current.name ? `${current.name} / ${trimmedVal}` : trimmedVal;
+        nextResults.push({
+          name: newName,
+          combination: {
+            ...current.combination,
+            [opt.name.trim()]: trimmedVal,
+          },
+        });
+      }
+    }
+    results = nextResults;
+  }
+
+  return results.filter((r) => r.name);
+}
+
+/**
+ * Formats price range for products with variants, or single price.
+ */
+export function formatVariantPriceRange(
+  basePrice: number,
+  variants?: { price: number }[],
+): string {
+  if (!variants || variants.length === 0) {
+    return formatIDR(basePrice);
+  }
+  const prices = variants.map((v) => v.price);
+  const min = Math.min(...prices);
+  const max = Math.max(...prices);
+  if (min === max) {
+    return formatIDR(min);
+  }
+  return `${formatIDR(min)} - ${formatIDR(max)}`;
+}
+

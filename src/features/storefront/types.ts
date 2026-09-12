@@ -1,5 +1,9 @@
+import type { VariantOptionGroup, ProductVariant } from "../produk/types";
+
 export interface StorefrontCartItem {
   productId: string;
+  variantId?: string;
+  variantName?: string;
   name: string;
   price: number;
   qty: number;
@@ -20,6 +24,9 @@ export interface StorefrontProduct {
   discountValue?: number;
   imageUrl?: string;
   imageId?: string;
+  hasVariants?: boolean;
+  variantOptions?: VariantOptionGroup[];
+  variants?: ProductVariant[];
 }
 
 export interface StorefrontStore {

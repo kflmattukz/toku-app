@@ -7,7 +7,11 @@ interface StorefrontCartSidebarProps {
   products: StorefrontProduct[];
   totalItems: number;
   total: number;
-  onUpdateQty: (product: StorefrontProduct, delta: number) => void;
+  onUpdateQty: (
+    product: StorefrontProduct,
+    delta: number,
+    variant?: { id: string; name: string; price: number; stock: number },
+  ) => void;
   onClearCart: () => void;
   onOpenCheckout: () => void;
 }
@@ -69,9 +73,15 @@ export function StorefrontCartSidebar({
         ) : (
           items.map((item) => {
             const product = productMap.get(item.productId);
+            const itemKey = `${item.productId}_${item.variantId ?? "base"}`;
+            const variantObj =
+              item.variantId && product?.variants
+                ? product.variants.find((v) => v.id === item.variantId)
+                : undefined;
+
             return (
               <div
-                key={item.productId}
+                key={itemKey}
                 className="flex items-center justify-between p-2.5 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] text-xs gap-3 transition-all hover:border-[var(--color-brand)]/40"
               >
                 {/* Product Thumbnail */}
@@ -99,7 +109,7 @@ export function StorefrontCartSidebar({
                   <div className="flex items-center gap-1 shrink-0 bg-[var(--color-surface-2)] rounded-lg p-0.5 border border-[var(--color-border)]">
                     <button
                       type="button"
-                      onClick={() => onUpdateQty(product, -1)}
+                      onClick={() => onUpdateQty(product, -1, variantObj)}
                       aria-label={`Kurangi 1 ${item.name}`}
                       className="w-6 h-6 rounded flex items-center justify-center text-[var(--color-text-2)] hover:bg-[var(--color-surface)] active:scale-90 transition-all"
                     >
@@ -108,7 +118,7 @@ export function StorefrontCartSidebar({
                     <span className="w-5 text-center font-bold text-xs font-mono">{item.qty}</span>
                     <button
                       type="button"
-                      onClick={() => onUpdateQty(product, 1)}
+                      onClick={() => onUpdateQty(product, 1, variantObj)}
                       aria-label={`Tambah 1 ${item.name}`}
                       className="w-6 h-6 rounded bg-[var(--color-brand)] text-white flex items-center justify-center active:scale-90 transition-all"
                     >

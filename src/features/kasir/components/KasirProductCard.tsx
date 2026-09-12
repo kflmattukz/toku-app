@@ -16,6 +16,7 @@ interface KasirProductCardProps {
   inCart?: CartItem;
   onAddToCart: (product: Product) => void;
   onUpdateQty: (productId: string, delta: number) => void;
+  onSelectVariant?: (product: Product) => void;
 }
 
 export function KasirProductCard({
@@ -23,21 +24,29 @@ export function KasirProductCard({
   inCart,
   onAddToCart,
   onUpdateQty,
+  onSelectVariant,
 }: KasirProductCardProps) {
   const disc = calculateItemDiscount(product.price, product.discountType, product.discountValue);
+  const hasVariants = Boolean(product.hasVariants && product.variants && product.variants.length > 0);
   const isOutOfStock = product.stock <= 0;
   const isMaxStock = Boolean(inCart && inCart.qty >= product.stock);
 
+  const handleClick = () => {
+    if (isOutOfStock) return;
+    if (hasVariants && onSelectVariant) {
+      onSelectVariant(product);
+      return;
+    }
+    if (isMaxStock) {
+      toast.warning(`Maksimal stok ${product.name} tercapai (${product.stock} pcs)`);
+      return;
+    }
+    onAddToCart(product);
+  };
+
   return (
     <div
-      onClick={() => {
-        if (isOutOfStock) return;
-        if (isMaxStock) {
-          toast.warning(`Maksimal stok ${product.name} tercapai (${product.stock} pcs)`);
-          return;
-        }
-        onAddToCart(product);
-      }}
+      onClick={handleClick}
       className={`squircle-card relative flex h-full min-h-[190px] flex-col justify-between rounded-2xl p-3 select-none transition-all ${
         isOutOfStock
           ? "cursor-not-allowed border-dashed opacity-50 grayscale-[50%]"
@@ -83,6 +92,10 @@ export function KasirProductCard({
             <WarningIcon size={11} weight="fill" />
             <span>Stok Habis</span>
           </div>
+        ) : hasVariants ? (
+          <div className="absolute top-2 left-2 z-2 flex items-center gap-0.5 rounded-full bg-[var(--color-brand)] px-2 py-0.5 text-[10px] font-extrabold text-white shadow-sm backdrop-blur-sm">
+            <span>{product.variants?.length} Varian</span>
+          </div>
         ) : disc.hasDiscount ? (
           <div className="shadow-primary-500/30 absolute top-2 left-2 z-2 flex items-center gap-0.5 rounded-full bg-[var(--color-brand)] px-1.5 py-0.5 text-[10px] font-extrabold text-white shadow-md">
             <TagIcon size={11} weight="fill" />
@@ -106,19 +119,27 @@ export function KasirProductCard({
           {product.name}
         </div>
         <div className="flex flex-wrap items-baseline gap-1.5">
-          <span className="price text-sm font-extrabold text-[var(--color-brand)]">
-            {formatIDR(disc.unitPrice)}
-          </span>
-          {disc.hasDiscount && (
-            <span className="price text-[11px] text-[var(--color-text-3)] line-through">
-              {formatIDR(product.price)}
+          {hasVariants ? (
+            <span className="price text-sm font-extrabold text-[var(--color-brand)]">
+              Mulai {formatIDR(Math.min(...(product.variants || []).map((v) => v.price)))}
             </span>
+          ) : (
+            <>
+              <span className="price text-sm font-extrabold text-[var(--color-brand)]">
+                {formatIDR(disc.unitPrice)}
+              </span>
+              {disc.hasDiscount && (
+                <span className="price text-[11px] text-[var(--color-text-3)] line-through">
+                  {formatIDR(product.price)}
+                </span>
+              )}
+            </>
           )}
         </div>
       </div>
 
-      {/* Integrated Quantity Stepper Controls (When in cart) */}
-      {inCart && (
+      {/* Integrated Quantity Stepper Controls (When in cart and non-variant) */}
+      {inCart && !hasVariants && (
         <div className="mt-2.5 flex items-center justify-between border-t border-[var(--color-border-subtle)] pt-2">
           <button
             type="button"

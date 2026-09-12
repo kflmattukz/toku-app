@@ -1,7 +1,10 @@
 import type { Id } from "../../../convex/_generated/dataModel";
+import type { VariantOptionGroup, ProductVariant } from "../produk/types";
 
 export type CartItem = {
   productId: string;
+  variantId?: string;
+  variantName?: string;
   name: string;
   price: number;
   costPrice?: number;
@@ -32,4 +35,7 @@ export type Product = {
   imageUrl?: string | null;
   discountType?: "percentage" | "nominal";
   discountValue?: number;
+  hasVariants?: boolean;
+  variantOptions?: VariantOptionGroup[];
+  variants?: ProductVariant[];
 };

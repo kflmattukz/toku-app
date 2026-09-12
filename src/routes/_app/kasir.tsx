@@ -18,6 +18,7 @@ import {
   ItemDiscountModal,
   PaymentModal,
   ReceiptModal,
+  VariantSelectionModal,
   KasirSkeleton,
   type Product,
 } from "#/features/kasir";
@@ -38,6 +39,7 @@ function Kasir() {
   const [categoryFilter, setCategoryFilter] = useState("Semua");
   const [showMobileCart, setShowMobileCart] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
+  const [variantSelectionProduct, setVariantSelectionProduct] = useState<Product | null>(null);
   const [lastScannedInfo, setLastScannedInfo] = useState<{
     code: string;
     name?: string;
@@ -99,9 +101,44 @@ function Kasir() {
     const code = scannedCode.trim();
     if (!code) return;
 
+    // Check variant barcode first
+    for (const p of products) {
+      if (p.hasVariants && p.variants) {
+        const matchingVariant = p.variants.find(
+          (v) => v.barcode && v.barcode.trim() === code,
+        );
+        if (matchingVariant) {
+          if (matchingVariant.stock <= 0) {
+            triggerScanFeedback(false);
+            setLastScannedInfo({
+              code,
+              name: `${p.name} - ${matchingVariant.name} (Stok Habis)`,
+              success: false,
+            });
+            toast.error(`Stok ${p.name} (${matchingVariant.name}) habis!`);
+            return;
+          }
+          addToCart(p, matchingVariant);
+          triggerScanFeedback(true);
+          setLastScannedInfo({
+            code,
+            name: `${p.name} (${matchingVariant.name})`,
+            success: true,
+          });
+          toast.success(`${p.name} (${matchingVariant.name}) ditambahkan`);
+          return;
+        }
+      }
+    }
+
     const found = products.find((p) => p.barcode && p.barcode.trim() === code);
 
     if (found) {
+      if (found.hasVariants && found.variants && found.variants.length > 0) {
+        setVariantSelectionProduct(found);
+        return;
+      }
+
       if (found.stock <= 0) {
         triggerScanFeedback(false);
         setLastScannedInfo({ code, name: `${found.name} (Stok Habis)`, success: false });
@@ -208,6 +245,7 @@ function Kasir() {
           cart={cart}
           onAddToCart={addToCart}
           onUpdateQty={updateQty}
+          onSelectVariant={(p) => setVariantSelectionProduct(p)}
           onOpenScanner={() => {
             setLastScannedInfo(null);
             setShowScanner(true);
@@ -287,6 +325,17 @@ function Kasir() {
         subtitle="Scan barcode barang untuk otomatis masuk keranjang"
         lastScannedInfo={lastScannedInfo}
         onScanSuccess={handleScanBarcode}
+      />
+
+      {/* Variant Selection Modal */}
+      <VariantSelectionModal
+        open={Boolean(variantSelectionProduct)}
+        onClose={() => setVariantSelectionProduct(null)}
+        product={variantSelectionProduct}
+        onSelectVariant={(prod, variant) => {
+          addToCart(prod, variant);
+          setVariantSelectionProduct(null);
+        }}
       />
     </div>
   );

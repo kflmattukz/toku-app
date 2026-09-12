@@ -19,6 +19,8 @@ export const create = mutation({
     items: v.array(
       v.object({
         productId: v.string(),
+        variantId: v.optional(v.string()),
+        variantName: v.optional(v.string()),
         name: v.string(),
         price: v.number(),
         costPrice: v.optional(v.number()),
@@ -51,9 +53,16 @@ export const create = mutation({
           const productId = ctx.db.normalizeId("products", item.productId);
           if (productId) {
             const product = await ctx.db.get(productId);
+            let costPrice = product?.costPrice ?? 0;
+            if (item.variantId && product?.variants) {
+              const vItem = product.variants.find((v) => v.id === item.variantId);
+              if (vItem?.costPrice !== undefined) {
+                costPrice = vItem.costPrice;
+              }
+            }
             return {
               ...item,
-              costPrice: product?.costPrice ?? 0,
+              costPrice,
             };
           }
         } catch {}
@@ -69,10 +78,20 @@ export const create = mutation({
           const productId = ctx.db.normalizeId("products", item.productId);
           if (productId) {
             const product = await ctx.db.get(productId);
-            if (product && product.stock < item.qty) {
-              insufficientStockItems.push(
-                `${item.name} (tersisa ${product.stock}, diminta ${item.qty})`,
-              );
+            if (product) {
+              if (item.variantId && product.hasVariants && product.variants) {
+                const vItem = product.variants.find((v) => v.id === item.variantId);
+                const currentStock = vItem ? vItem.stock : 0;
+                if (currentStock < item.qty) {
+                  insufficientStockItems.push(
+                    `${item.name} (${item.variantName ?? "Varian"}) (tersisa ${currentStock}, diminta ${item.qty})`,
+                  );
+                }
+              } else if (product.stock < item.qty) {
+                insufficientStockItems.push(
+                  `${item.name} (tersisa ${product.stock}, diminta ${item.qty})`,
+                );
+              }
             }
           }
         } catch {}
@@ -98,9 +117,23 @@ export const create = mutation({
         if (productId) {
           const product = await ctx.db.get(productId);
           if (product) {
-            await ctx.db.patch(productId, {
-              stock: Math.max(0, product.stock - item.qty),
-            });
+            if (item.variantId && product.hasVariants && product.variants) {
+              const updatedVariants = product.variants.map((v) => {
+                if (v.id === item.variantId) {
+                  return { ...v, stock: Math.max(0, v.stock - item.qty) };
+                }
+                return v;
+              });
+              const totalStock = updatedVariants.reduce((s, v) => s + v.stock, 0);
+              await ctx.db.patch(productId, {
+                variants: updatedVariants,
+                stock: totalStock,
+              });
+            } else {
+              await ctx.db.patch(productId, {
+                stock: Math.max(0, product.stock - item.qty),
+              });
+            }
           }
         }
       } catch {
@@ -137,9 +170,23 @@ export const cancel = mutation({
         if (productId) {
           const product = await ctx.db.get(productId);
           if (product) {
-            await ctx.db.patch(productId, {
-              stock: product.stock + item.qty,
-            });
+            if (item.variantId && product.hasVariants && product.variants) {
+              const updatedVariants = product.variants.map((v) => {
+                if (v.id === item.variantId) {
+                  return { ...v, stock: v.stock + item.qty };
+                }
+                return v;
+              });
+              const totalStock = updatedVariants.reduce((s, v) => s + v.stock, 0);
+              await ctx.db.patch(productId, {
+                variants: updatedVariants,
+                stock: totalStock,
+              });
+            } else {
+              await ctx.db.patch(productId, {
+                stock: product.stock + item.qty,
+              });
+            }
           }
         }
       } catch {

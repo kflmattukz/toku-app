@@ -16,6 +16,7 @@ import {
   type StorefrontProduct,
   type CheckoutFormValues,
 } from "../features/storefront";
+import { VariantSelectionModal } from "../features/kasir";
 
 export const Route = createFileRoute("/s/$storeSlug")({
   component: PublicStoreCatalog,
@@ -37,6 +38,7 @@ function PublicStoreCatalog() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [variantModalProduct, setVariantModalProduct] = useState<StorefrontProduct | null>(null);
 
   const store = data?.store;
   const products: StorefrontProduct[] = (data?.products ?? []) as StorefrontProduct[];
@@ -76,6 +78,8 @@ function PublicStoreCatalog() {
 
     const items = Object.values(cart).map((item) => ({
       productId: item.productId,
+      variantId: item.variantId,
+      variantName: item.variantName,
       name: item.name,
       price: item.price,
       qty: item.qty,
@@ -159,14 +163,21 @@ function PublicStoreCatalog() {
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3.5">
-                {filteredProducts.map((p) => (
-                  <StorefrontProductCard
-                    key={p._id}
-                    product={p}
-                    cartQty={cart[p._id]?.qty ?? 0}
-                    onUpdateQty={updateQty}
-                  />
-                ))}
+                {filteredProducts.map((p) => {
+                  const productCartQty = Object.values(cart)
+                    .filter((item) => item.productId === p._id)
+                    .reduce((sum, item) => sum + item.qty, 0);
+
+                  return (
+                    <StorefrontProductCard
+                      key={p._id}
+                      product={p}
+                      cartQty={productCartQty}
+                      onUpdateQty={updateQty}
+                      onSelectVariant={(prod) => setVariantModalProduct(prod)}
+                    />
+                  );
+                })}
               </div>
             )}
           </main>
@@ -202,6 +213,17 @@ function PublicStoreCatalog() {
         onUpdateQty={updateQty}
         onSubmitOrder={handleCheckoutSubmit}
         isSubmitting={isSubmitting}
+      />
+
+      {/* Variant Selection Modal */}
+      <VariantSelectionModal
+        open={Boolean(variantModalProduct)}
+        onClose={() => setVariantModalProduct(null)}
+        product={variantModalProduct as any}
+        onSelectVariant={(prod, variant) => {
+          updateQty(prod as any, 1, variant);
+          setVariantModalProduct(null);
+        }}
       />
     </div>
   );

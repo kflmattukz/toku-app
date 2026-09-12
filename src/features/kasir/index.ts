@@ -12,3 +12,4 @@ export * from "./components/ItemDiscountModal";
 export * from "./components/PaymentModal";
 export * from "./components/ReceiptModal";
 export * from "./components/KasirReceipt";
+export * from "./components/VariantSelectionModal";

@@ -7,33 +7,43 @@ interface StorefrontProductCardProps {
   product: StorefrontProduct;
   cartQty: number;
   onUpdateQty: (product: StorefrontProduct, delta: number) => void;
+  onSelectVariant?: (product: StorefrontProduct) => void;
 }
 
 export const StorefrontProductCard = memo(function StorefrontProductCard({
   product,
   cartQty,
   onUpdateQty,
+  onSelectVariant,
 }: StorefrontProductCardProps) {
   const disc = calculateItemDiscount(
     product.price,
     product.discountType as "percentage" | "nominal" | undefined,
     product.discountValue,
   );
+  const hasVariants = Boolean(product.hasVariants && product.variants && product.variants.length > 0);
   const isOutOfStock = product.stock <= 0;
   const imageSource = product.imageUrl || product.imageId;
+
+  const handleClick = () => {
+    if (isOutOfStock) return;
+    if (hasVariants && onSelectVariant) {
+      onSelectVariant(product);
+      return;
+    }
+    onUpdateQty(product, 1);
+  };
 
   return (
     <article
       role="button"
       tabIndex={isOutOfStock ? -1 : 0}
       aria-label={`${product.name}, harga ${formatIDR(disc.unitPrice)}, ${isOutOfStock ? "stok habis" : `stok ${product.stock}`}`}
-      onClick={() => {
-        if (!isOutOfStock) onUpdateQty(product, 1);
-      }}
+      onClick={handleClick}
       onKeyDown={(e) => {
         if ((e.key === "Enter" || e.key === " ") && !isOutOfStock) {
           e.preventDefault();
-          onUpdateQty(product, 1);
+          handleClick();
         }
       }}
       className={cn(
@@ -60,14 +70,18 @@ export const StorefrontProductCard = memo(function StorefrontProductCard({
             </div>
           )}
 
-          {/* Discount Badge */}
-          {disc.hasDiscount && (
+          {/* Variant Badge or Discount Badge */}
+          {hasVariants ? (
+            <div className="absolute top-2 left-2 z-10 rounded-lg bg-[var(--color-brand)] text-white px-2 py-0.5 text-[10px] font-black shadow-xs">
+              {product.variants?.length} Varian
+            </div>
+          ) : disc.hasDiscount ? (
             <div className="absolute top-2 left-2 z-10 rounded-lg bg-rose-500 text-white px-2 py-0.5 text-[10px] font-black shadow-xs">
               {product.discountType === "percentage"
                 ? `-${product.discountValue}%`
                 : `-${formatIDR(product.discountValue || 0)}`}
             </div>
-          )}
+          ) : null}
 
           {/* Cart Quantity Badge */}
           {cartQty > 0 && (
@@ -108,19 +122,38 @@ export const StorefrontProductCard = memo(function StorefrontProductCard({
       {/* Pricing & Actions */}
       <div className="mt-3 pt-2.5 border-t border-[var(--color-border)] flex items-center justify-between min-h-[38px] gap-2">
         <div className="flex flex-col min-w-0">
-          <span className="text-base font-black text-[var(--color-brand)] font-mono tracking-tight">
-            {formatIDR(disc.unitPrice)}
-          </span>
-          {disc.hasDiscount && (
-            <span className="text-xs text-[var(--color-text-3)] line-through font-mono">
-              {formatIDR(product.price)}
+          {hasVariants ? (
+            <span className="text-sm font-black text-[var(--color-brand)] font-mono tracking-tight">
+              Mulai {formatIDR(Math.min(...(product.variants || []).map((v) => v.price)))}
             </span>
+          ) : (
+            <>
+              <span className="text-base font-black text-[var(--color-brand)] font-mono tracking-tight">
+                {formatIDR(disc.unitPrice)}
+              </span>
+              {disc.hasDiscount && (
+                <span className="text-xs text-[var(--color-text-3)] line-through font-mono">
+                  {formatIDR(product.price)}
+                </span>
+              )}
+            </>
           )}
         </div>
 
         {/* Stepper or Quick Add Button */}
         {isOutOfStock ? (
           <span className="text-xs text-[var(--color-text-3)] font-semibold">Habis</span>
+        ) : hasVariants ? (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleClick();
+            }}
+            className="rounded-xl bg-[var(--color-brand)] text-white px-2.5 py-1 text-xs font-bold shadow-xs hover:scale-105 active:scale-95 transition-all press-tactile"
+          >
+            Pilih
+          </button>
         ) : cartQty > 0 ? (
           <div
             className="flex items-center gap-1 bg-[var(--color-surface)] rounded-xl p-0.5 border border-[var(--color-border)] shadow-xs"

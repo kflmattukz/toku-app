@@ -144,7 +144,7 @@ export default defineSchema({
     storeId: v.id("stores"),
     name: v.string(),
     category: v.string(), // custom per store, e.g. "Minuman", "Makanan"
-    price: v.number(), // IDR integer
+    price: v.number(), // IDR integer (base/default price or lowest price)
     costPrice: v.optional(v.number()), // Modal / HPP per unit (IDR)
     stock: v.number(),
     barcode: v.optional(v.string()),
@@ -152,6 +152,28 @@ export default defineSchema({
     discountType: v.optional(v.union(v.literal("percentage"), v.literal("nominal"))),
     discountValue: v.optional(v.number()),
     minStockAlert: v.optional(v.number()),
+    hasVariants: v.optional(v.boolean()),
+    variantOptions: v.optional(
+      v.array(
+        v.object({
+          name: v.string(),
+          values: v.array(v.string()),
+        }),
+      ),
+    ),
+    variants: v.optional(
+      v.array(
+        v.object({
+          id: v.string(),
+          name: v.string(),
+          combination: v.record(v.string(), v.string()),
+          price: v.number(),
+          costPrice: v.optional(v.number()),
+          stock: v.number(),
+          barcode: v.optional(v.string()),
+        }),
+      ),
+    ),
   }).index("by_storeId", ["storeId"]),
 
   expenses: defineTable({
@@ -181,6 +203,8 @@ export default defineSchema({
     items: v.array(
       v.object({
         productId: v.string(),
+        variantId: v.optional(v.string()),
+        variantName: v.optional(v.string()),
         name: v.string(),
         price: v.number(),
         costPrice: v.optional(v.number()), // Snapshot HPP at time of sale
@@ -220,6 +244,8 @@ export default defineSchema({
     items: v.array(
       v.object({
         productId: v.string(),
+        variantId: v.optional(v.string()),
+        variantName: v.optional(v.string()),
         name: v.string(),
         price: v.number(),
         costPrice: v.optional(v.number()),

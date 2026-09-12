@@ -8,6 +8,7 @@ import {
   calculateCartTotals,
 } from "#/lib/utils";
 import type { CartItem, ItemDiscountModalState, Product } from "../types";
+import type { ProductVariant } from "../../produk/types";
 
 const EMPTY_PRODUCTS: Product[] = [];
 
@@ -42,16 +43,22 @@ export function useKasirCart(products: Product[] = EMPTY_PRODUCTS) {
         continue;
       }
 
-      if (prod.stock <= 0) {
+      let availableStock = prod.stock;
+      if (item.variantId && prod.hasVariants && prod.variants) {
+        const v = prod.variants.find((v) => v.id === item.variantId);
+        availableStock = v ? v.stock : 0;
+      }
+
+      if (availableStock <= 0) {
         changed = true;
         notifications.push({ type: "out_of_stock", name: item.name });
         continue;
       }
 
-      if (item.qty > prod.stock) {
+      if (item.qty > availableStock) {
         changed = true;
-        notifications.push({ type: "adjusted", name: item.name, stock: prod.stock });
-        nextCart.push({ ...item, qty: prod.stock });
+        notifications.push({ type: "adjusted", name: item.name, stock: availableStock });
+        nextCart.push({ ...item, qty: availableStock });
       } else {
         nextCart.push(item);
       }
@@ -73,32 +80,48 @@ export function useKasirCart(products: Product[] = EMPTY_PRODUCTS) {
     }
   }, [products]);
 
-  const addToCart = (product: Product) => {
-    if (product.stock <= 0) {
-      toast.error(`Stok ${product.name} habis!`, {
+  const addToCart = (product: Product, variant?: ProductVariant) => {
+    const isVariant = Boolean(variant);
+    const stockToCheck = isVariant ? variant!.stock : product.stock;
+    const priceToCharge = isVariant ? variant!.price : product.price;
+    const costToCharge = isVariant ? variant!.costPrice : product.costPrice;
+    const displayName = isVariant ? `${product.name} (${variant!.name})` : product.name;
+
+    if (stockToCheck <= 0) {
+      toast.error(`Stok ${displayName} habis!`, {
         description: "Silakan restok terlebih dahulu",
       });
       return;
     }
 
-    const existing = cart.find((i) => i.productId === product._id);
-    if (existing && existing.qty >= product.stock) {
-      toast.warning(`Maksimal stok ${product.name} tercapai (${product.stock} pcs)`);
+    const existing = cart.find(
+      (i) => i.productId === product._id && i.variantId === (variant?.id ?? undefined),
+    );
+    if (existing && existing.qty >= stockToCheck) {
+      toast.warning(`Maksimal stok ${displayName} tercapai (${stockToCheck} pcs)`);
       return;
     }
 
     setCart((prev) => {
-      const exists = prev.find((i) => i.productId === product._id);
+      const exists = prev.find(
+        (i) => i.productId === product._id && i.variantId === (variant?.id ?? undefined),
+      );
       if (exists) {
-        return prev.map((i) => (i.productId === product._id ? { ...i, qty: i.qty + 1 } : i));
+        return prev.map((i) =>
+          i.productId === product._id && i.variantId === (variant?.id ?? undefined)
+            ? { ...i, qty: i.qty + 1 }
+            : i,
+        );
       }
       return [
         ...prev,
         {
           productId: product._id,
-          name: product.name,
-          price: product.price,
-          costPrice: product.costPrice,
+          variantId: variant?.id,
+          variantName: variant?.name,
+          name: displayName,
+          price: priceToCharge,
+          costPrice: costToCharge,
           qty: 1,
           discountType: product.discountType,
           discountValue: product.discountValue,
@@ -106,39 +129,54 @@ export function useKasirCart(products: Product[] = EMPTY_PRODUCTS) {
       ];
     });
 
-    const disc = calculateItemDiscount(product.price, product.discountType, product.discountValue);
-    toast.success(`${product.name} ditambahkan`, {
+    const disc = calculateItemDiscount(priceToCharge, product.discountType, product.discountValue);
+    toast.success(`${displayName} ditambahkan`, {
       description: disc.hasDiscount
         ? `${formatIDR(disc.unitPrice)} (Diskon ${disc.discountLabel})`
-        : formatIDR(product.price),
+        : formatIDR(priceToCharge),
     });
 
-    if (product.stock <= 5) {
-      toast.warning(`Peringatan Stok: ${product.name} tersisa ${product.stock} pcs!`);
+    if (stockToCheck <= 5) {
+      toast.warning(`Peringatan Stok: ${displayName} tersisa ${stockToCheck} pcs!`);
     }
   };
 
-  const updateQty = (productId: string, delta: number) => {
-    const current = cart.find((i) => i.productId === productId);
+  const updateQty = (productId: string, delta: number, variantId?: string) => {
+    const current = cart.find(
+      (i) => i.productId === productId && (variantId ? i.variantId === variantId : !i.variantId),
+    );
     if (!current) return;
 
     if (delta > 0) {
       const product = products.find((p) => p._id === productId);
-      if (product && current.qty >= product.stock) {
-        toast.warning(`Maksimal stok ${current.name} tercapai (${product.stock} pcs)`);
+      let maxStock = product?.stock ?? 999;
+      if (variantId && product?.hasVariants && product.variants) {
+        const v = product.variants.find((v) => v.id === variantId);
+        if (v) maxStock = v.stock;
+      }
+      if (current.qty >= maxStock) {
+        toast.warning(`Maksimal stok ${current.name} tercapai (${maxStock} pcs)`);
         return;
       }
     }
 
     setCart((prev) =>
       prev
-        .map((i) => (i.productId === productId ? { ...i, qty: i.qty + delta } : i))
+        .map((i) =>
+          i.productId === productId && (variantId ? i.variantId === variantId : !i.variantId)
+            ? { ...i, qty: i.qty + delta }
+            : i,
+        )
         .filter((i) => i.qty > 0),
     );
   };
 
-  const removeFromCart = (productId: string) => {
-    setCart((prev) => prev.filter((i) => i.productId !== productId));
+  const removeFromCart = (productId: string, variantId?: string) => {
+    setCart((prev) =>
+      prev.filter(
+        (i) => !(i.productId === productId && (variantId ? i.variantId === variantId : !i.variantId)),
+      ),
+    );
   };
 
   const clearCart = () => {

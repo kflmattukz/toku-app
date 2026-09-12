@@ -29,45 +29,59 @@ export function useStorefrontCart(storeSlug: string) {
     }
   }, [cart, storageKey]);
 
-  const updateQty = useCallback((product: StorefrontProduct, delta: number) => {
-    setCart((prev) => {
-      const existing = prev[product._id];
-      const disc = calculateItemDiscount(
-        product.price,
-        product.discountType as "percentage" | "nominal" | undefined,
-        product.discountValue,
-      );
-      const unitPrice = disc.unitPrice;
-      const currentQty = existing ? existing.qty : 0;
-      const nextQty = currentQty + delta;
+  const updateQty = useCallback(
+    (
+      product: StorefrontProduct,
+      delta: number,
+      variant?: { id: string; name: string; price: number; stock: number },
+    ) => {
+      setCart((prev) => {
+        const itemKey = `${product._id}_${variant ? variant.id : "base"}`;
+        const existing = prev[itemKey];
+        const effectivePrice = variant ? variant.price : product.price;
+        const availableStock = variant ? variant.stock : product.stock;
+        const disc = calculateItemDiscount(
+          effectivePrice,
+          product.discountType as "percentage" | "nominal" | undefined,
+          product.discountValue,
+        );
+        const unitPrice = disc.unitPrice;
+        const currentQty = existing ? existing.qty : 0;
+        const nextQty = currentQty + delta;
 
-      if (nextQty <= 0) {
-        const next = { ...prev };
-        delete next[product._id];
-        return next;
-      }
+        if (nextQty <= 0) {
+          const next = { ...prev };
+          delete next[itemKey];
+          return next;
+        }
 
-      if (nextQty > product.stock) {
-        toast.error(`Maksimal stok tersedia hanya ${product.stock}`);
-        return prev;
-      }
+        if (nextQty > availableStock) {
+          toast.error(`Maksimal stok tersedia hanya ${availableStock}`);
+          return prev;
+        }
 
-      return {
-        ...prev,
-        [product._id]: {
-          productId: product._id,
-          name: product.name,
-          price: product.price,
-          qty: nextQty,
-          subtotal: unitPrice * nextQty,
-          discountType: product.discountType as "percentage" | "nominal" | undefined,
-          discountValue: product.discountValue,
-          maxStock: product.stock,
-          imageUrl: product.imageUrl || product.imageId,
-        },
-      };
-    });
-  }, []);
+        const displayName = variant ? `${product.name} (${variant.name})` : product.name;
+
+        return {
+          ...prev,
+          [itemKey]: {
+            productId: product._id,
+            variantId: variant?.id,
+            variantName: variant?.name,
+            name: displayName,
+            price: effectivePrice,
+            qty: nextQty,
+            subtotal: unitPrice * nextQty,
+            discountType: product.discountType as "percentage" | "nominal" | undefined,
+            discountValue: product.discountValue,
+            maxStock: availableStock,
+            imageUrl: product.imageUrl || product.imageId,
+          },
+        };
+      });
+    },
+    [],
+  );
 
   const clearCart = useCallback(() => {
     setCart({});

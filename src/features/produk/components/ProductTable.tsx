@@ -14,6 +14,14 @@ import { Button, DataTable } from "#/components/ui";
 import { useAppTable, createAppColumnHelper } from "#/lib/table";
 import type { Product } from "../types";
 
+function formatVariantPriceRange(basePrice: number, variants?: { price: number }[]): string {
+  if (!variants || variants.length === 0) return formatIDR(basePrice);
+  const prices = variants.map((v) => v.price);
+  const min = Math.min(...prices);
+  const max = Math.max(...prices);
+  return min === max ? formatIDR(min) : `${formatIDR(min)} - ${formatIDR(max)}`;
+}
+
 interface ProductTableProps {
   products: Product[];
   search: string;
@@ -106,7 +114,18 @@ export function ProductTable({
           id: "costPrice",
           header: "Harga Modal",
           cell: (info) => {
-            const cost = info.row.original.costPrice;
+            const p = info.row.original;
+            if (p.hasVariants && p.variants && p.variants.length > 0) {
+              const variantCosts = p.variants.map((v) => ({ price: v.costPrice || 0 })).filter((v) => v.price > 0);
+              if (variantCosts.length > 0) {
+                return (
+                  <div className="text-xs font-bold text-[var(--color-text-2)]">
+                    <span className="price">{formatVariantPriceRange(p.costPrice || 0, variantCosts)}</span>
+                  </div>
+                );
+              }
+            }
+            const cost = p.costPrice;
             const hasCost = cost !== undefined && cost > 0;
             return hasCost ? (
               <div className="text-xs font-bold text-[var(--color-text-2)]">
@@ -123,6 +142,26 @@ export function ProductTable({
           header: "Harga Jual",
           cell: (info) => {
             const p = info.row.original;
+            if (p.hasVariants && p.variants && p.variants.length > 0) {
+              const priceDisplay = formatVariantPriceRange(p.price, p.variants);
+              return (
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="price text-sm font-extrabold text-[var(--color-text)]">
+                      {priceDisplay}
+                    </span>
+                    <span className="rounded-full border border-[var(--color-brand)] bg-[var(--color-brand-light)] px-1.5 py-0.5 text-[10px] font-extrabold text-[var(--color-brand)]">
+                      {p.variants.length} Varian
+                    </span>
+                  </div>
+                  <div className="mt-0.5 text-[10px] text-[var(--color-text-3)]">
+                    {p.variants.map((v) => v.name).slice(0, 3).join(", ")}
+                    {p.variants.length > 3 ? "..." : ""}
+                  </div>
+                </div>
+              );
+            }
+
             const disc = calculateItemDiscount(p.price, p.discountType, p.discountValue);
             const effectivePrice = disc.unitPrice;
             const hasCost = p.costPrice !== undefined && p.costPrice > 0;
@@ -176,22 +215,31 @@ export function ProductTable({
         columnHelper.accessor("stock", {
           header: "Stok Barang",
           cell: (info) => {
+            const p = info.row.original;
             const stock = info.getValue();
             return (
-              <span
-                className={`inline-flex items-center gap-1.5 text-sm font-extrabold ${
-                  stock <= 5 ? "text-[var(--color-danger-text)]" : "text-[var(--color-text)]"
-                }`}
-              >
-                {stock <= 5 && (
-                  <WarningIcon
-                    size={15}
-                    weight="fill"
-                    className="text-[var(--color-danger-text)]"
-                  />
+              <div>
+                <span
+                  className={`inline-flex items-center gap-1.5 text-sm font-extrabold ${
+                    stock <= 5 ? "text-[var(--color-danger-text)]" : "text-[var(--color-text)]"
+                  }`}
+                >
+                  {stock <= 5 && (
+                    <WarningIcon
+                      size={15}
+                      weight="fill"
+                      className="text-[var(--color-danger-text)]"
+                    />
+                  )}
+                  {stock} pcs
+                </span>
+                {p.hasVariants && p.variants && p.variants.length > 0 && (
+                  <div className="mt-0.5 text-[10px] font-medium text-[var(--color-text-3)]">
+                    {p.variants.map((v) => `${v.name}: ${v.stock}`).slice(0, 2).join(" • ")}
+                    {p.variants.length > 2 ? "..." : ""}
+                  </div>
                 )}
-                {stock} pcs
-              </span>
+              </div>
             );
           },
         }),
@@ -316,13 +364,17 @@ export function ProductTable({
                     <div>
                       <div className="text-[10px] font-bold text-text-3 uppercase">Modal</div>
                       <div className="price mt-0.5 text-xs font-extrabold text-text-2">
-                        {hasCost ? formatIDR(p.costPrice || 0) : "-"}
+                        {p.hasVariants && p.variants && p.variants.length > 0
+                          ? formatVariantPriceRange(p.costPrice || 0, p.variants.map((v: any) => ({ price: v.costPrice || 0 })))
+                          : hasCost ? formatIDR(p.costPrice || 0) : "-"}
                       </div>
                     </div>
                     <div>
                       <div className="text-[10px] font-bold text-text-3 uppercase">Jual</div>
                       <div className="price mt-0.5 text-xs font-extrabold text-brand">
-                        {formatIDR(disc.unitPrice)}
+                        {p.hasVariants && p.variants && p.variants.length > 0
+                          ? formatVariantPriceRange(p.price, p.variants)
+                          : formatIDR(disc.unitPrice)}
                       </div>
                     </div>
                     <div>
@@ -337,7 +389,15 @@ export function ProductTable({
                     </div>
                   </div>
 
-                  {marginPct !== null && (
+                  {p.hasVariants && p.variants && p.variants.length > 0 ? (
+                    <div className="flex flex-wrap gap-1 text-[11px] text-text-3">
+                      <span className="font-bold text-brand">{p.variants.length} Varian:</span>
+                      <span>
+                        {p.variants.map((v: any) => `${v.name} (${v.stock})`).slice(0, 3).join(", ")}
+                        {p.variants.length > 3 ? "..." : ""}
+                      </span>
+                    </div>
+                  ) : marginPct !== null ? (
                     <div className="flex justify-between text-xs">
                       <span className="text-text-3">Margin Keuntungan:</span>
                       <span
@@ -348,7 +408,7 @@ export function ProductTable({
                         {(profitPerUnit || 0) >= 0 ? `+${marginPct}%` : `${marginPct}%`}
                       </span>
                     </div>
-                  )}
+                  ) : null}
 
                   <div className="flex gap-2 pt-1">
                     <Button

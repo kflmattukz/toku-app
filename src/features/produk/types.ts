@@ -1,5 +1,20 @@
 import type { Id } from "../../../convex/_generated/dataModel";
 
+export type VariantOptionGroup = {
+  name: string;
+  values: string[];
+};
+
+export type ProductVariant = {
+  id: string;
+  name: string;
+  combination: Record<string, string>;
+  price: number;
+  costPrice?: number;
+  stock: number;
+  barcode?: string;
+};
+
 export type Product = {
   _id: Id<"products">;
   _creationTime: number;
@@ -14,6 +29,19 @@ export type Product = {
   imageUrl?: string;
   discountType?: "percentage" | "nominal";
   discountValue?: number;
+  hasVariants?: boolean;
+  variantOptions?: VariantOptionGroup[];
+  variants?: ProductVariant[];
+};
+
+export type ProductVariantFormItem = {
+  id: string;
+  name: string;
+  combination: Record<string, string>;
+  price: string;
+  costPrice: string;
+  stock: string;
+  barcode: string;
 };
 
 export type ProductFormState = {
@@ -26,6 +54,9 @@ export type ProductFormState = {
   imageId: string;
   discountType: "none" | "percentage" | "nominal";
   discountValue: string;
+  hasVariants: boolean;
+  variantOptions: VariantOptionGroup[];
+  variants: ProductVariantFormItem[];
 };
 
 export const emptyProductForm: ProductFormState = {
@@ -38,4 +69,7 @@ export const emptyProductForm: ProductFormState = {
   imageId: "",
   discountType: "none",
   discountValue: "",
+  hasVariants: false,
+  variantOptions: [],
+  variants: [],
 };

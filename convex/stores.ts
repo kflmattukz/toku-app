@@ -415,6 +415,9 @@ export const getBySlugOrId = query({
           imageUrl: imageUrl ?? p.imageId ?? null,
           discountType: p.discountType,
           discountValue: p.discountValue,
+          hasVariants: p.hasVariants,
+          variantOptions: p.variantOptions,
+          variants: p.variants,
         };
       }),
     );

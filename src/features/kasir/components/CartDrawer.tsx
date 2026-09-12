@@ -22,8 +22,8 @@ interface CartDrawerProps {
   subtotal: number;
   total: number;
   totalSavings: number;
-  onUpdateQty: (productId: string, delta: number) => void;
-  onRemoveFromCart: (productId: string) => void;
+  onUpdateQty: (productId: string, delta: number, variantId?: string) => void;
+  onRemoveFromCart: (productId: string, variantId?: string) => void;
   onClearCart: () => void;
   onOpenItemDiscount: (item: CartItem) => void;
   showPayment: boolean;
@@ -59,13 +59,19 @@ export function CartDrawer({
       ) : (
         cart.map((item) => {
           const productData = products.find((p) => p._id === item.productId);
+          let currentStock = productData?.stock ?? 999;
+          if (item.variantId && productData?.hasVariants && productData.variants) {
+            const v = productData.variants.find((v) => v.id === item.variantId);
+            if (v) currentStock = v.stock;
+          }
           const disc = calculateItemDiscount(item.price, item.discountType, item.discountValue);
           const lineTotal = disc.unitPrice * item.qty;
-          const isMaxStock = Boolean(productData && item.qty >= productData.stock);
+          const isMaxStock = item.qty >= currentStock;
+          const cartItemKey = `${item.productId}_${item.variantId ?? "base"}`;
 
           return (
             <div
-              key={item.productId}
+              key={cartItemKey}
               className="flex flex-col gap-2 rounded-2xl border border-[var(--color-border)] bg-surface-2 p-3"
             >
               <div className="flex items-center gap-3">
@@ -87,6 +93,11 @@ export function CartDrawer({
                   <div className="truncate text-xs font-extrabold text-[var(--color-text)]">
                     {item.name}
                   </div>
+                  {item.variantName && (
+                    <div className="text-[10px] font-bold text-[var(--color-brand)]">
+                      {item.variantName}
+                    </div>
+                  )}
                   <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-[var(--color-text-3)]">
                     <span>
                       {item.qty} x {formatIDR(disc.unitPrice)}
@@ -128,7 +139,7 @@ export function CartDrawer({
                 <div className="flex items-center gap-1.5">
                   <button
                     type="button"
-                    onClick={() => onUpdateQty(item.productId, -1)}
+                    onClick={() => onUpdateQty(item.productId, -1, item.variantId)}
                     className="press-tactile flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] text-[var(--color-text)]"
                   >
                     <MinusIcon size={11} weight="bold" />
@@ -141,7 +152,7 @@ export function CartDrawer({
                     disabled={isMaxStock}
                     onClick={() => {
                       if (isMaxStock) return;
-                      onUpdateQty(item.productId, 1);
+                      onUpdateQty(item.productId, 1, item.variantId);
                     }}
                     className={`flex h-7 w-7 items-center justify-center rounded-full transition-all ${
                       isMaxStock
@@ -149,14 +160,14 @@ export function CartDrawer({
                         : "press-tactile cursor-pointer bg-[var(--color-brand)] text-white shadow-xs"
                     }`}
                     title={
-                      isMaxStock ? `Maksimal stok tercapai (${productData?.stock} pcs)` : "Tambah"
+                      isMaxStock ? `Maksimal stok tercapai (${currentStock} pcs)` : "Tambah"
                     }
                   >
                     <PlusIcon size={11} weight="bold" />
                   </button>
                   <button
                     type="button"
-                    onClick={() => onRemoveFromCart(item.productId)}
+                    onClick={() => onRemoveFromCart(item.productId, item.variantId)}
                     title="Hapus dari keranjang"
                     className="press-tactile ml-0.5 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border border-[var(--color-danger)]/20 bg-[var(--color-danger-light)] text-[var(--color-danger-text)]"
                   >

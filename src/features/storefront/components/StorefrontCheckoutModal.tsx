@@ -18,7 +18,11 @@ interface StorefrontCheckoutModalProps {
   products: StorefrontProduct[];
   totalItems: number;
   total: number;
-  onUpdateQty: (product: StorefrontProduct, delta: number) => void;
+  onUpdateQty: (
+    product: StorefrontProduct,
+    delta: number,
+    variant?: { id: string; name: string; price: number; stock: number },
+  ) => void;
   onSubmitOrder: (formValues: CheckoutFormValues) => Promise<void>;
   isSubmitting: boolean;
 }
@@ -59,24 +63,24 @@ export function StorefrontCheckoutModal({
     };
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmitOrder({
+    await onSubmitOrder({
       customerName,
       customerPhone,
       customerNotes,
     });
   };
 
+  if (!isOpen) return null;
+
   return (
     <div
+      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200"
+      onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-labelledby="checkout-modal-title"
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200"
-      onClick={onClose}
     >
       <div
         className="bg-[var(--color-surface)] border border-[var(--color-border)] w-full max-w-lg rounded-t-3xl sm:rounded-3xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl animate-in slide-in-from-bottom-6 duration-200"
@@ -110,9 +114,15 @@ export function StorefrontCheckoutModal({
             <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
               {items.map((item) => {
                 const product = productMap.get(item.productId);
+                const itemKey = `${item.productId}_${item.variantId ?? "base"}`;
+                const variantObj =
+                  item.variantId && product?.variants
+                    ? product.variants.find((v) => v.id === item.variantId)
+                    : undefined;
+
                 return (
                   <div
-                    key={item.productId}
+                    key={itemKey}
                     className="flex items-center justify-between p-2.5 rounded-xl bg-[var(--color-surface-2)] border border-[var(--color-border)] text-xs gap-3"
                   >
                     <div className="w-10 h-10 rounded-lg bg-[var(--color-surface)] border border-[var(--color-border)] overflow-hidden flex items-center justify-center shrink-0">
@@ -141,7 +151,7 @@ export function StorefrontCheckoutModal({
                       <div className="flex items-center gap-1.5 shrink-0">
                         <button
                           type="button"
-                          onClick={() => onUpdateQty(product, -1)}
+                          onClick={() => onUpdateQty(product, -1, variantObj)}
                           aria-label={`Kurangi 1 ${item.name}`}
                           className="w-6 h-6 rounded bg-[var(--color-surface)] border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-2)] hover:bg-[var(--color-surface-2)] active:scale-90 transition-all"
                         >
@@ -150,7 +160,7 @@ export function StorefrontCheckoutModal({
                         <span className="w-5 text-center font-bold font-mono">{item.qty}</span>
                         <button
                           type="button"
-                          onClick={() => onUpdateQty(product, 1)}
+                          onClick={() => onUpdateQty(product, 1, variantObj)}
                           aria-label={`Tambah 1 ${item.name}`}
                           className="w-6 h-6 rounded bg-[var(--color-brand)] text-white flex items-center justify-center active:scale-90 transition-all"
                         >

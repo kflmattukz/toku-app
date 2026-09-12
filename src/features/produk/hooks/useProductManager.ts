@@ -57,6 +57,17 @@ export function useProductManager({ storeId }: UseProductManagerProps) {
           : p.discountType === "nominal"
             ? formatIDRInput(p.discountValue ?? "")
             : "",
+      hasVariants: p.hasVariants ?? false,
+      variantOptions: p.variantOptions ?? [],
+      variants: (p.variants ?? []).map((v) => ({
+        id: v.id,
+        name: v.name,
+        combination: v.combination,
+        price: formatIDRInput(v.price),
+        costPrice: v.costPrice !== undefined ? formatIDRInput(v.costPrice) : "",
+        stock: String(v.stock),
+        barcode: v.barcode ?? "",
+      })),
     });
     setImagePreview(p.imageUrl ?? p.imageId ?? "");
     setShowModal(true);
@@ -105,9 +116,51 @@ export function useProductManager({ storeId }: UseProductManagerProps) {
       ? parseIDRInput(currentData.costPrice)
       : undefined;
     const stockNum = parseInt(currentData.stock, 10) || 0;
-    if (!currentData.name.trim() || !currentData.category.trim() || priceNum <= 0) {
-      toast.error("Mohon lengkapi nama, kategori, dan harga yang valid");
+
+    if (!currentData.name.trim() || !currentData.category.trim()) {
+      toast.error("Mohon lengkapi nama dan kategori produk");
       return;
+    }
+
+    if (!currentData.hasVariants && priceNum <= 0) {
+      toast.error("Mohon masukkan harga produk yang valid");
+      return;
+    }
+
+    // Process variants if enabled
+    let mappedVariants = undefined;
+    let finalBasePrice = priceNum;
+    let finalTotalStock = stockNum;
+
+    if (currentData.hasVariants) {
+      if (!currentData.variants || currentData.variants.length === 0) {
+        toast.error("Mohon tambahkan minimal 1 kombinasi varian");
+        return;
+      }
+      mappedVariants = currentData.variants.map((v) => {
+        const vPrice = parseIDRInput(v.price);
+        const vCost = v.costPrice.trim() ? parseIDRInput(v.costPrice) : undefined;
+        const vStock = parseInt(v.stock, 10) || 0;
+        return {
+          id: v.id,
+          name: v.name,
+          combination: v.combination,
+          price: vPrice,
+          costPrice: vCost,
+          stock: vStock,
+          barcode: v.barcode.trim() || undefined,
+        };
+      });
+
+      // Validate variant prices
+      const invalidVariant = mappedVariants.find((v) => v.price <= 0);
+      if (invalidVariant) {
+        toast.error(`Harga untuk varian "${invalidVariant.name}" harus lebih dari 0`);
+        return;
+      }
+
+      finalBasePrice = Math.min(...mappedVariants.map((v) => v.price));
+      finalTotalStock = mappedVariants.reduce((sum, v) => sum + v.stock, 0);
     }
 
     let discountTypeVal: "percentage" | "nominal" | undefined = undefined;
@@ -123,7 +176,7 @@ export function useProductManager({ storeId }: UseProductManagerProps) {
       const nom = parseIDRInput(currentData.discountValue);
       if (nom > 0) {
         discountTypeVal = "nominal";
-        discountNum = Math.min(priceNum, nom);
+        discountNum = Math.min(finalBasePrice, nom);
       }
     }
 
@@ -134,13 +187,16 @@ export function useProductManager({ storeId }: UseProductManagerProps) {
           id: editId,
           name: currentData.name.trim(),
           category: currentData.category.trim(),
-          price: priceNum,
+          price: finalBasePrice,
           costPrice: costPriceNum,
-          stock: stockNum,
+          stock: finalTotalStock,
           barcode: currentData.barcode.trim() || undefined,
           imageId: currentData.imageId.trim() || undefined,
           discountType: discountTypeVal,
           discountValue: discountNum,
+          hasVariants: currentData.hasVariants,
+          variantOptions: currentData.hasVariants ? currentData.variantOptions : undefined,
+          variants: currentData.hasVariants ? mappedVariants : undefined,
         });
         toast.success(`Produk "${currentData.name}" berhasil diperbarui`);
       } else {
@@ -148,13 +204,16 @@ export function useProductManager({ storeId }: UseProductManagerProps) {
           storeId,
           name: currentData.name.trim(),
           category: currentData.category.trim(),
-          price: priceNum,
+          price: finalBasePrice,
           costPrice: costPriceNum,
-          stock: stockNum,
+          stock: finalTotalStock,
           barcode: currentData.barcode.trim() || undefined,
           imageId: currentData.imageId.trim() || undefined,
           discountType: discountTypeVal,
           discountValue: discountNum,
+          hasVariants: currentData.hasVariants,
+          variantOptions: currentData.hasVariants ? currentData.variantOptions : undefined,
+          variants: currentData.hasVariants ? mappedVariants : undefined,
         });
         toast.success(`Produk "${currentData.name}" berhasil ditambahkan`);
       }
