@@ -405,10 +405,17 @@ export const getBySlugOrId = query({
             }
           }
         }
+        const categories =
+          p.categories && p.categories.length > 0
+            ? p.categories
+            : p.category
+              ? [p.category]
+              : [];
         return {
           _id: p._id,
           name: p.name,
-          category: p.category,
+          category: categories[0] ?? "",
+          categories,
           price: p.price,
           stock: p.stock,
           imageId: p.imageId,

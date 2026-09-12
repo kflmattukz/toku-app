@@ -220,7 +220,14 @@ function Kasir() {
 
   if (!store || !rawProducts) return <KasirSkeleton />;
 
-  const categories = ["Semua", ...new Set(products.map((p) => p.category))];
+  const categories = [
+    "Semua",
+    ...new Set(
+      products
+        .flatMap((p) => (p.categories && p.categories.length > 0 ? p.categories : [p.category]))
+        .filter(Boolean),
+    ),
+  ];
 
   return (
     <div className="flex min-h-[calc(100vh-120px)] flex-1 flex-col gap-6 lg:flex-row">

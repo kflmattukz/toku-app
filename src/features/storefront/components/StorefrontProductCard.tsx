@@ -97,8 +97,13 @@ export const StorefrontProductCard = memo(function StorefrontProductCard({
         {/* Product Info */}
         <div className="flex items-start justify-between gap-1.5 mb-2">
           <div className="min-w-0 flex-1">
-            <span className="text-[10px] uppercase font-bold text-[var(--color-text-3)] tracking-wider">
-              {product.category}
+            <span className="text-[10px] uppercase font-bold text-[var(--color-text-3)] tracking-wider truncate block">
+              {((product.categories && product.categories.length > 0)
+                ? product.categories
+                : product.category
+                  ? [product.category]
+                  : []
+              ).join(" · ")}
             </span>
             <h3 className="font-semibold text-sm text-[var(--color-text)] line-clamp-2 mt-0.5 group-hover:text-[var(--color-brand)] transition-colors">
               {product.name}

@@ -21,6 +21,7 @@ export type Product = {
   storeId: Id<"stores">;
   name: string;
   category: string;
+  categories: string[];
   price: number;
   costPrice?: number;
   stock: number;
@@ -46,7 +47,8 @@ export type ProductVariantFormItem = {
 
 export type ProductFormState = {
   name: string;
-  category: string;
+  category?: string;
+  categories: string[];
   price: string;
   costPrice: string;
   stock: string;
@@ -62,6 +64,7 @@ export type ProductFormState = {
 export const emptyProductForm: ProductFormState = {
   name: "",
   category: "",
+  categories: [],
   price: "",
   costPrice: "",
   stock: "",

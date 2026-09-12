@@ -77,14 +77,23 @@ export function StockTable({
   const [pageSize, setPageSize] = useState(10);
 
   const filtered = useMemo(() => {
-    return products.filter(
-      (p) =>
-        p.name.toLowerCase().includes(search.toLowerCase()) ||
-        p.category.toLowerCase().includes(search.toLowerCase()) ||
+    const q = search.toLowerCase();
+    return products.filter((p) => {
+      const cats =
+        p.categories && p.categories.length > 0
+          ? p.categories
+          : p.category
+            ? [p.category]
+            : [];
+      const matchCat = cats.some((c) => c.toLowerCase().includes(q));
+      return (
+        p.name.toLowerCase().includes(q) ||
+        matchCat ||
         (p.barcode && p.barcode.includes(search)) ||
         (p.variants &&
-          p.variants.some((v) => v.name.toLowerCase().includes(search.toLowerCase()))),
-    );
+          p.variants.some((v) => v.name.toLowerCase().includes(q)))
+      );
+    });
   }, [products, search]);
 
   const columns = useMemo(
@@ -129,14 +138,46 @@ export function StockTable({
             );
           },
         }),
-        columnHelper.accessor("category", {
-          header: "Kategori",
-          cell: (info) => (
-            <span className="rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] px-3 py-1 text-xs font-semibold text-[var(--color-text-2)]">
-              {info.getValue()}
-            </span>
-          ),
-        }),
+        columnHelper.accessor(
+          (row) =>
+            row.categories && row.categories.length > 0
+              ? row.categories
+              : row.category
+                ? [row.category]
+                : [],
+          {
+            id: "categories",
+            header: "Kategori",
+            cell: (info) => {
+              const cats = (info.getValue() as string[]) || [];
+              if (cats.length === 0)
+                return <span className="text-xs text-[var(--color-text-3)]">-</span>;
+              const displayCats = cats.slice(0, 2);
+              const remaining = cats.length - 2;
+
+              return (
+                <div className="flex flex-wrap items-center gap-1" title={cats.join(", ")}>
+                  {displayCats.map((cat, idx) => (
+                    <span
+                      key={idx}
+                      className="rounded-full border border-[var(--color-border)] bg-[var(--color-surface-2)] px-2.5 py-0.5 text-xs font-semibold text-[var(--color-text-2)]"
+                    >
+                      {cat}
+                    </span>
+                  ))}
+                  {remaining > 0 && (
+                    <span
+                      className="rounded-full border border-[var(--color-border)] bg-[var(--color-surface-3)] px-1.5 py-0.5 text-[10px] font-extrabold text-[var(--color-text-3)]"
+                      title={cats.slice(2).join(", ")}
+                    >
+                      +{remaining}
+                    </span>
+                  )}
+                </div>
+              );
+            },
+          }
+        ),
         columnHelper.accessor("stock", {
           header: "Stok Saat Ini",
           cell: (info) => {
@@ -308,7 +349,8 @@ export function StockTable({
                         </span>
                       </div>
                       <span className="text-xs font-semibold text-[var(--color-text-3)]">
-                        {p.category} {status.hasVariants && `· ${p.variants?.length} Varian`}
+                        {(p.categories && p.categories.length > 0 ? p.categories : [p.category]).join(", ")}{" "}
+                        {status.hasVariants && `· ${p.variants?.length} Varian`}
                       </span>
                     </div>
                     <div className="text-right shrink-0">
@@ -445,7 +487,7 @@ export function StockTable({
                             )}
                           </div>
                           <span className="text-xs font-semibold text-[var(--color-text-3)]">
-                            {p.category} · {formatIDR(p.price)}
+                            {(p.categories && p.categories.length > 0 ? p.categories : [p.category]).join(", ")} · {formatIDR(p.price)}
                           </span>
                         </div>
                         {status.hasVariants ? (

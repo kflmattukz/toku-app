@@ -18,6 +18,7 @@ export interface StorefrontProduct {
   _id: string;
   name: string;
   category: string;
+  categories?: string[];
   price: number;
   stock: number;
   discountType?: "percentage" | "nominal" | string;

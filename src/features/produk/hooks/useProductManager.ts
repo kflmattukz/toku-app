@@ -94,9 +94,17 @@ export function useProductManager({ storeId }: UseProductManagerProps) {
       );
     }
 
+    const categories =
+      p.categories && p.categories.length > 0
+        ? p.categories
+        : p.category
+          ? [p.category]
+          : [];
+
     setForm({
       name: p.name,
-      category: p.category,
+      category: categories[0] ?? "",
+      categories,
       price: formatIDRInput(p.price),
       costPrice: p.costPrice !== undefined ? formatIDRInput(p.costPrice) : "",
       stock: String(totalStockNum),
@@ -161,8 +169,16 @@ export function useProductManager({ storeId }: UseProductManagerProps) {
       : undefined;
     const stockNum = parseInt(currentData.stock, 10) || 0;
 
-    if (!currentData.name.trim() || !currentData.category.trim()) {
-      toast.error("Mohon lengkapi nama dan kategori produk");
+    const cleanedCategories = Array.from(
+      new Set(
+        (currentData.categories || [currentData.category || ""])
+          .map((c) => c.trim())
+          .filter(Boolean),
+      ),
+    );
+
+    if (!currentData.name.trim() || cleanedCategories.length === 0) {
+      toast.error("Mohon lengkapi nama dan minimal 1 kategori produk");
       return;
     }
 
@@ -230,7 +246,8 @@ export function useProductManager({ storeId }: UseProductManagerProps) {
         await updateProduct({
           id: editId,
           name: currentData.name.trim(),
-          category: currentData.category.trim(),
+          category: cleanedCategories[0],
+          categories: cleanedCategories,
           price: finalBasePrice,
           costPrice: costPriceNum,
           stock: finalTotalStock,
@@ -247,7 +264,8 @@ export function useProductManager({ storeId }: UseProductManagerProps) {
         await createProduct({
           storeId,
           name: currentData.name.trim(),
-          category: currentData.category.trim(),
+          category: cleanedCategories[0],
+          categories: cleanedCategories,
           price: finalBasePrice,
           costPrice: costPriceNum,
           stock: finalTotalStock,

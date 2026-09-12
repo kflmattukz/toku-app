@@ -46,10 +46,17 @@ function PublicStoreCatalog() {
   // Filter products by search and category
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
+      const cats =
+        p.categories && p.categories.length > 0
+          ? p.categories
+          : p.category
+            ? [p.category]
+            : [];
       const matchSearch =
         p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.category.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchCategory = selectedCategory === "all" || p.category === selectedCategory;
+        cats.some((c) => c.toLowerCase().includes(searchQuery.toLowerCase()));
+      const matchCategory =
+        selectedCategory === "all" || cats.includes(selectedCategory);
       return matchSearch && matchCategory;
     });
   }, [products, searchQuery, selectedCategory]);
@@ -57,7 +64,17 @@ function PublicStoreCatalog() {
   // Distinct category list
   const categories = useMemo(() => {
     const set = new Set<string>();
-    products.forEach((p) => set.add(p.category));
+    products.forEach((p) => {
+      const cats =
+        p.categories && p.categories.length > 0
+          ? p.categories
+          : p.category
+            ? [p.category]
+            : [];
+      cats.forEach((c) => {
+        if (c) set.add(c);
+      });
+    });
     return Array.from(set);
   }, [products]);
 

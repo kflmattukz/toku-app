@@ -30,8 +30,16 @@ export const list = query({
             }
           }
         }
+        const categories =
+          p.categories && p.categories.length > 0
+            ? p.categories
+            : p.category
+              ? [p.category]
+              : [];
         return {
           ...p,
+          categories,
+          category: categories[0] ?? "",
           imageUrl: imageUrl ?? p.imageId ?? null,
         };
       })
@@ -43,7 +51,8 @@ export const create = mutation({
   args: {
     storeId: v.id("stores"),
     name: v.string(),
-    category: v.string(),
+    category: v.optional(v.string()),
+    categories: v.array(v.string()),
     price: v.number(),
     costPrice: v.optional(v.number()),
     stock: v.number(),
@@ -76,12 +85,21 @@ export const create = mutation({
     ),
   },
   handler: async (ctx, args) => {
+    const cleanedCategories = Array.from(
+      new Set(args.categories.map((c) => c.trim()).filter(Boolean))
+    );
+    if (cleanedCategories.length === 0) {
+      throw new Error("Produk harus memiliki minimal 1 kategori");
+    }
+
     let finalStock = args.stock;
     if (args.hasVariants && args.variants && args.variants.length > 0) {
       finalStock = args.variants.reduce((sum, item) => sum + item.stock, 0);
     }
     return ctx.db.insert("products", {
       ...args,
+      category: cleanedCategories[0],
+      categories: cleanedCategories,
       stock: finalStock,
     });
   },
@@ -92,6 +110,7 @@ export const update = mutation({
     id: v.id("products"),
     name: v.optional(v.string()),
     category: v.optional(v.string()),
+    categories: v.optional(v.array(v.string())),
     price: v.optional(v.number()),
     costPrice: v.optional(v.number()),
     stock: v.optional(v.number()),
@@ -124,6 +143,16 @@ export const update = mutation({
     ),
   },
   handler: async (ctx, { id, ...patch }) => {
+    if (patch.categories !== undefined) {
+      const cleanedCategories = Array.from(
+        new Set(patch.categories.map((c) => c.trim()).filter(Boolean))
+      );
+      if (cleanedCategories.length === 0) {
+        throw new Error("Produk harus memiliki minimal 1 kategori");
+      }
+      patch.categories = cleanedCategories;
+      patch.category = cleanedCategories[0];
+    }
     if (patch.imageId !== undefined) {
       const existing = await ctx.db.get(id);
       if (

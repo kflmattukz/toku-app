@@ -48,12 +48,21 @@ export function ProductTable({
   const [previewProduct, setPreviewProduct] = useState<Product | null>(null);
 
   const filtered = useMemo(() => {
-    return products.filter(
-      (p) =>
-        p.name.toLowerCase().includes(search.toLowerCase()) ||
-        p.category.toLowerCase().includes(search.toLowerCase()) ||
-        (p.barcode && p.barcode.includes(search)),
-    );
+    const q = search.toLowerCase();
+    return products.filter((p) => {
+      const cats =
+        p.categories && p.categories.length > 0
+          ? p.categories
+          : p.category
+            ? [p.category]
+            : [];
+      const matchCat = cats.some((c) => c.toLowerCase().includes(q));
+      return (
+        p.name.toLowerCase().includes(q) ||
+        matchCat ||
+        (p.barcode && p.barcode.includes(search))
+      );
+    });
   }, [products, search]);
 
   const columns = useMemo(
@@ -102,14 +111,45 @@ export function ProductTable({
             );
           },
         }),
-        columnHelper.accessor("category", {
-          header: "Kategori",
-          cell: (info) => (
-            <span className="rounded-full border border-border bg-surface-2 px-3 py-1 text-xs font-bold text-text-2">
-              {info.getValue()}
-            </span>
-          ),
-        }),
+        columnHelper.accessor(
+          (row) =>
+            row.categories && row.categories.length > 0
+              ? row.categories
+              : row.category
+                ? [row.category]
+                : [],
+          {
+            id: "categories",
+            header: "Kategori",
+            cell: (info) => {
+              const cats = (info.getValue() as string[]) || [];
+              if (cats.length === 0) return <span className="text-xs text-text-3">-</span>;
+              const displayCats = cats.slice(0, 2);
+              const remaining = cats.length - 2;
+
+              return (
+                <div className="flex flex-wrap items-center gap-1" title={cats.join(", ")}>
+                  {displayCats.map((cat, idx) => (
+                    <span
+                      key={idx}
+                      className="rounded-full border border-border bg-surface-2 px-2.5 py-0.5 text-xs font-bold text-text-2"
+                    >
+                      {cat}
+                    </span>
+                  ))}
+                  {remaining > 0 && (
+                    <span
+                      className="rounded-full border border-border bg-surface-3 px-1.5 py-0.5 text-[10px] font-extrabold text-text-3"
+                      title={cats.slice(2).join(", ")}
+                    >
+                      +{remaining}
+                    </span>
+                  )}
+                </div>
+              );
+            },
+          }
+        ),
         columnHelper.accessor((row) => row.costPrice ?? 0, {
           id: "costPrice",
           header: "Harga Modal",
@@ -347,10 +387,20 @@ export function ProductTable({
                     )}
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-sm font-extrabold text-text">{p.name}</div>
-                      <div className="mt-0.5 flex items-center gap-2">
-                        <span className="rounded-full border border-border bg-surface-2 px-2 py-0.5 text-[10px] font-bold text-text-2">
-                          {p.category}
-                        </span>
+                      <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+                        {((p.categories && p.categories.length > 0)
+                          ? p.categories
+                          : p.category
+                            ? [p.category]
+                            : []
+                        ).map((cat: string, idx: number) => (
+                          <span
+                            key={idx}
+                            className="rounded-full border border-border bg-surface-2 px-2 py-0.5 text-[10px] font-bold text-text-2"
+                          >
+                            {cat}
+                          </span>
+                        ))}
                         {p.barcode && (
                           <span className="font-mono text-[10px] text-text-3">
                             SKU: {p.barcode}
@@ -457,6 +507,7 @@ export function ProductTable({
         imageUrl={previewProduct?.imageUrl || previewProduct?.imageId}
         title={previewProduct?.name}
         category={previewProduct?.category}
+        categories={previewProduct?.categories}
         price={previewProduct?.price}
         subtitle={
           previewProduct?.barcode

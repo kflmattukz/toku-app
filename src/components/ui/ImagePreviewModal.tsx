@@ -15,6 +15,7 @@ interface ImagePreviewModalProps {
   imageUrl: string | null | undefined;
   title?: string;
   category?: string;
+  categories?: string[];
   price?: number;
   subtitle?: string;
 }
@@ -25,6 +26,7 @@ export function ImagePreviewModal({
   imageUrl,
   title,
   category,
+  categories,
   price,
   subtitle,
 }: ImagePreviewModalProps) {
@@ -102,13 +104,21 @@ export function ImagePreviewModal({
         {/* Modal Header */}
         <div className="flex items-center justify-between border-b border-border bg-surface-2 px-5 py-3.5">
           <div className="min-w-0 flex-1 pr-4">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-1.5">
               <span className="eyebrow-tag">PREVIEW FOTO</span>
-              {category && (
-                <span className="rounded-full bg-surface-3 px-2 py-0.5 text-[11px] font-bold text-text-2">
-                  {category}
+              {((categories && categories.length > 0)
+                ? categories
+                : category
+                  ? [category]
+                  : []
+              ).map((cat, idx) => (
+                <span
+                  key={idx}
+                  className="rounded-full bg-surface-3 px-2 py-0.5 text-[11px] font-bold text-text-2"
+                >
+                  {cat}
                 </span>
-              )}
+              ))}
             </div>
             <h3 id="preview-title" className="mt-0.5 truncate text-base font-extrabold text-text">
               {title || "Gambar Produk"}

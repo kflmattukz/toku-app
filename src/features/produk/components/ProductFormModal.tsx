@@ -39,6 +39,7 @@ interface ProductFormModalProps {
   onImageFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   saving: boolean;
   onSave: (formData?: ProductFormState | React.FormEvent) => void;
+  existingCategories?: string[];
 }
 
 export function ProductFormModal({
@@ -52,10 +53,12 @@ export function ProductFormModal({
   onImageFileChange,
   saving,
   onSave,
+  existingCategories,
 }: ProductFormModalProps) {
   const [showImagePreview, setShowImagePreview] = useState(false);
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [categoryInput, setCategoryInput] = useState("");
   const [newOptionName, setNewOptionName] = useState("");
   const [newOptionValueInputs, setNewOptionValueInputs] = useState<Record<number, string>>({});
 
@@ -68,7 +71,8 @@ export function ProductFormModal({
         document.getElementById("input-product-name")?.focus();
         return;
       }
-      if (!value.category.trim()) {
+      const cats = (value.categories || []).map((c) => c.trim()).filter(Boolean);
+      if (cats.length === 0) {
         document.getElementById("input-product-category")?.focus();
         return;
       }
@@ -99,12 +103,14 @@ export function ProductFormModal({
     setPrevEditId(editId);
     if (open) {
       setSubmitted(false);
+      setCategoryInput("");
     }
   }
 
   useEffect(() => {
     if (open) {
       productForm.reset(form);
+      setCategoryInput("");
     }
   }, [open, editId]);
 
@@ -155,13 +161,17 @@ export function ProductFormModal({
             <productForm.Subscribe
               selector={(state) => ({
                 name: state.values.name,
-                category: state.values.category,
+                categories: state.values.categories,
                 price: state.values.price,
+                hasVariants: state.values.hasVariants,
               })}
             >
-              {({ name, category, price }) => {
+              {({ name, categories, price, hasVariants }) => {
                 const priceNum = parseIDRInput(price);
-                const hasErrors = submitted && (!name.trim() || !category.trim() || priceNum <= 0);
+                const hasCategory = categories && categories.length > 0;
+                const hasErrors =
+                  submitted &&
+                  (!name.trim() || !hasCategory || (!hasVariants && priceNum <= 0));
 
                 if (!hasErrors) return null;
 
@@ -295,14 +305,41 @@ export function ProductFormModal({
             {/* Kategori & Barcode Grid */}
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <productForm.Field
-                name="category"
+                name="categories"
                 validators={{
                   onChange: ({ value }) =>
-                    !value.trim() ? "Kategori produk wajib diisi" : undefined,
+                    !value || value.length === 0
+                      ? "Minimal 1 kategori produk wajib diisi"
+                      : undefined,
                 }}
               >
                 {(field) => {
-                  const isInvalid = Boolean(submitted && !field.state.value.trim());
+                  const currentCats: string[] = field.state.value || [];
+                  const isInvalid = Boolean(submitted && currentCats.length === 0);
+
+                  const addCat = (catToAdd: string) => {
+                    const trimmed = catToAdd.trim();
+                    if (!trimmed) return;
+                    if (currentCats.some((c) => c.toLowerCase() === trimmed.toLowerCase())) {
+                      setCategoryInput("");
+                      return;
+                    }
+                    const next = [...currentCats, trimmed];
+                    field.handleChange(next);
+                    onChangeForm((p) => ({ ...p, categories: next, category: next[0] }));
+                    setCategoryInput("");
+                  };
+
+                  const removeCat = (idx: number) => {
+                    const next = currentCats.filter((_, i) => i !== idx);
+                    field.handleChange(next);
+                    onChangeForm((p) => ({ ...p, categories: next, category: next[0] || "" }));
+                  };
+
+                  const suggestions = (existingCategories || []).filter(
+                    (cat) => !currentCats.some((c) => c.toLowerCase() === cat.toLowerCase())
+                  );
+
                   return (
                     <div>
                       <label className="mb-1.5 flex items-center justify-between text-xs font-bold text-[var(--color-text)]">
@@ -311,31 +348,96 @@ export function ProductFormModal({
                         </span>
                         {isInvalid && (
                           <span className="text-[10px] font-extrabold text-rose-500">
-                            Wajib diisi
+                            Minimal 1 kategori
                           </span>
                         )}
                       </label>
-                      <input
-                        id="input-product-category"
-                        type="text"
-                        placeholder="Contoh: Minuman, Makanan, Servis"
-                        value={field.state.value}
-                        onBlur={field.handleBlur}
-                        onChange={(e) => {
-                          field.handleChange(e.target.value);
-                          onChangeForm((p) => ({ ...p, category: e.target.value }));
-                        }}
-                        className={`w-full rounded-xl border bg-[var(--color-surface)] px-3.5 py-2.5 text-sm font-medium transition-colors focus:ring-2 focus:outline-none ${
+
+                      {/* Tag Input Box */}
+                      <div
+                        onClick={() => document.getElementById("input-product-category")?.focus()}
+                        className={`flex min-h-[44px] cursor-text flex-wrap items-center gap-1.5 rounded-xl border bg-[var(--color-surface)] px-3 py-1.5 transition-colors focus-within:ring-2 ${
                           isInvalid
-                            ? "border-rose-500 text-[var(--color-text)] focus:border-rose-500 focus:ring-rose-500/20"
-                            : "focus:border-primary-500 focus:ring-primary-500/20 border-[var(--color-border)] text-[var(--color-text)]"
+                            ? "border-rose-500 focus-within:border-rose-500 focus-within:ring-rose-500/20"
+                            : "border-[var(--color-border)] focus-within:border-primary-500 focus-within:ring-primary-500/20"
                         }`}
-                      />
+                      >
+                        {currentCats.map((cat, idx) => (
+                          <span
+                            key={idx}
+                            className="inline-flex items-center gap-1 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-2)] px-2 py-0.5 text-xs font-bold text-[var(--color-text)]"
+                          >
+                            <span>{cat}</span>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                removeCat(idx);
+                              }}
+                              className="rounded p-0.5 text-[var(--color-text-3)] hover:bg-rose-500/10 hover:text-rose-500 transition-colors cursor-pointer"
+                              title={`Hapus kategori ${cat}`}
+                            >
+                              <XIcon size={12} weight="bold" />
+                            </button>
+                          </span>
+                        ))}
+                        <input
+                          id="input-product-category"
+                          type="text"
+                          placeholder={
+                            currentCats.length === 0
+                              ? "Ketik kategori lalu Enter..."
+                              : "Tambah kategori..."
+                          }
+                          value={categoryInput}
+                          onChange={(e) => setCategoryInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === ",") {
+                              e.preventDefault();
+                              addCat(categoryInput);
+                            } else if (
+                              e.key === "Backspace" &&
+                              !categoryInput &&
+                              currentCats.length > 0
+                            ) {
+                              removeCat(currentCats.length - 1);
+                            }
+                          }}
+                          onBlur={() => {
+                            if (categoryInput.trim()) {
+                              addCat(categoryInput);
+                            }
+                            field.handleBlur();
+                          }}
+                          className="min-w-[120px] flex-1 bg-transparent py-1 text-sm font-medium text-[var(--color-text)] focus:outline-none placeholder:text-[var(--color-text-3)]"
+                        />
+                      </div>
+
                       {isInvalid && (
                         <p className="mt-1 flex items-center gap-1 text-[11px] font-bold text-rose-500">
                           <WarningCircleIcon size={14} weight="fill" className="shrink-0" />
-                          Kategori produk wajib diisi
+                          Minimal 1 kategori produk wajib diisi
                         </p>
+                      )}
+
+                      {/* Quick suggestions pills */}
+                      {suggestions.length > 0 && (
+                        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                          <span className="text-[10px] font-bold text-[var(--color-text-3)]">
+                            Saran:
+                          </span>
+                          {suggestions.slice(0, 6).map((cat) => (
+                            <button
+                              key={cat}
+                              type="button"
+                              onClick={() => addCat(cat)}
+                              className="inline-flex items-center gap-1 rounded-md border border-dashed border-[var(--color-border)] bg-[var(--color-surface)] px-2 py-0.5 text-[11px] font-medium text-[var(--color-text-2)] hover:border-[var(--color-brand)] hover:text-[var(--color-brand)] transition-colors cursor-pointer"
+                            >
+                              <PlusIcon size={10} weight="bold" />
+                              {cat}
+                            </button>
+                          ))}
+                        </div>
                       )}
                     </div>
                   );
@@ -1194,7 +1296,8 @@ export function ProductFormModal({
         onClose={() => setShowImagePreview(false)}
         imageUrl={imagePreview}
         title={form.name || "Preview Foto Produk"}
-        category={form.category}
+        category={form.category || form.categories?.[0]}
+        categories={form.categories}
         price={parseIDRInput(form.price)}
       />
 

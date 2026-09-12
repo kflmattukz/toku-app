@@ -40,9 +40,17 @@ export function ProductCatalogGrid({
 }: ProductCatalogGridProps) {
   const filtered = products.filter((p) => {
     const q = search.toLowerCase();
-    const matchSearch = p.name.toLowerCase().includes(q);
+    const cats =
+      p.categories && p.categories.length > 0
+        ? p.categories
+        : p.category
+          ? [p.category]
+          : [];
+    const matchSearch =
+      p.name.toLowerCase().includes(q) ||
+      cats.some((c) => c.toLowerCase().includes(q));
     const matchBarcode = p.barcode ? p.barcode.toLowerCase().includes(q) : false;
-    const matchCat = categoryFilter === "Semua" || p.category === categoryFilter;
+    const matchCat = categoryFilter === "Semua" || cats.includes(categoryFilter);
     return (matchSearch || matchBarcode) && matchCat;
   });
 

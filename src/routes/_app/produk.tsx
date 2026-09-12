@@ -14,7 +14,7 @@ import {
   type Product,
 } from "#/features/produk";
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 
 export const Route = createFileRoute("/_app/produk")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -28,6 +28,16 @@ function Produk() {
   const { store } = useAppStore();
   const rawProducts = useQuery(api.products.list, store ? { storeId: store._id } : "skip");
   const products = (rawProducts as Product[] | undefined) ?? [];
+
+  const existingCategories = useMemo(() => {
+    return Array.from(
+      new Set(
+        products
+          .flatMap((p) => (p.categories && p.categories.length > 0 ? p.categories : [p.category]))
+          .filter(Boolean),
+      ),
+    ).sort();
+  }, [products]);
 
   const {
     showModal,
@@ -124,6 +134,7 @@ function Produk() {
         onImageFileChange={handleImageFileChange}
         saving={saving}
         onSave={handleSave}
+        existingCategories={existingCategories}
       />
 
       {/* Delete Confirmation Modal */}

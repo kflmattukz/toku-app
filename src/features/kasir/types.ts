@@ -1,6 +1,5 @@
-import type { Id } from "../../../convex/_generated/dataModel";
-import type { VariantOptionGroup, ProductVariant } from "../produk/types";
-export type { VariantOptionGroup, ProductVariant };
+import type { VariantOptionGroup, ProductVariant, Product } from "../produk/types";
+export type { VariantOptionGroup, ProductVariant, Product };
 
 export type CartItem = {
   productId: string;
@@ -22,21 +21,3 @@ export type ItemDiscountModalState = {
   discountValue: string;
 } | null;
 
-export type Product = {
-  _id: Id<"products">;
-  _creationTime: number;
-  storeId: Id<"stores">;
-  name: string;
-  category: string;
-  price: number;
-  costPrice?: number;
-  stock: number;
-  barcode?: string;
-  imageId?: string;
-  imageUrl?: string | null;
-  discountType?: "percentage" | "nominal";
-  discountValue?: number;
-  hasVariants?: boolean;
-  variantOptions?: VariantOptionGroup[];
-  variants?: ProductVariant[];
-};

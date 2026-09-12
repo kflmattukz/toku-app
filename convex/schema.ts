@@ -143,7 +143,8 @@ export default defineSchema({
   products: defineTable({
     storeId: v.id("stores"),
     name: v.string(),
-    category: v.string(), // custom per store, e.g. "Minuman", "Makanan"
+    category: v.optional(v.string()), // backward-compatibility: legacy single category
+    categories: v.optional(v.array(v.string())), // multiple categories support
     price: v.number(), // IDR integer (base/default price or lowest price)
     costPrice: v.optional(v.number()), // Modal / HPP per unit (IDR)
     stock: v.number(),
