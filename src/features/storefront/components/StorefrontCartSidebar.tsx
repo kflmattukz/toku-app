@@ -1,4 +1,11 @@
-import { ShoppingBagIcon, TrashIcon, ArrowRightIcon, PackageIcon, PlusIcon, MinusIcon } from "@phosphor-icons/react";
+import {
+  ShoppingBagIcon,
+  TrashIcon,
+  ArrowRightIcon,
+  PackageIcon,
+  PlusIcon,
+  MinusIcon,
+} from "@phosphor-icons/react";
 import { formatIDR } from "#/lib/utils";
 import type { StorefrontCartItem, StorefrontProduct } from "../types";
 
@@ -100,7 +107,9 @@ export function StorefrontCartSidebar({
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-xs text-[var(--color-text)] truncate">{item.name}</p>
+                  <p className="font-semibold text-xs text-[var(--color-text)] truncate">
+                    {item.name}
+                  </p>
                   <p className="text-[11px] text-[var(--color-brand)] font-mono font-bold mt-0.5">
                     {formatIDR(item.subtotal)}
                   </p>
@@ -113,7 +122,7 @@ export function StorefrontCartSidebar({
                       type="button"
                       onClick={() => onUpdateQty(product, -1, variantObj)}
                       aria-label={`Kurangi 1 ${item.name}`}
-                      className="w-6 h-6 rounded flex items-center justify-center text-[var(--color-text-2)] hover:bg-[var(--color-surface)] active:scale-90 transition-all"
+                      className="w-6 h-6 rounded-full flex items-center justify-center text-[var(--color-text-2)] hover:bg-[var(--color-surface)] active:scale-90 transition-all"
                     >
                       <MinusIcon size={10} weight="bold" />
                     </button>
@@ -123,8 +132,12 @@ export function StorefrontCartSidebar({
                       disabled={isMaxStock}
                       onClick={() => onUpdateQty(product, 1, variantObj)}
                       aria-label={`Tambah 1 ${item.name}`}
-                      title={isMaxStock ? `Maksimal stok tercapai (${maxStock} pcs)` : `Tambah 1 ${item.name}`}
-                      className={`w-6 h-6 rounded flex items-center justify-center transition-all ${
+                      title={
+                        isMaxStock
+                          ? `Maksimal stok tercapai (${maxStock} pcs)`
+                          : `Tambah 1 ${item.name}`
+                      }
+                      className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${
                         isMaxStock
                           ? "opacity-40 cursor-not-allowed bg-[var(--color-surface-3)] text-[var(--color-text-3)]"
                           : "bg-[var(--color-brand)] text-white active:scale-90"
